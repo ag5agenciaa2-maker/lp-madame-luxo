@@ -65,7 +65,10 @@
     </noscript>
 
     <!-- CSS -->
-    <link rel="stylesheet" href="style.css">
+    <!-- Lighthouse/PageSpeed fix: preload + async trick to eliminate render-blocking CSS (FCP) -->
+    <link rel="preload" href="style.css" as="style">
+    <link rel="stylesheet" href="style.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="style.css"></noscript>
     <link rel="stylesheet" href="cookie-banner.css" media="print" onload="this.media='all'">
     <noscript>
         <link rel="stylesheet" href="cookie-banner.css">
@@ -329,8 +332,9 @@
                 <li role="none"><a href="#contato" class="nav-link" role="menuitem">Contato</a></li>
             </ul>
 
+            <!-- Accessibility fix: aria-label distinto para diferenciar do botão WhatsApp flutuante -->
             <a href="https://wa.me/5521988501459?text=Ol%C3%A1%2C%20vim%20atrav%C3%A9s%20do%20site%20e%20gostaria%20de%20uma%20informa%C3%A7%C3%A3o."
-                class="nav-cta" target="_blank" rel="noopener noreferrer">
+                class="nav-cta" target="_blank" rel="noopener noreferrer" aria-label="Comprar no WhatsApp - Menu de navegação">
                 Comprar no WhatsApp
             </a>
         </div>
@@ -505,8 +509,9 @@
                         class="bento-image bento-image--top" width="800" height="600" loading="lazy">
                     <div class="bento-overlay">
                         <h3 class="bento-title">Vestidos</h3>
+                        <!-- Accessibility fix: aria-label distinto por categoria (link-text) -->
                         <a href="https://wa.me/5521988501459?text=Olá,%20vim%20através%20do%20site%20e%20gostaria%20de%20saber%20sobre%20Vestidos"
-                            class="bento-cta" target="_blank" rel="noopener noreferrer">
+                            class="bento-cta" target="_blank" rel="noopener noreferrer" aria-label="Ver Vestidos no WhatsApp">
                             Ver no WhatsApp
                         </a>
                     </div>
@@ -520,7 +525,7 @@
                     <div class="bento-overlay">
                         <h3 class="bento-title">Blusas</h3>
                         <a href="https://wa.me/5521988501459?text=Olá,%20vim%20através%20do%20site%20e%20gostaria%20de%20saber%20sobre%20Blusas"
-                            class="bento-cta" target="_blank" rel="noopener noreferrer">
+                            class="bento-cta" target="_blank" rel="noopener noreferrer" aria-label="Ver Blusas no WhatsApp">
                             Ver no WhatsApp
                         </a>
                     </div>
@@ -534,7 +539,7 @@
                     <div class="bento-overlay">
                         <h3 class="bento-title">Macacão</h3>
                         <a href="https://wa.me/5521988501459?text=Olá,%20vim%20através%20do%20site%20e%20gostaria%20de%20saber%20sobre%20Macacão"
-                            class="bento-cta" target="_blank" rel="noopener noreferrer">
+                            class="bento-cta" target="_blank" rel="noopener noreferrer" aria-label="Ver Macacão no WhatsApp">
                             Ver no WhatsApp
                         </a>
                     </div>
@@ -548,7 +553,7 @@
                     <div class="bento-overlay">
                         <h3 class="bento-title">Saia & Conjuntos</h3>
                         <a href="https://wa.me/5521988501459?text=Olá,%20vim%20através%20do%20site%20e%20gostaria%20de%20saber%20sobre%20Saia%20&%20Conjuntos"
-                            class="bento-cta" target="_blank" rel="noopener noreferrer">
+                            class="bento-cta" target="_blank" rel="noopener noreferrer" aria-label="Ver Saia e Conjuntos no WhatsApp">
                             Ver no WhatsApp
                         </a>
                     </div>
@@ -562,7 +567,7 @@
                     <div class="bento-overlay">
                         <h3 class="bento-title">Bodies</h3>
                         <a href="https://wa.me/5521988501459?text=Olá,%20vim%20através%20do%20site%20e%20gostaria%20de%20saber%20sobre%20Bodies"
-                            class="bento-cta" target="_blank" rel="noopener noreferrer">
+                            class="bento-cta" target="_blank" rel="noopener noreferrer" aria-label="Ver Bodies no WhatsApp">
                             Ver no WhatsApp
                         </a>
                     </div>
@@ -576,7 +581,7 @@
                     <div class="bento-overlay">
                         <h3 class="bento-title">Plus Size</h3>
                         <a href="https://wa.me/5521988501459?text=Olá,%20vim%20através%20do%20site%20e%20gostaria%20de%20saber%20sobre%20Plus%20Size"
-                            class="bento-cta" target="_blank" rel="noopener noreferrer">
+                            class="bento-cta" target="_blank" rel="noopener noreferrer" aria-label="Ver Plus Size no WhatsApp">
                             Ver no WhatsApp
                         </a>
                     </div>
@@ -590,7 +595,7 @@
                     <div class="bento-overlay">
                         <h3 class="bento-title">Cropped</h3>
                         <a href="https://wa.me/5521988501459?text=Olá,%20vim%20através%20do%20site%20e%20gostaria%20de%20saber%20sobre%20Cropped"
-                            class="bento-cta" target="_blank" rel="noopener noreferrer">
+                            class="bento-cta" target="_blank" rel="noopener noreferrer" aria-label="Ver Cropped no WhatsApp">
                             Ver no WhatsApp
                         </a>
                     </div>
@@ -604,7 +609,7 @@
                     <div class="bento-overlay">
                         <h3 class="bento-title">Shorts</h3>
                         <a href="https://wa.me/5521988501459?text=Olá,%20vim%20através%20do%20site%20e%20gostaria%20de%20saber%20sobre%20Shorts"
-                            class="bento-cta" target="_blank" rel="noopener noreferrer">
+                            class="bento-cta" target="_blank" rel="noopener noreferrer" aria-label="Ver Shorts no WhatsApp">
                             Ver no WhatsApp
                         </a>
                     </div>
@@ -618,7 +623,7 @@
                     <div class="bento-overlay">
                         <h3 class="bento-title">Acessórios</h3>
                         <a href="https://wa.me/5521988501459?text=Olá,%20vim%20através%20do%20site%20e%20gostaria%20de%20saber%20sobre%20Acessórios"
-                            class="bento-cta" target="_blank" rel="noopener noreferrer">
+                            class="bento-cta" target="_blank" rel="noopener noreferrer" aria-label="Ver Acessórios no WhatsApp">
                             Ver no WhatsApp
                         </a>
                     </div>
@@ -632,7 +637,7 @@
                     <div class="bento-overlay">
                         <h3 class="bento-title">Macaquinho</h3>
                         <a href="https://wa.me/5521988501459?text=Olá,%20vim%20através%20do%20site%20e%20gostaria%20de%20saber%20sobre%20Macaquinho"
-                            class="bento-cta" target="_blank" rel="noopener noreferrer">
+                            class="bento-cta" target="_blank" rel="noopener noreferrer" aria-label="Ver Macaquinho no WhatsApp">
                             Ver no WhatsApp
                         </a>
                     </div>
@@ -646,7 +651,7 @@
                     <div class="bento-overlay">
                         <h3 class="bento-title">Looks Completos</h3>
                         <a href="https://wa.me/5521988501459?text=Olá,%20vim%20através%20do%20site%20e%20gostaria%20de%20saber%20sobre%20Looks%20Completos"
-                            class="bento-cta" target="_blank" rel="noopener noreferrer">
+                            class="bento-cta" target="_blank" rel="noopener noreferrer" aria-label="Ver Looks Completos no WhatsApp">
                             Ver no WhatsApp
                         </a>
                     </div>
@@ -660,7 +665,7 @@
                     <div class="bento-overlay">
                         <h3 class="bento-title">Nova Coleção</h3>
                         <a href="https://wa.me/5521988501459?text=Olá,%20vim%20através%20do%20site%20e%20gostaria%20de%20saber%20sobre%20Nova%20Coleção"
-                            class="bento-cta" target="_blank" rel="noopener noreferrer">
+                            class="bento-cta" target="_blank" rel="noopener noreferrer" aria-label="Ver Nova Coleção no WhatsApp">
                             Ver no WhatsApp
                         </a>
                     </div>
@@ -741,9 +746,10 @@
     <section class="about" id="sobre" aria-labelledby="aboutTitle">
         <div class="about-container reveal-left">
             <div class="about-image-wrapper">
-                <img src="assets/wind-banner-loja-madame-luxo-entrada.webp"
+                <!-- Lighthouse/PageSpeed fix: removed fetchpriority="high" from non-LCP image to not compete with hero -->
+            <img src="assets/wind-banner-loja-madame-luxo-entrada.webp"
                     alt="Entrada da loja Madame Luxo com wind banner personalizado" class="about-image" width="600"
-                    height="800" loading="eager" fetchpriority="high">
+                    height="800" loading="lazy">
             </div>
             <div class="about-content">
                 <div class="about-text-box reveal-right">
@@ -888,6 +894,35 @@
                         <span class="testimonial-author">— Rayza cruz</span>
                     </article>
                 </div>
+                <div class="marquee-content" aria-hidden="true">
+                    <article class="testimonial-card">
+                        <div class="testimonial-meta">
+                            <span class="google-label">Google Review</span>
+                            <div class="stars">★★★★★</div>
+                        </div>
+                        <p class="testimonial-text">"Loja incrível, atendimento ótimo, super atenciosos. Me ajudou nas
+                            dúvidas sobre minhas medidas e a entrega foi rápida. Loja de confiança. 🥰🥰 amei minha
+                            compra. vi carinho em cada detalhe."</p>
+                        <span class="testimonial-author">— Rose Gonçalves</span>
+                    </article>
+                    <article class="testimonial-card">
+                        <div class="testimonial-meta">
+                            <span class="google-label">Google Review</span>
+                            <div class="stars">★★★★★</div>
+                        </div>
+                        <p class="testimonial-text">"Atendimento ótimo, roupas lindas, amo comprar nessa loja, entrega
+                            rápida e tudo de ótima qualidade, super recomendo."</p>
+                        <span class="testimonial-author">— Marcella Jayme</span>
+                    </article>
+                    <article class="testimonial-card">
+                        <div class="testimonial-meta">
+                            <span class="google-label">Google Review</span>
+                            <div class="stars">★★★★★</div>
+                        </div>
+                        <p class="testimonial-text">"Atendimento ótimo peças com qualidade maravilhosa"</p>
+                        <span class="testimonial-author">— Rayza cruz</span>
+                    </article>
+                </div>
             </div>
         </div>
     </section>
@@ -895,6 +930,18 @@
     <!-- Barra Ticker -->
     <div class="ticker" aria-hidden="true">
         <div class="ticker-track">
+            <span class="ticker-item">MADAME LUXO</span>
+            <span class="ticker-separator">•</span>
+            <span class="ticker-item">MODA FEMININA</span>
+            <span class="ticker-separator">•</span>
+            <span class="ticker-item">PLUS SIZE</span>
+            <span class="ticker-separator">•</span>
+            <span class="ticker-item">SANTA CRUZ</span>
+            <span class="ticker-separator">•</span>
+            <span class="ticker-item">CAMPO GRANDE</span>
+            <span class="ticker-separator">•</span>
+            <span class="ticker-item">DESDE 2007</span>
+            <span class="ticker-separator">•</span>
             <span class="ticker-item">MADAME LUXO</span>
             <span class="ticker-separator">•</span>
             <span class="ticker-item">MODA FEMININA</span>
@@ -1058,9 +1105,10 @@
                             </div>
                         </div>
                         <div class="location-hub-actions">
+                            <!-- Accessibility fix: aria-label distintos para leitores de tela -->
                             <a href="https://www.google.com/maps?sca_esv=3fab016ef7a05157&output=search&q=Madame+Luxo+Santa+Cruz&source=lnms&fbs=ADc_l-acAb_3MMOAUx0zmbUpgBqRdynpPJ66TDyFgZmq_XFwppazcD3UADNx6r4GDDz3huEOg4-JsqXsTWRjrkKQQ9hdCybcT1ZeC0VOUTKPtVlj_BszWKsJ93vI_jya9V4XcOtLNKfc2QU5-64WRxFdMrsxczoH6XBdLERriMfELf8IUasfzEKGCid2vfQ4DaSCQljxD8V1IOLUdXhFgP5-HHD5nFwMQQ&entry=mc&ved=1t:200715&ictx=111"
                                 class="location-hub-btn location-hub-btn--primary" target="_blank"
-                                rel="noopener noreferrer">
+                                rel="noopener noreferrer" aria-label="Como chegar na Loja Santa Cruz - Google Maps">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" stroke="currentColor"
                                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -1071,7 +1119,7 @@
                             </a>
                             <a href="https://wa.me/5521988501459?text=Olá,%20vim%20através%20do%20site%20e%20gostaria%20de%20saber%20sobre%20a%20Loja%20Santa%20Cruz"
                                 class="location-hub-btn location-hub-btn--secondary" target="_blank"
-                                rel="noopener noreferrer">
+                                rel="noopener noreferrer" aria-label="WhatsApp da Loja Santa Cruz - (21) 98850-1459">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                     <path
                                         d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"
@@ -1133,9 +1181,10 @@
                             </div>
                         </div>
                         <div class="location-hub-actions">
+                            <!-- Accessibility fix: aria-label distintos para leitores de tela -->
                             <a href="https://maps.google.com/?q=Estrada+do+Campinho,+6006+-+Loja+D,+Campo+Grande,+Rio+de+Janeiro+-+RJ"
                                 class="location-hub-btn location-hub-btn--primary" target="_blank"
-                                rel="noopener noreferrer">
+                                rel="noopener noreferrer" aria-label="Como chegar na Loja Campo Grande - Google Maps">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" stroke="currentColor"
                                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -1146,7 +1195,7 @@
                             </a>
                             <a href="https://wa.me/5521988501459?text=Olá,%20vim%20através%20do%20site%20e%20gostaria%20de%20saber%20sobre%20a%20Loja%20Campo%20Grande"
                                 class="location-hub-btn location-hub-btn--secondary" target="_blank"
-                                rel="noopener noreferrer">
+                                rel="noopener noreferrer" aria-label="WhatsApp da Loja Campo Grande - (21) 98850-1459">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                     <path
                                         d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"
@@ -1194,8 +1243,9 @@
                     </div>
                     <div class="contact-bar-text">
                         <span class="contact-bar-label">Central de Atendimento</span>
+                        <!-- Accessibility fix: aria-label para distinguir do botão flutuante WhatsApp -->
                         <a href="https://wa.me/5521988501459?text=Ol%C3%A1%2C%20vim%20atrav%C3%A9s%20do%20site%20e%20gostaria%20de%20uma%20informa%C3%A7%C3%A3o."
-                            class="contact-bar-value" target="_blank" rel="noopener noreferrer">(21) 98850-1459</a>
+                            class="contact-bar-value" target="_blank" rel="noopener noreferrer" aria-label="Central de atendimento WhatsApp (21) 98850-1459">(21) 98850-1459</a>
                     </div>
                 </div>
                 <div class="contact-bar-divider" aria-hidden="true"></div>
@@ -1507,7 +1557,8 @@
         </a>
     </div>
 
-    <script src="script.js"></script>
+    <!-- Lighthouse/PageSpeed fix: defer scripts to eliminate render-blocking JS (TBT/FCP) -->
+    <script src="script.js" defer></script>
     <script src="cookie-banner.js" defer></script>
 </body>
 
