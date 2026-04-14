@@ -1,0 +1,2183 @@
+/* Configuração do Design System Madame Luxo */
+:root {
+    --brand-main: #E8E000;
+    --brand-hover: #C9A227;
+    --brand-accent: #C9A227;
+    --brand-dark: #1A1A1A;
+    --brand-gray: #8C8C8C;
+    --brand-light: #FAFAF7;
+    --whatsapp-color: #25D366;
+    --bg-color: #FAFAF7;
+    --text-color: #1A1A1A;
+    --card-bg: #FFFFFF;
+    --border-color: rgba(0, 0, 0, 0.08);
+    --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ========================================
+   MATRIX MADEIRAS - COLOR SYSTEM
+   ======================================== */
+
+/* Light Mode (Padrão) - Fundo off-white premium, tipografia fashion */
+body.light-mode {
+    --brand-main: #E8E000;
+    --brand-hover: #C9A227;
+    --brand-accent: #C9A227;
+    --brand-dark: #1A1A1A;
+    --brand-gray: #555555;
+    --brand-light: #FAFAF7;
+    --bg-color: #FAFAF7;
+    --text-color: #1A1A1A;
+    --card-bg: #FFFFFF;
+    --border-color: rgba(26, 26, 26, 0.08);
+}
+
+* {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+img {
+    -webkit-user-drag: none;
+    pointer-events: none;
+}
+
+a,
+button,
+input,
+textarea,
+[data-interactive="true"] {
+    user-select: auto;
+    pointer-events: auto;
+}
+
+/* WhatsApp Floating Button com Balão */
+.whatsapp-container {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 1000;
+}
+
+/* Whatsapp message bubble */
+#whatsapp-message {
+    width: 260px;
+    margin-left: 0px;
+    position: absolute;
+    bottom: 75px;
+    right: 0px;
+    padding: 10px 24px 10px 12px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    color: #1a1a1b;
+    border-radius: 14px;
+    font-size: 10.5px;
+    font-weight: 500;
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(12px) scale(0.96);
+    transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    z-index: 1002;
+}
+
+/* Ponta do balão (cauda) */
+#whatsapp-message::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    right: 25px;
+    width: 12px;
+    height: 12px;
+    background: inherit;
+    transform: rotate(45deg);
+    border-right: 1px solid rgba(255, 255, 255, 0.4);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+    z-index: -1;
+}
+
+#whatsapp-message.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+
+/* Modo Claro - Ajustes de Cor */
+body.light-mode #whatsapp-message {
+    background: #ffffff !important;
+    color: #1a1a1b !important;
+    border-color: rgba(0, 0, 0, 0.15) !important;
+}
+
+body.light-mode .close-whatsapp-bubble {
+    color: #000 !important;
+}
+
+body.dark-mode #whatsapp-message {
+    background: #2d2112 !important;
+    color: #ffffff !important;
+    border-color: rgba(196, 154, 60, 0.4) !important;
+}
+
+body.dark-mode .close-whatsapp-bubble {
+    color: #fff !important;
+}
+
+/* Estilo da Logo com Borda Verde (Forçado) */
+.whatsapp-logo-bubble {
+    border: 2px solid #25d366 !important;
+    background-color: #fff !important;
+    padding: 2px !important;
+}
+
+.close-whatsapp-bubble {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    background: transparent;
+    border: none;
+    color: #000;
+    cursor: pointer;
+    font-size: 10px;
+    padding: 3px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.8;
+}
+
+.close-whatsapp-bubble:hover {
+    opacity: 1;
+}
+
+.whatsapp-float {
+    width: 60px;
+    height: 60px;
+    background-color: #25d366;
+    color: #FFF;
+    border-radius: 50px;
+    text-align: center;
+    font-size: 30px;
+    box-shadow: 0 10px 25px rgba(37, 211, 102, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    position: relative;
+    z-index: 1001;
+}
+
+.whatsapp-float:hover {
+    transform: scale(1.1) rotate(5deg);
+    background-color: #128c7e;
+    box-shadow: 0 15px 30px rgba(37, 211, 102, 0.4);
+}
+
+.whatsapp-float i {
+    margin-top: 1px;
+}
+
+.whatsapp-float::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background-color: #25d366;
+    z-index: -1;
+    animation: whatsapp-pulse 2s infinite;
+}
+
+@keyframes whatsapp-pulse {
+    0% {
+        transform: scale(1);
+        opacity: 0.5;
+    }
+
+    100% {
+        transform: scale(1.6);
+        opacity: 0;
+    }
+}
+
+/* Notificação Vermelha Sutil */
+.whatsapp-notify {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    background-color: #ff3b30;
+    color: white;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #fff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 1003;
+}
+
+.whatsapp-notify.show {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Dark Mode - Fundo preto, destaques amarelo e branco */
+body.dark-mode {
+    --brand-main: #E8E000;
+    --brand-hover: #C9A227;
+    --brand-accent: #C9A227;
+    --brand-dark: #FFFFFF;
+    --brand-gray: #8C8C8C;
+    --brand-light: #1A1A1A;
+    --bg-color: #1A1A1A;
+    --text-color: #FFFFFF;
+    --card-bg: #1A1A1A;
+    --border-color: rgba(232, 224, 0, 0.15);
+}
+
+/* Light Mode */
+/* REMOVIDO - Definição duplicada/incorreta. Usar a definição correta nas linhas 22-33 */
+
+/* ========== LIGHT MODE OVERRIDES - MATRIX MADEIRAS ========== */
+
+/* Light Mode - Fundo branco puro e design editorial */
+body.light-mode {
+    background-color: #FAFAF7 !important;
+    --bg-color: #FAFAF7 !important;
+    --brand-light: #FAFAF7 !important;
+}
+
+body.light-mode .min-h-screen,
+body.light-mode #root>div {
+    background-color: #FAFAF7 !important;
+}
+
+/* Tipografia Editorial - Bebas Neue para todos os títulos */
+body.light-mode h1,
+body.light-mode h2,
+body.light-mode h3,
+body.light-mode h4,
+body.light-mode .font-title {
+    font-family: 'Bebas Neue', sans-serif !important;
+    text-transform: uppercase !important;
+    letter-spacing: -0.02em !important;
+    color: #1A1A1A !important;
+}
+
+/* Cards e Seções no light mode — exceção para botões amadeirados */
+body.light-mode .bg-white,
+body.light-mode .bg-zinc-900:not([class*="bg-[#3D2A0E]"]),
+body.light-mode [class*="bg-[#18181b]"],
+body.light-mode section .rounded-2xl:not([class*="bg-[#3D2A0E]"]):not(a):not(button),
+body.light-mode section .rounded-3xl:not([class*="bg-[#3D2A0E]"]):not(a):not(button),
+body.light-mode section [class*="rounded-[2"]:not([class*="bg-[#3D2A0E]"]):not(a):not(button) {
+    background-color: #FFFFFF !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.02) !important;
+}
+
+body.light-mode .modal-content {
+    background-color: #FFFFFF !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Textos no light mode - Contraste industrial */
+body.light-mode p,
+body.light-mode .text-zinc-600,
+body.light-mode .text-zinc-500 {
+    color: #444444 !important;
+}
+
+body.light-mode .text-brand-dark,
+body.light-mode .text-zinc-900,
+body.light-mode .text-black {
+    color: #3c290e !important;
+}
+
+/* Exceção para textos sobre vídeos e fundos escuros */
+body.light-mode .video-section h1,
+body.light-mode .video-section h2,
+body.light-mode .video-section h3,
+body.light-mode .video-section h4,
+body.light-mode #video-gallery h4,
+body.light-mode #video-gallery p.text-white\/70,
+body.light-mode .\!text-white {
+    color: #FFFFFF !important;
+}
+
+/* Diferenciais e Cards de Atendimento */
+body.light-mode .grid div[class*="bg-[#18181b]"],
+body.light-mode .grid a[class*="bg-[#18181b]"],
+body.light-mode .grid button[class*="bg-[#18181b]"] {
+    background-color: #FAFAFA !important;
+    border: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+body.light-mode .grid div[class*="bg-[#27272a]"] {
+    background-color: #F1F1F1 !important;
+    color: #2B7A1F !important;
+}
+
+/* Ajuste do degradê do vídeo no light mode - integração total com fundo branco */
+body.light-mode .hero .bg-gradient-to-t.from-brand-light {
+    background: linear-gradient(to top,
+            #FFFFFF 0%,
+            rgba(255, 255, 255, 0.95) 30%,
+            rgba(255, 255, 255, 0.75) 55%,
+            transparent 100%) !important;
+}
+
+body.light-mode .hero-gradient-bottom {
+    background: linear-gradient(to top,
+            #FFFFFF 0%,
+            #FFFFFF 40%,
+            rgba(255, 255, 255, 0.98) 60%,
+            rgba(255, 255, 255, 0.85) 75%,
+            transparent 100%) !important;
+}
+
+body.light-mode .hero-gradient-soft {
+    background: linear-gradient(to top,
+            #FFFFFF 0%,
+            rgba(255, 255, 255, 0.7) 50%,
+            transparent 100%) !important;
+}
+
+/* Botões e elementos interativos no light mode */
+body.light-mode .btn-primary,
+body.light-mode .bg-brand-main {
+    background-color: #2B7A1F !important;
+}
+
+body.light-mode .theme-toggle {
+    background-color: #FFFFFF !important;
+    border-color: rgba(139, 94, 30, 0.2) !important;
+    color: #2B7A1F !important;
+}
+
+/* Sombras suaves em tom marrom */
+body.light-mode .shadow-xl,
+body.light-mode .shadow-2xl {
+    box-shadow: 0 10px 40px -10px rgba(42, 29, 10, 0.1) !important;
+}
+
+body.light-mode .bg-zinc-800 {
+    background-color: #f4f4f5 !important;
+}
+
+body.light-mode .bg-black {
+    background-color: #f4f4f5 !important;
+}
+
+body.light-mode [class*="bg-[#121212]"] {
+    background-color: #f4f4f5 !important;
+}
+
+body.light-mode [class*="bg-[#18181b]"] {
+    background-color: #ffffff !important;
+}
+
+body.light-mode [class*="bg-[#09090b]"] {
+    background-color: #f4f4f5 !important;
+}
+
+body.light-mode [class*="!bg-zinc-900"] {
+    background-color: #ffffff !important;
+}
+
+/* Textos claros → escuros */
+body.light-mode .text-white {
+    color: #1a1a1a !important;
+}
+
+/* Títulos sobre imagens sempre brancos (cards de serviços) */
+body.light-mode .absolute.text-white {
+    color: #ffffff !important;
+}
+
+body.light-mode .text-zinc-300 {
+    color: #3f3f46 !important;
+}
+
+body.light-mode .text-zinc-400 {
+    color: #52525b !important;
+}
+
+body.light-mode .text-zinc-500 {
+    color: #71717a !important;
+}
+
+body.light-mode [class*="text-white/7"] {
+    color: rgba(24, 24, 27, 0.6) !important;
+}
+
+body.light-mode [class*="text-white/8"] {
+    color: rgba(24, 24, 27, 0.75) !important;
+}
+
+body.light-mode [class*="text-white/5"] {
+    color: rgba(24, 24, 27, 0.5) !important;
+}
+
+body.light-mode .text-brand-gray {
+    color: #52525b !important;
+}
+
+body.light-mode .text-brand-dark {
+    color: #18181b !important;
+}
+
+/* Bordas — Mais visíveis com contornos claros */
+body.light-mode [class*="border-white/5"] {
+    border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+body.light-mode [class*="border-white/10"] {
+    border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+body.light-mode [class*="border-brand-main"] {
+    border-color: #2B7A1F !important;
+}
+
+/* Fundos com opacidade branca → opacidade escura */
+body.light-mode [class*="bg-white/5"] {
+    background-color: rgba(0, 0, 0, 0.03) !important;
+}
+
+body.light-mode [class*="bg-white/10"] {
+    background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+body.light-mode [class*="bg-black/5"] {
+    background-color: rgba(0, 0, 0, 0.02) !important;
+}
+
+body.light-mode [class*="bg-black/50"] {
+    background-color: rgba(255, 255, 255, 0.8) !important;
+}
+
+body.light-mode [class*="bg-black/60"] {
+    background-color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Sombras mais suaves */
+body.light-mode .shadow-xl {
+    box-shadow: 0 4px 20px -4px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04) !important;
+}
+
+body.light-mode .shadow-2xl {
+    box-shadow: 0 8px 30px -8px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.04) !important;
+}
+
+body.light-mode .shadow-lg {
+    box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.03) !important;
+}
+
+body.light-mode [class*="shadow-brand-main"] {
+    box-shadow: 0 4px 16px -4px rgba(43, 122, 31, 0.15) !important;
+}
+
+/* Glassmorphism */
+body.light-mode .glass {
+    background: rgba(255, 255, 255, 0.7) !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+    backdrop-filter: blur(12px) saturate(120%) !important;
+}
+
+/* Modais */
+body.light-mode .modal-backdrop {
+    background: rgba(240, 240, 240, 0.8) !important;
+    backdrop-filter: blur(8px) !important;
+}
+
+body.light-mode .modal-content {
+    background: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 20px 60px -15px rgba(0, 0, 0, 0.15) !important;
+}
+
+body.light-mode .close-modal {
+    color: #71717a !important;
+}
+
+/* Theme Toggle - Estilos específicos */
+.theme-toggle {
+    position: fixed;
+    right: 1rem;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.04);
+    z-index: 1000;
+    transition: transform 0.4s var(--ease-premium), opacity 0.4s var(--ease-premium), border-color 0.4s var(--ease-premium);
+    backdrop-filter: blur(8px);
+}
+
+body.light-mode .theme-toggle {
+    background: #FFFFFF !important;
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+    color: #2A1D0A !important;
+}
+
+body.light-mode .theme-toggle i {
+    color: #2B7A1F !important;
+}
+
+body.dark-mode .theme-toggle {
+    background: #3D2A0E !important;
+    border: 1px solid rgba(196, 154, 60, 0.3) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+    color: #FFFFFF !important;
+}
+
+body.dark-mode .theme-toggle i {
+    color: #C49A3C !important;
+}
+
+/* Hover effects para theme toggle */
+body.light-mode .theme-toggle:hover {
+    border-color: #2B7A1F !important;
+    transform: scale(1.05) rotate(12deg);
+}
+
+body.dark-mode .theme-toggle:hover {
+    border-color: #2B7A1F !important;
+    transform: scale(1.05) rotate(12deg);
+}
+
+/* ========================================
+   BOTÕES PRINCIPAIS - LIGHT MODE
+   Tom amadeirado médio (mais claro que o dark, mesmo visual)
+   ======================================== */
+
+/* Botões de link secundários com bg-[#3D2A0E] — tom amadeirado #8f6538 */
+body.light-mode a[class*="bg-[#3D2A0E]"],
+body.light-mode button[class*="bg-[#3D2A0E]"],
+body.light-mode a.bg-white[class*="dark:bg-[#3D2A0E]"],
+body.light-mode button.bg-white[class*="dark:bg-[#3D2A0E]"] {
+    background-color: #3c290e !important;
+    border-color: rgba(196, 154, 60, 0.2) !important;
+    box-shadow: 0 8px 24px rgba(60, 41, 14, 0.25) !important;
+}
+
+/* Hover: escurece levemente */
+body.light-mode a[class*="bg-[#3D2A0E]"]:hover,
+body.light-mode button[class*="bg-[#3D2A0E]"]:hover,
+body.light-mode a.bg-white[class*="dark:bg-[#3D2A0E]"]:hover,
+body.light-mode button.bg-white[class*="dark:bg-[#3D2A0E]"]:hover {
+    background-color: #4d3716 !important;
+    box-shadow: 0 12px 30px rgba(60, 41, 14, 0.35) !important;
+}
+
+/* Textos e ícones brancos dentro dos botões principais amadeirados */
+body.light-mode a[class*="bg-[#3D2A0E]"] span,
+body.light-mode a[class*="bg-[#3D2A0E]"] i,
+body.light-mode button[class*="bg-[#3D2A0E]"] span,
+body.light-mode button[class*="bg-[#3D2A0E]"] i,
+body.light-mode a.bg-white[class*="dark:bg-[#3D2A0E]"] span,
+body.light-mode a.bg-white[class*="dark:bg-[#3D2A0E]"] i,
+body.light-mode button.bg-white[class*="dark:bg-[#3D2A0E]"] span,
+body.light-mode button.bg-white[class*="dark:bg-[#3D2A0E]"] i {
+    color: #ffffff !important;
+}
+
+/* Ícone decorativo de fundo (background) — opacidade levemente maior */
+body.light-mode a[class*="bg-[#3D2A0E]"] .opacity-10,
+body.light-mode button[class*="bg-[#3D2A0E]"] .opacity-10,
+body.light-mode a.bg-white[class*="dark:bg-[#3D2A0E]"] .opacity-10,
+body.light-mode button.bg-white[class*="dark:bg-[#3D2A0E]"] .opacity-10 {
+    opacity: 0.15 !important;
+}
+
+/* Botões h-24 com bg-zinc-900 (fallback) */
+body.light-mode .h-24.bg-zinc-900 {
+    background-color: #3c290e !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+body.light-mode .h-24.bg-zinc-900 span,
+body.light-mode .h-24.bg-zinc-900 i {
+    color: #ffffff !important;
+}
+
+body.light-mode .h-24[class*="hover:bg-zinc-800"]:hover {
+    background-color: #4d3716 !important;
+}
+
+/* Service cards, about sections */
+body.light-mode section .rounded-2xl,
+body.light-mode section .rounded-3xl,
+body.light-mode section [class*="rounded-[2"] {
+    border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Botões Ligar Loja e Salvar Contato — fundo branco com borda e sombra */
+body.light-mode .grid-cols-2 a.bg-white,
+body.light-mode .grid-cols-2 button.bg-white {
+    background-color: #ffffff !important;
+    border: 1.5px solid rgba(143, 101, 56, 0.25) !important;
+    box-shadow: 0 4px 16px rgba(143, 101, 56, 0.12), 0 1px 4px rgba(0, 0, 0, 0.06) !important;
+}
+
+body.light-mode .grid-cols-2 a.bg-white:hover,
+body.light-mode .grid-cols-2 button.bg-white:hover {
+    border-color: rgba(143, 101, 56, 0.5) !important;
+    box-shadow: 0 6px 20px rgba(143, 101, 56, 0.18), 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Garantir textos e ícones corretos nesses botões */
+body.light-mode .grid-cols-2 a.bg-white span,
+body.light-mode .grid-cols-2 button.bg-white span {
+    color: #4a3520 !important;
+}
+
+body.light-mode .grid-cols-2 a.bg-white i,
+body.light-mode .grid-cols-2 button.bg-white i {
+    color: var(--brand-main) !important;
+}
+
+
+/* Footer */
+body.light-mode footer {
+    background-color: #ffffff !important;
+    border-top: 2px solid var(--brand-main) !important;
+    color: #3f3f46 !important;
+}
+
+body.light-mode footer a,
+body.light-mode footer i,
+body.light-mode footer p,
+body.light-mode footer span {
+    color: #3f3f46 !important;
+}
+
+body.light-mode footer a:hover,
+body.light-mode footer a:hover i {
+    color: var(--brand-main) !important;
+}
+
+/* Créditos e copyright — remover transparência no light mode */
+body.light-mode footer .opacity-30 {
+    opacity: 0.7 !important;
+    color: #3f3f46 !important;
+}
+
+body.light-mode footer a.opacity-30 {
+    opacity: 0.6 !important;
+    color: #52525b !important;
+}
+
+body.light-mode footer a.opacity-30:hover {
+    opacity: 1 !important;
+    color: var(--brand-main) !important;
+}
+
+/* Gradientes de hero */
+body.light-mode [class*="from-brand-main"] {
+    --tw-gradient-from: rgba(43, 122, 31, 0.06) !important;
+}
+
+/* Micro-labels e opacidades */
+body.light-mode .micro-label {
+    color: #52525b !important;
+}
+
+body.light-mode .opacity-70 span,
+body.light-mode .font-medium.opacity-70 {
+    opacity: 1 !important;
+    color: #3f3f46 !important;
+}
+
+/* Video labels e overlays */
+body.light-mode .video-label {
+    color: #ffffff !important;
+}
+
+body.light-mode .btn-ativar-som {
+    color: #ffffff !important;
+}
+
+/* Botão CTA vinho — manter texto branco */
+body.light-mode .bg-brand-main {
+    color: #ffffff !important;
+}
+
+body.light-mode [class*="bg-brand-main"] a,
+body.light-mode [class*="bg-brand-main"] span,
+body.light-mode [class*="bg-brand-main"] i,
+body.light-mode a.bg-brand-main,
+body.light-mode a.bg-brand-main i {
+    color: #ffffff !important;
+}
+
+/* Botão WhatsApp gradiente — manter texto branco */
+body.light-mode [class*="from-[#2B7A1F]"] {
+    color: #ffffff !important;
+}
+
+body.light-mode [class*="from-[#2B7A1F]"] span,
+body.light-mode [class*="from-[#2B7A1F]"] i,
+body.light-mode [class*="from-[#2B7A1F]"] div {
+    color: #ffffff !important;
+}
+
+body.light-mode .pulse-custom-slow span,
+body.light-mode .pulse-custom-slow i {
+    color: #ffffff !important;
+}
+
+/* Seção de vídeo — fundo transparente no light mode */
+body.light-mode .video-gallery-section {
+    background-color: transparent !important;
+}
+
+body.light-mode #video-gallery {
+    background-color: transparent !important;
+}
+
+body.light-mode .video-carousel,
+body.light-mode #videoCarousel {
+    background-color: transparent !important;
+}
+
+/* Stats cards — fundo branco com borda vinho */
+body.light-mode [class*="bg-black/40"] {
+    background-color: #ffffff !important;
+    backdrop-filter: none !important;
+    border: 2px solid var(--brand-main) !important;
+    box-shadow: 0 2px 12px rgba(43, 122, 31, 0.08) !important;
+}
+
+/* Pill de categoria do hero — light mode: sem borda, fundo suave */
+body.light-mode [data-config="negocio.subtitulo"] {
+    background-color: rgba(255, 255, 255, 0.25) !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Pill de categoria do hero — dark mode: letra branca */
+body.dark-mode [data-config="negocio.subtitulo"] {
+    color: #ffffff !important;
+}
+
+/* ========================================
+   HERO - TEXTOS AMADEIRADOS PREMIUM (LIGHT MODE)
+   ======================================== */
+
+/* "Desde 1994" — mesma cor amadeirada do título */
+body.light-mode .hero [class*="font-label"][class*="text-black"] {
+    color: #8f6538 !important;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    opacity: 1 !important;
+    letter-spacing: 0.15em !important;
+}
+
+/* "Matrix Madeiras" — mogno escuro, cor de madeira real */
+body.light-mode .hero [data-config="negocio.nome"] {
+    color: #8f6538 !important;
+    -webkit-text-fill-color: #8f6538 !important;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+    background: none !important;
+    filter: none;
+}
+
+
+body.light-mode [class*="bg-black/40"] div {
+    color: #18181b !important;
+}
+
+body.light-mode [class*="bg-black/40"] .text-brand-main {
+    color: var(--brand-main) !important;
+}
+
+/* Mapa — sem inversão */
+body.light-mode iframe {
+    filter: none !important;
+}
+
+/* Base */
+html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: 'Inter', sans-serif;
+    transition: background-color 0.8s var(--ease-premium), color 0.8s var(--ease-premium);
+    overflow-x: hidden;
+}
+
+/* Container principal - herda cor de fundo */
+#root>div {
+    background-color: var(--bg-color);
+    transition: background-color 0.8s var(--ease-premium);
+}
+
+/* ========================================
+   HERO VIDEO - Drone Matrix Madeiras
+   ======================================== */
+.hero {
+    overflow: hidden;
+}
+
+.hero>div:first-of-type {
+    overflow: hidden;
+    position: absolute;
+    inset: 0;
+}
+
+.hero video,
+.hero-video {
+    position: absolute;
+    top: 25%;
+    left: 50%;
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    transform: translate(-50%, -25%) scale(1.5);
+    object-fit: cover;
+    z-index: 0;
+}
+
+/* Ajuste para vídeo 9:16 - descer a imagem para mostrar estrutura */
+.hero video,
+.hero-video {
+    top: 70% !important;
+    transform: translate(-50%, -70%) scale(1.6) !important;
+}
+
+/* Zoom extra para cobrir bordas em telas diferentes */
+@media (min-aspect-ratio: 16/9) {
+
+    .hero video,
+    .hero-video {
+        width: 160% !important;
+        height: 160% !important;
+        top: 65% !important;
+        transform: translate(-50%, -65%) scale(1.7) !important;
+    }
+}
+
+@media (max-aspect-ratio: 9/16) {
+
+    .hero video,
+    .hero-video {
+        width: 180% !important;
+        height: 180% !important;
+        top: 75% !important;
+        transform: translate(-50%, -75%) scale(1.5) !important;
+    }
+}
+
+/* Esconder bordas com vignette */
+.hero>div:first-of-type::after {
+    content: '';
+    position: absolute;
+    inset: -20px;
+    box-shadow: inset 0 0 80px 40px rgba(42, 29, 10, 0.8);
+    pointer-events: none;
+    z-index: 1;
+}
+
+body.light-mode .hero>div:first-of-type::after {
+    box-shadow: inset 0 0 100px 60px rgba(255, 255, 255, 0.95);
+}
+
+/* Degradê extra forte na base da hero para esconder corte do vídeo */
+.hero-gradient-bottom,
+.hero-gradient-soft {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 11;
+    pointer-events: none;
+}
+
+body.dark-mode .hero-gradient-bottom {
+    background: linear-gradient(to top,
+            #2A1D0A 0%,
+            #2A1D0A 40%,
+            rgba(42, 29, 10, 0.98) 65%,
+            rgba(42, 29, 10, 0.85) 80%,
+            transparent 100%) !important;
+}
+
+body.dark-mode .hero-gradient-soft {
+    background: linear-gradient(to top,
+            #2A1D0A 0%,
+            rgba(42, 29, 10, 0.8) 50%,
+            transparent 100%) !important;
+}
+
+/* Ajuste do degradê inferior para ser mais forte */
+.hero .bg-gradient-to-t.from-brand-light {
+    --tw-gradient-from: var(--bg-color) !important;
+    --tw-gradient-via: color-mix(in srgb, var(--bg-color) 90%, transparent) !important;
+    --tw-gradient-to: transparent !important;
+    --tw-gradient-from-position: 25% !important;
+}
+
+/* Ajustes do gradiente da hero no modo escuro */
+body.dark-mode .hero .bg-gradient-to-t.from-brand-light {
+    --tw-gradient-from: rgba(42, 29, 10, 0.95) !important;
+    --tw-gradient-via: rgba(42, 29, 10, 0.7) !important;
+    --tw-gradient-to: transparent !important;
+}
+
+/* Ajustes do gradiente da hero no modo claro */
+body.light-mode .hero .bg-gradient-to-t.from-brand-light {
+    --tw-gradient-from: rgba(250, 250, 248, 0.98) !important;
+    --tw-gradient-via: rgba(250, 250, 248, 0.75) !important;
+    --tw-gradient-to: transparent !important;
+}
+
+/* Garantir que o body em light mode tenha fundo claro */
+body.light-mode {
+    background-color: #FAFAF8 !important;
+}
+
+body.light-mode #root>div {
+    background-color: #FAFAF8 !important;
+}
+
+/* Garantir que o body em dark mode tenha fundo marrom escuro */
+body.dark-mode {
+    background-color: #2A1D0A !important;
+}
+
+body.dark-mode #root>div {
+    background-color: #2A1D0A !important;
+}
+
+/* Efeito de Textura Premium para o Dark Mode */
+body.dark-mode::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url("https://www.transparenttextures.com/patterns/carbon-fibre.png");
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+/* Tipografia Industrial Matrix */
+h1,
+h2,
+h3,
+h4,
+.font-serif,
+.font-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+}
+
+h1 {
+    font-weight: 800;
+}
+
+/* Corpo do texto Moderno e Técnico */
+body,
+.font-sans {
+    font-family: 'Inter', sans-serif;
+}
+
+/* Acento/Labels: Barlow Condensed Semibold Italic — rótulos em small caps */
+.font-label,
+.micro-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    font-style: italic;
+    font-variant: small-caps;
+    text-transform: lowercase;
+    letter-spacing: 0.15em;
+    display: inline-block;
+}
+
+/* Glassmorphism Refinado */
+.glass {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border: 0.5px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Modal Styling */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+/* Light mode - overlay claro para TODOS os modais */
+body.light-mode .modal-backdrop {
+    background: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(5px) !important;
+}
+
+/* Modal da Galeria - garantir visibilidade */
+body.light-mode #modal-gallery.modal-backdrop {
+    background: rgba(250, 250, 250, 0.85) !important;
+    backdrop-filter: blur(6px) !important;
+}
+
+body.dark-mode #modal-gallery.modal-backdrop {
+    background: rgba(0, 0, 0, 0.95) !important;
+}
+
+/* Dark mode - overlay escuro para TODOS os modais */
+body.dark-mode .modal-backdrop {
+    background: rgba(0, 0, 0, 0.85) !important;
+}
+
+body.light-mode #modal-gallery .modal-content {
+    background: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15) !important;
+}
+
+body.dark-mode #modal-gallery .modal-content {
+    background: #111111 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9) !important;
+}
+
+/* Cards de imagem no modal - light mode */
+body.light-mode #modal-gallery .aspect-\[4\/5\] {
+    background-color: #f4f4f5 !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+body.light-mode #modal-gallery .aspect-\[4\/5\] p {
+    color: #18181b !important;
+}
+
+body.light-mode #modal-gallery .aspect-\[4\/5\] .bg-gradient-to-t {
+    background: linear-gradient(to top, rgba(255, 255, 255, 0.9) 0%, transparent 100%) !important;
+}
+
+/* Cards de imagem no modal - dark mode */
+body.dark-mode #modal-gallery .aspect-\[4\/5\] {
+    background-color: #141414 !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+body.dark-mode #modal-gallery .aspect-\[4\/5\] p {
+    color: #ffffff !important;
+}
+
+body.dark-mode #modal-gallery .aspect-\[4\/5\] .bg-gradient-to-t {
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, transparent 100%) !important;
+}
+
+/* ========================================
+   GALERIA PREVIEW PREMIUM - LIGHT MODE
+   ======================================== */
+
+/* Container da galeria preview */
+body.light-mode .reveal.px-5 .bg-\[\#18181b\] {
+    background-color: #ffffff !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Fotos da galeria preview */
+body.light-mode .reveal.px-5 .aspect-\[3\/4\],
+body.light-mode .reveal.px-5 .aspect-\[4\/3\] {
+    border-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+body.light-mode .reveal.px-5 .bg-gradient-to-t {
+    background: linear-gradient(to top, rgba(255, 255, 255, 0.8) 0%, transparent 100%) !important;
+}
+
+/* Botão "Ver Todas as Fotos" */
+body.light-mode .reveal.px-5 button {
+    box-shadow: 0 4px 16px rgba(43, 122, 31, 0.15) !important;
+}
+
+/* ========================================
+   MODAL GALERIA - HEADER LIGHT MODE
+   ======================================== */
+
+body.light-mode #modal-gallery .modal-content {
+    background: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+body.light-mode #modal-gallery .sticky.top-0 {
+    background-color: rgba(255, 255, 255, 0.95) !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+body.light-mode #modal-gallery .sticky.top-0 h3 {
+    color: #18181b !important;
+}
+
+body.light-mode #modal-gallery .sticky.top-0 p {
+    color: #71717a !important;
+}
+
+body.light-mode #modal-gallery .sticky.top-0 button {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+body.light-mode #modal-gallery .sticky.top-0 button:hover {
+    background-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+body.light-mode #modal-gallery .sticky.top-0 button i {
+    color: #18181b !important;
+}
+
+body.light-mode #modal-gallery .w-9.h-9 {
+    background-color: rgba(43, 122, 31, 0.1) !important;
+}
+
+body.light-mode #modal-gallery .grid.grid-cols-2 {
+    background-color: transparent !important;
+}
+
+/* ========================================
+   MODAL IMAGEM INDIVIDUAL - LIGHT MODE
+   ======================================== */
+
+/* Overlay do modal de imagem - light mode: mais claro */
+body.light-mode #modal-image.modal-backdrop {
+    background: rgba(255, 255, 255, 0.9) !important;
+    backdrop-filter: blur(12px) !important;
+}
+
+/* Botão de fechar no light mode - escuro */
+body.light-mode #modal-image .close-modal {
+    color: #18181b !important;
+    background-color: rgba(0, 0, 0, 0.1) !important;
+    border-radius: 50% !important;
+    width: 48px !important;
+    height: 48px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+body.light-mode #modal-image .close-modal:hover {
+    background-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Imagem no modal - garantir visibilidade */
+body.light-mode #modal-image #popup-img {
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
+}
+
+#modal-gallery .modal-content {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: flex !important;
+    flex-direction: column !important;
+    max-height: 90vh !important;
+    width: 95% !important;
+    margin: auto !important;
+}
+
+#modal-gallery .modal-content * {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+}
+
+#modal-image .modal-content {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: flex !important;
+    max-width: 95vw !important;
+    max-height: 95vh !important;
+    margin: auto !important;
+}
+
+#modal-image .modal-content * {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+}
+
+.modal-content {
+    background: var(--card-bg) !important;
+    border-radius: 2rem;
+    width: 95%;
+    max-width: 480px;
+    max-height: 85vh;
+    overflow-y: auto;
+    position: relative;
+    padding: 0;
+    box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--border-color);
+    z-index: 10001;
+}
+
+@keyframes modalIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.99);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.close-modal {
+    position: absolute;
+    top: 1.25rem;
+    right: 1.25rem;
+    color: var(--brand-gray);
+    cursor: pointer;
+    padding: 0.5rem;
+    transition: transform 0.3s var(--ease-premium);
+}
+
+.close-modal:hover {
+    transform: rotate(90deg);
+}
+
+/* Animations & Micro-interactions */
+.hover-lift {
+    transition: all 0.5s var(--ease-premium);
+}
+
+.hover-lift:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px -15px rgba(43, 122, 31, 0.4);
+}
+
+/* Estilos para cards de diferenciais premium */
+.diferencial-card-premium {
+    transition: all 0.4s var(--ease-premium) !important;
+}
+
+.diferencial-card-premium:hover {
+    transform: translateY(-5px) !important;
+    border-color: var(--brand-main) !important;
+    background: var(--brand-light) !important;
+}
+
+.diferencial-card-premium i {
+    transition: transform 0.5s var(--ease-premium);
+    display: inline-block;
+}
+
+.diferencial-card-premium:hover i {
+    transform: scale(1.2) rotate(10deg);
+}
+
+.diferencial-card-premium:active {
+    transform: scale(0.95) !important;
+}
+
+.diferencial-card-premium:active i {
+    animation: iconPop 0.4s var(--ease-premium) forwards;
+}
+
+@keyframes iconPop {
+    0% {
+        transform: scale(1.2) rotate(10deg);
+    }
+
+    50% {
+        transform: scale(1.5) rotate(-15deg);
+    }
+
+    100% {
+        transform: scale(1) rotate(0);
+    }
+}
+
+/* Fade Up Entry */
+.reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.8s var(--ease-premium);
+}
+
+.reveal.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Pulse slower and more elegant - REMOVIDO para conformidade OAB */
+@keyframes pulse-ring {
+    0% {
+        transform: scale(0.98);
+        box-shadow: 0 0 0 0 rgba(43, 122, 31, 0.5);
+    }
+
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 10px rgba(43, 122, 31, 0);
+    }
+
+    100% {
+        transform: scale(0.98);
+        box-shadow: 0 0 0 0 rgba(43, 122, 31, 0);
+    }
+}
+
+/* .pulse-custom-slow - Animation removida para conformidade OAB */
+
+/* Theme Toggle - definição unificada abaixo em BOTÕES FIXOS SUPERIORES */
+
+/* Refinamento dos Cards em Modo Escuro (Global) - Matrix Madeiras */
+body.dark-mode [class*="bg-[#18181b]"],
+body.dark-mode [class*="bg-zinc-900"],
+body.dark-mode .modal-content {
+    background-color: var(--card-bg) !important;
+    border: 1px solid rgba(196, 154, 60, 0.15) !important;
+    box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(196, 154, 60, 0.05) !important;
+}
+
+body.dark-mode [class*="bg-[#18181b]"]:hover {
+    border-color: rgba(43, 122, 31, 0.4) !important;
+    box-shadow: 0 25px 50px -20px rgba(0, 0, 0, 0.6), 0 0 15px rgba(43, 122, 31, 0.15) !important;
+}
+
+/* Textos em modo escuro - Branco puro para contraste */
+body.dark-mode .text-brand-dark {
+    color: #FFFFFF !important;
+}
+
+body.dark-mode .text-zinc-900 {
+    color: #FFFFFF !important;
+}
+
+body.dark-mode .text-zinc-300 {
+    color: #D4B08A !important;
+}
+
+body.dark-mode h1,
+body.dark-mode h2,
+body.dark-mode h3,
+body.dark-mode h4 {
+    color: #FFFFFF !important;
+}
+
+/* Parágrafos no modo escuro */
+body.dark-mode p {
+    color: #F4F0EB !important;
+}
+
+/* Labels e textos secundários no modo escuro */
+body.dark-mode .text-brand-gray {
+    color: #C49A3C !important;
+}
+
+/* Cards específicos no modo escuro */
+body.dark-mode .bg-white {
+    background-color: var(--card-bg) !important;
+}
+
+body.dark-mode .bg-zinc-900 {
+    background-color: var(--card-bg) !important;
+}
+
+/* Music Toggle Animations */
+@keyframes pulse-music {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(43, 122, 31, 0.4);
+    }
+
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 8px rgba(43, 122, 31, 0);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(43, 122, 31, 0);
+    }
+}
+
+#music-toggle.playing {
+    animation: pulse-music 2.5s infinite var(--ease-premium);
+    border-color: var(--brand-hover);
+}
+
+#music-toggle.playing i {
+    color: var(--brand-hover);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--brand-light);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--brand-main);
+    opacity: 0.3;
+    border-radius: 10px;
+}
+
+/* Make sure text colors override everything properly */
+.text-brand-gray {
+    color: var(--brand-gray) !important;
+}
+
+.text-brand-dark {
+    color: var(--brand-dark) !important;
+}
+
+/* Horizontal Scroll for Reviews */
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Container do carrossel */
+.hide-scrollbar.overflow-x-hidden {
+    overflow-x: hidden;
+}
+
+@keyframes scrollReviews {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+.animate-scroll {
+    display: flex;
+    width: max-content;
+    animation: scrollReviews 60s linear infinite;
+}
+
+.animate-scroll:hover {
+    animation-play-state: paused;
+}
+
+@keyframes scrollResults {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+.animate-scroll-fast {
+    display: flex;
+    width: max-content;
+    animation: scrollResults 20s linear infinite;
+}
+
+.animate-scroll-fast:hover {
+    animation-play-state: paused;
+}
+
+@keyframes scrollReverse {
+    0% {
+        transform: translateX(-50%);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
+}
+
+.animate-scroll-reverse {
+    display: flex;
+    width: max-content;
+    animation: scrollReverse 60s linear infinite;
+}
+
+.animate-scroll-reverse:hover {
+    animation-play-state: paused;
+}
+
+@keyframes modalZoom {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.animate-modalZoom {
+    animation: modalZoom 0.4s var(--ease-premium);
+}
+
+/* ============================================================
+   GALERIA DE VÍDEOS - Carousel 3D
+   ============================================================ */
+
+/* Botão ativar som */
+.btn-ativar-som {
+    position: absolute;
+    top: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.25rem;
+    background: var(--brand-main);
+    color: #fff;
+    border: none;
+    border-radius: 2rem;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    animation: pulseSom 2s ease-in-out infinite;
+    box-shadow: 0 4px 20px rgba(43, 122, 31, 0.5);
+    transition: background 0.2s, transform 0.2s;
+}
+
+.btn-ativar-som:hover {
+    background: var(--brand-hover);
+    transform: translateX(-50%) scale(1.05);
+}
+
+@keyframes pulseSom {
+
+    0%,
+    100% {
+        box-shadow: 0 4px 20px rgba(43, 122, 31, 0.5);
+    }
+
+    50% {
+        box-shadow: 0 4px 30px rgba(43, 122, 31, 0.8);
+    }
+}
+
+.video-gallery-section {
+    background-color: rgba(24, 24, 27, 0.5);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+    border-radius: 2.5rem;
+    margin-top: 2rem;
+}
+
+.video-carousel {
+    position: relative;
+    width: 100%;
+    height: 500px;
+    perspective: 1200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@media (max-width: 480px) {
+    .video-carousel {
+        height: 420px;
+    }
+}
+
+/* Cada slide de vídeo */
+.video-slide {
+    position: absolute;
+    width: 75%;
+    max-width: 320px;
+    height: 90%;
+    border-radius: 1.5rem;
+    overflow: hidden;
+    transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    border: 2px solid transparent;
+    background: #000;
+}
+
+/* Máscara de degradê para os vídeos de fundo */
+.video-slide-mask {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Vídeo player */
+.video-player {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* Label do vídeo */
+.video-label {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    padding: 1.5rem 1.25rem 1rem;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, transparent 100%);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #fff;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+/* ── Estados do Carousel ────────────────────────────── */
+
+/* Vídeo ativo (centro, na frente) */
+.video-slide.is-active {
+    z-index: 30;
+    transform: translateX(0) scale(1);
+    filter: none;
+    border-color: var(--brand-main);
+    box-shadow:
+        0 0 40px rgba(107, 23, 40, 0.2),
+        0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+.video-slide.is-active .video-slide-mask {
+    opacity: 0;
+}
+
+.video-slide.is-active .video-label {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Vídeo à esquerda */
+.video-slide.is-prev {
+    z-index: 20;
+    transform: translateX(-40%) scale(0.78) rotateY(6deg);
+    filter: blur(4px) brightness(0.45);
+}
+
+.video-slide.is-prev .video-slide-mask {
+    opacity: 1;
+    background: linear-gradient(to left, rgba(9, 9, 11, 0.92) 0%, rgba(9, 9, 11, 0.5) 40%, transparent 100%);
+}
+
+/* Vídeo à direita */
+.video-slide.is-next {
+    z-index: 20;
+    transform: translateX(40%) scale(0.78) rotateY(-6deg);
+    filter: blur(4px) brightness(0.45);
+}
+
+.video-slide.is-next .video-slide-mask {
+    opacity: 1;
+    background: linear-gradient(to right, rgba(9, 9, 11, 0.92) 0%, rgba(9, 9, 11, 0.5) 40%, transparent 100%);
+}
+
+/* Vídeos ocultos (fora da visualização) */
+.video-slide.is-hidden {
+    z-index: 10;
+    transform: translateX(0) scale(0.6);
+    filter: blur(8px) brightness(0.3);
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* ── Indicadores / Dots ────────────────────────────── */
+.video-indicators {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+    padding-bottom: 2rem;
+}
+
+.video-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid var(--brand-gray);
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 0;
+}
+
+.video-dot.active {
+    border-color: var(--brand-main);
+    background: var(--brand-main);
+    transform: scale(1.2);
+}
+
+/* Barra de progresso no vídeo ativo */
+.video-slide.is-active.is-playing::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: var(--brand-main);
+    z-index: 20;
+    width: 0%;
+    animation: videoProgress var(--video-duration, 10s) linear forwards;
+}
+
+@keyframes videoProgress {
+    from {
+        width: 0%;
+    }
+
+    to {
+        width: 100%;
+    }
+}
+
+/* Utilities */
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* ============================================================
+   ANIMATED TICKER (Top Bar)
+   ============================================================ */
+.welcome-ticker {
+    width: 100%;
+    background: transparent;
+    color: #fff;
+    padding: 8px 0;
+    overflow: hidden;
+    position: relative;
+    z-index: 50;
+    border-bottom: 1px solid var(--brand-main);
+    border-top: 1px solid var(--brand-main);
+}
+
+.ticker-content {
+    display: inline-flex;
+    white-space: nowrap;
+    gap: 1.5rem;
+    animation: ticker-anim 80s linear infinite;
+    justify-content: center;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    align-items: center;
+}
+
+.ticker-content span {
+    display: inline-block;
+}
+
+.ticker-content .separator {
+    color: rgba(255, 255, 255, 0.4);
+    font-weight: 300;
+}
+
+@keyframes ticker-anim {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+body.light-mode .welcome-ticker {
+    background: transparent;
+    color: var(--brand-main);
+    border-top: 1px solid var(--brand-main);
+    border-bottom: 1px solid var(--brand-main);
+    box-shadow: none;
+}
+
+/* ===== IMAGE COMPARISON SLIDER ===== */
+.image-comparison-container {
+    position: relative;
+    width: 100%;
+    height: 480px;
+    border-radius: 1.5rem;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    margin-bottom: 2rem;
+    overflow: hidden;
+    --exposure: 50%;
+}
+
+.comparison-img-before,
+.comparison-img-after {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.comparison-img-after {
+    z-index: 10;
+}
+
+.comparison-img-before {
+    z-index: 20;
+    clip-path: inset(0 calc(100% - var(--exposure)) 0 0);
+}
+
+.comparison-slider-handle {
+    position: absolute;
+    top: 0;
+    left: var(--exposure);
+    width: 4px;
+    height: 100%;
+    background: var(--brand-main);
+    z-index: 40;
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+.comparison-slider-handle::after {
+    content: '\f337';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 40px;
+    background: var(--brand-main);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.comparison-slider {
+    position: absolute;
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: transparent;
+    outline: none;
+    margin: 0;
+    z-index: 50;
+    cursor: ew-resize;
+}
+
+.comparison-slider::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 40px;
+    height: 480px;
+    background: transparent;
+    cursor: ew-resize;
+}
+
+.results-badge-abs {
+    position: absolute;
+    top: 1.5rem;
+    padding: 0.5rem 1.25rem;
+    border-radius: 99px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    z-index: 30;
+}
+
+.badge-before-pos {
+    left: 1rem;
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    backdrop-filter: blur(4px);
+}
+
+.badge-after-pos {
+    right: 1rem;
+    background: var(--brand-main);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(107, 23, 40, 0.3);
+}
+
+.text-brand-main {
+    color: var(--brand-main);
+}
+
+/* Override para separadores vinhos no modo claro */
+body.light-mode .ticker-content .separator {
+    color: var(--brand-main) !important;
+    opacity: 1 !important;
+}
+
+/* Ticker Animation for Welcome Bar */
+@keyframes ticker-scroll {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+.welcome-ticker .separator {
+    margin: 0 1.5rem;
+    opacity: 0.3;
+}
+
+/* ============================================
+   BOTÕES FIXOS SUPERIORES (PADRÃO PREMIUM)
+   ============================================ */
+
+.theme-toggle.hidden-btn {
+    transform: translateX(calc(100% + 1.5rem));
+    opacity: 0;
+    pointer-events: none;
+}
+
+.theme-toggle:hover {
+    transform: scale(1.05) rotate(12deg);
+    border-color: var(--brand-main);
+}
+
+/* 
+   AJUSTE DE BORDA DO FOOTER (SOLICITAÇÃO)
+   Garante que o footer tenha uma borda dourada/bege premium em ambos os modos
+*/
+body.dark-mode footer.bg-zinc-900,
+body.light-mode footer.bg-zinc-900 {
+    border-top: 2.5px solid var(--brand-hover) !important;
+}
+
+/* ============================================
+   SEÇÃO NOSSOS DIFERENCIAIS — REDESIGN PREMIUM
+   ============================================ */
+
+/* ── Cabeçalho da seção ── */
+.diferenciais-eyebrow {
+    font-family: 'Barlow Condensed', 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--brand-main);
+    opacity: 0.85;
+    margin-bottom: 8px;
+}
+
+.diferenciais-titulo {
+    font-family: 'Barlow Condensed', sans-serif !important;
+    font-size: clamp(2.4rem, 9vw, 3.2rem);
+    font-weight: 900;
+    line-height: 0.92;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    color: var(--text-color);
+    margin-bottom: 14px;
+}
+
+/* Linha decorativa dourada */
+.diferenciais-linha {
+    width: 44px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--brand-main) 0%, var(--brand-hover) 100%);
+    border-radius: 2px;
+    margin-bottom: 12px;
+}
+
+.diferenciais-subtitulo {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.6;
+    color: var(--brand-gray);
+    max-width: 300px;
+}
+
+/* ── Estilos de Diferenciais Simplificados (Herança de index.html) ── */
+
+/* ── Fim dos Estilos de Diferenciais ── */
+
+/* ============================================
+   🎥 CARROSSEL DE VÍDEOS 3D (NOSSA ESTRUTURA)
+   ============================================ */
+
+.carousel-3d-container {
+    perspective: 1200px;
+    width: 100%;
+    height: 540px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    margin-top: -20px;
+}
+
+.carousel-3d-item {
+    position: absolute;
+    width: 280px;
+    aspect-ratio: 9/16;
+    border-radius: 2rem;
+    overflow: hidden;
+    transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+    cursor: pointer;
+    background: #000;
+    box-shadow: 0 10px 30px rgba(60, 41, 14, 0.1), 0 20px 60px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Estado: Central (Ativo) */
+.carousel-3d-item.active {
+    z-index: 30;
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 1;
+    filter: blur(0);
+    box-shadow: 0 30px 90px rgba(60, 41, 14, 0.2), 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* Estado: Esquerda (Pausado/Atrás) */
+.carousel-3d-item.left {
+    z-index: 20;
+    transform: translate3d(-130px, 0, -150px) rotateY(25deg) scale(0.85);
+    opacity: 0.6;
+    filter: blur(2px) grayscale(0.5);
+}
+
+/* Estado: Direita (Pausado/Atrás) */
+.carousel-3d-item.right {
+    z-index: 20;
+    transform: translate3d(130px, 0, -150px) rotateY(-25deg) scale(0.85);
+    opacity: 0.6;
+    filter: blur(2px) grayscale(0.5);
+}
+
+/* Estado: Escondido (Para carrosséis com > 3 itens) */
+.carousel-3d-item.hidden {
+    z-index: 10;
+    transform: translate3d(0, 0, -250px) scale(0.7);
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Sombreamento degradê nos vídeos laterais */
+.carousel-3d-item:not(.active)::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(60, 41, 14, 0.8), transparent);
+    z-index: 5;
+    transition: opacity 0.3s;
+}
+
+.carousel-3d-item.active::after {
+    opacity: 0;
+}
+
+/* Controles de Navegação do Carrossel */
+.carousel-controls {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+    justify-content: center;
+}
+
+.carousel-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--brand-main);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 4px 15px rgba(43, 122, 31, 0.3);
+}
+
+.carousel-btn:active {
+    scale: 0.9;
+}
+
+/* Ajuste Responsivo Mobile */
+@media (max-width: 480px) {
+    .carousel-3d-item {
+        width: 220px;
+    }
+
+    .carousel-3d-item.left {
+        transform: translate3d(-80px, 0, -120px) rotateY(20deg) scale(0.8);
+    }
+
+    .carousel-3d-item.right {
+        transform: translate3d(80px, 0, -120px) rotateY(-20deg) scale(0.8);
+    }
+}

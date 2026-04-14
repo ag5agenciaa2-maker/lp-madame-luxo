@@ -51,16 +51,25 @@
 
     <title>Moda Feminina & Plus Size em Santa Cruz e Campo Grande | Madame Luxo</title>
 
-    <!-- Google Fonts -->
+    <!-- Google Fonts (non-blocking com display=swap) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://assets.cdn.filesafe.space" crossorigin>
     <link
         href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&family=Playfair+Display:ital,wght@1,400;1,500&display=swap"
-        rel="stylesheet">
+        rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&family=Playfair+Display:ital,wght@1,400;1,500&display=swap"
+            rel="stylesheet">
+    </noscript>
 
     <!-- CSS -->
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="cookie-banner.css">
+    <link rel="stylesheet" href="cookie-banner.css" media="print" onload="this.media='all'">
+    <noscript>
+        <link rel="stylesheet" href="cookie-banner.css">
+    </noscript>
 
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="assets/favicon-madame-luxo.ico">
@@ -734,7 +743,7 @@
             <div class="about-image-wrapper">
                 <img src="assets/wind-banner-loja-madame-luxo-entrada.webp"
                     alt="Entrada da loja Madame Luxo com wind banner personalizado" class="about-image" width="600"
-                    height="800" loading="lazy">
+                    height="800" loading="eager" fetchpriority="high">
             </div>
             <div class="about-content">
                 <div class="about-text-box reveal-right">
