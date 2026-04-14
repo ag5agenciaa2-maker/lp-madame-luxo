@@ -1,0 +1,18 @@
+# IDEs
+.vscode/
+.idea/
+
+# Agente
+.gemini/
+.antigravity/
+brain/
+artifacts/
+scratch/
+
+# Sistema
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Pasta de Skills (opcional subir, mas geralmente é melhor manter o repo limpo apenas com o site)
+Skill´s Padrões AG5/
