@@ -2064,7 +2064,7 @@ ol {
         content: '';
         position: absolute;
         inset: 0;
-        background: linear-gradient(to top, rgba(10, 10, 10, 1) 0%, rgba(15, 15, 15, 0.95) 20%, rgba(20, 20, 20, 0.85) 40%, rgba(26, 26, 26, 0.6) 55%, transparent 70%);
+        background: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(5, 5, 5, 0.98) 15%, rgba(10, 10, 10, 0.95) 30%, rgba(15, 15, 15, 0.9) 45%, rgba(20, 20, 20, 0.75) 60%, transparent 75%);
         z-index: 1;
     }
 
@@ -2293,7 +2293,7 @@ ol {
         content: '';
         position: absolute;
         inset: 0;
-        background: linear-gradient(to top, rgba(10, 10, 10, 1) 0%, rgba(15, 15, 15, 0.95) 20%, rgba(20, 20, 20, 0.85) 40%, rgba(26, 26, 26, 0.6) 55%, transparent 70%);
+        background: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(5, 5, 5, 0.98) 15%, rgba(10, 10, 10, 0.95) 30%, rgba(15, 15, 15, 0.9) 45%, rgba(20, 20, 20, 0.75) 60%, transparent 75%);
         z-index: 1;
     }
 
