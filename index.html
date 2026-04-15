@@ -65,14 +65,8 @@
     </noscript>
 
     <!-- CSS -->
-    <!-- Lighthouse/PageSpeed fix: preload + async trick to eliminate render-blocking CSS (FCP) -->
-    <link rel="preload" href="style.css" as="style">
-    <link rel="stylesheet" href="style.css" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="style.css"></noscript>
-    <link rel="stylesheet" href="cookie-banner.css" media="print" onload="this.media='all'">
-    <noscript>
-        <link rel="stylesheet" href="cookie-banner.css">
-    </noscript>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="cookie-banner.css">
 
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="assets/favicon-madame-luxo.ico">
@@ -807,23 +801,15 @@
 
     <!-- Depoimentos / Marquee -->
     <section class="testimonials" id="depoimentos" aria-labelledby="testimonialsTitle">
-        <div class="testimonials-header reveal-left">
+        <div class="testimonials-header">
             <h2 class="section-title section-title--light" id="testimonialsTitle">O que dizem sobre nós</h2>
             <div class="google-trust-badge">
                 <div class="google-g-logo">
                     <svg viewBox="0 0 24 24" width="28" height="28">
-                        <path
-                            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                            fill="#4285F4" />
-                        <path
-                            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                            fill="#34A853" />
-                        <path
-                            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
-                            fill="#FBBC05" />
-                        <path
-                            d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                            fill="#EA4335" />
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" />
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                     </svg>
                 </div>
                 <div class="google-trust-info">
@@ -833,96 +819,134 @@
             </div>
         </div>
 
-        <div class="marquee-container">
-            <div class="marquee-track">
-                <div class="marquee-content">
-                    <article class="testimonial-card">
-                        <div class="testimonial-meta">
-                            <span class="google-label">Google Review</span>
-                            <div class="stars">★★★★★</div>
+        <!-- Estrutura de marquee idêntica ao Link 360 que funciona em todas plataformas -->
+        <div class="t-scroll-wrapper">
+            <div class="t-scroll-track">
+
+                <!-- Card 1 - Rose Gonçalves -->
+                <article class="t-card">
+                    <div class="t-card-top">
+                        <div class="t-card-google-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="14" height="14"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
                         </div>
-                        <p class="testimonial-text">"Loja incrível, atendimento ótimo, super atenciosos. Me ajudou nas
-                            dúvidas sobre minhas medidas e a entrega foi rápida. Loja de confiança. 🥰🥰 amei minha
-                            compra. vi carinho em cada detalhe."</p>
-                        <span class="testimonial-author">— Rose Gonçalves</span>
-                    </article>
-                    <article class="testimonial-card">
-                        <div class="testimonial-meta">
-                            <span class="google-label">Google Review</span>
-                            <div class="stars">★★★★★</div>
+                        <div class="t-card-stars" aria-label="5 estrelas">★★★★★</div>
+                        <p class="t-card-text">"Loja incrível, atendimento ótimo, super atenciosos. Me ajudou nas dúvidas sobre minhas medidas e a entrega foi rápida. Loja de confiança. Amei minha compra, vi carinho em cada detalhe."</p>
+                    </div>
+                    <div class="t-card-footer">
+                        <div class="t-card-avatar" aria-hidden="true">RG</div>
+                        <div>
+                            <strong class="t-card-name">Rose Gonçalves</strong>
+                            <span class="t-card-label">Google Review</span>
                         </div>
-                        <p class="testimonial-text">"Atendimento ótimo, roupas lindas, amo comprar nessa loja, entrega
-                            rápida e tudo de ótima qualidade, super recomendo."</p>
-                        <span class="testimonial-author">— Marcella Jayme</span>
-                    </article>
-                    <article class="testimonial-card">
-                        <div class="testimonial-meta">
-                            <span class="google-label">Google Review</span>
-                            <div class="stars">★★★★★</div>
+                    </div>
+                </article>
+
+                <!-- Card 2 - Marcella Jayme -->
+                <article class="t-card">
+                    <div class="t-card-top">
+                        <div class="t-card-google-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="14" height="14"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
                         </div>
-                        <p class="testimonial-text">"Atendimento ótimo peças com qualidade maravilhosa"</p>
-                        <span class="testimonial-author">— Rayza cruz</span>
-                    </article>
-                </div>
-                <!-- Duplicate for seamless loop -->
-                <div class="marquee-content" aria-hidden="true">
-                    <article class="testimonial-card">
-                        <div class="testimonial-meta">
-                            <span class="google-label">Google Review</span>
-                            <div class="stars">★★★★★</div>
+                        <div class="t-card-stars" aria-label="5 estrelas">★★★★★</div>
+                        <p class="t-card-text">"Atendimento ótimo, roupas lindas, amo comprar nessa loja, entrega rápida e tudo de ótima qualidade, super recomendo."</p>
+                    </div>
+                    <div class="t-card-footer">
+                        <div class="t-card-avatar" aria-hidden="true">MJ</div>
+                        <div>
+                            <strong class="t-card-name">Marcella Jayme</strong>
+                            <span class="t-card-label">Google Review</span>
                         </div>
-                        <p class="testimonial-text">"Loja incrível, atendimento ótimo, super atenciosos. Me ajudou nas
-                            dúvidas sobre minhas medidas e a entrega foi rápida. Loja de confiança. 🥰🥰 amei minha
-                            compra. vi carinho em cada detalhe."</p>
-                        <span class="testimonial-author">— Rose Gonçalves</span>
-                    </article>
-                    <article class="testimonial-card">
-                        <div class="testimonial-meta">
-                            <span class="google-label">Google Review</span>
-                            <div class="stars">★★★★★</div>
+                    </div>
+                </article>
+
+                <!-- Card 3 - Rayza Cruz -->
+                <article class="t-card">
+                    <div class="t-card-top">
+                        <div class="t-card-google-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="14" height="14"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
                         </div>
-                        <p class="testimonial-text">"Atendimento ótimo, roupas lindas, amo comprar nessa loja, entrega
-                            rápida e tudo de ótima qualidade, super recomendo."</p>
-                        <span class="testimonial-author">— Marcella Jayme</span>
-                    </article>
-                    <article class="testimonial-card">
-                        <div class="testimonial-meta">
-                            <span class="google-label">Google Review</span>
-                            <div class="stars">★★★★★</div>
+                        <div class="t-card-stars" aria-label="5 estrelas">★★★★★</div>
+                        <p class="t-card-text">"Atendimento ótimo, peças com qualidade maravilhosa."</p>
+                    </div>
+                    <div class="t-card-footer">
+                        <div class="t-card-avatar" aria-hidden="true">RC</div>
+                        <div>
+                            <strong class="t-card-name">Rayza Cruz</strong>
+                            <span class="t-card-label">Google Review</span>
                         </div>
-                        <p class="testimonial-text">"Atendimento ótimo peças com qualidade maravilhosa"</p>
-                        <span class="testimonial-author">— Rayza cruz</span>
-                    </article>
-                </div>
-                <div class="marquee-content" aria-hidden="true">
-                    <article class="testimonial-card">
-                        <div class="testimonial-meta">
-                            <span class="google-label">Google Review</span>
-                            <div class="stars">★★★★★</div>
-                        </div>
-                        <p class="testimonial-text">"Loja incrível, atendimento ótimo, super atenciosos. Me ajudou nas
-                            dúvidas sobre minhas medidas e a entrega foi rápida. Loja de confiança. 🥰🥰 amei minha
-                            compra. vi carinho em cada detalhe."</p>
-                        <span class="testimonial-author">— Rose Gonçalves</span>
-                    </article>
-                    <article class="testimonial-card">
-                        <div class="testimonial-meta">
-                            <span class="google-label">Google Review</span>
-                            <div class="stars">★★★★★</div>
-                        </div>
-                        <p class="testimonial-text">"Atendimento ótimo, roupas lindas, amo comprar nessa loja, entrega
-                            rápida e tudo de ótima qualidade, super recomendo."</p>
-                        <span class="testimonial-author">— Marcella Jayme</span>
-                    </article>
-                    <article class="testimonial-card">
-                        <div class="testimonial-meta">
-                            <span class="google-label">Google Review</span>
-                            <div class="stars">★★★★★</div>
-                        </div>
-                        <p class="testimonial-text">"Atendimento ótimo peças com qualidade maravilhosa"</p>
-                        <span class="testimonial-author">— Rayza cruz</span>
-                    </article>
-                </div>
+                    </div>
+                </article>
+
+                <!-- Duplicação set 2 (aria-hidden) -->
+                <article class="t-card" aria-hidden="true">
+                    <div class="t-card-top">
+                        <div class="t-card-google-icon"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg></div>
+                        <div class="t-card-stars">★★★★★</div>
+                        <p class="t-card-text">"Loja incrível, atendimento ótimo, super atenciosos. Me ajudou nas dúvidas sobre minhas medidas e a entrega foi rápida. Loja de confiança. Amei minha compra, vi carinho em cada detalhe."</p>
+                    </div>
+                    <div class="t-card-footer">
+                        <div class="t-card-avatar">RG</div>
+                        <div><strong class="t-card-name">Rose Gonçalves</strong><span class="t-card-label">Google Review</span></div>
+                    </div>
+                </article>
+                <article class="t-card" aria-hidden="true">
+                    <div class="t-card-top">
+                        <div class="t-card-google-icon"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg></div>
+                        <div class="t-card-stars">★★★★★</div>
+                        <p class="t-card-text">"Atendimento ótimo, roupas lindas, amo comprar nessa loja, entrega rápida e tudo de ótima qualidade, super recomendo."</p>
+                    </div>
+                    <div class="t-card-footer">
+                        <div class="t-card-avatar">MJ</div>
+                        <div><strong class="t-card-name">Marcella Jayme</strong><span class="t-card-label">Google Review</span></div>
+                    </div>
+                </article>
+                <article class="t-card" aria-hidden="true">
+                    <div class="t-card-top">
+                        <div class="t-card-google-icon"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg></div>
+                        <div class="t-card-stars">★★★★★</div>
+                        <p class="t-card-text">"Atendimento ótimo, peças com qualidade maravilhosa."</p>
+                    </div>
+                    <div class="t-card-footer">
+                        <div class="t-card-avatar">RC</div>
+                        <div><strong class="t-card-name">Rayza Cruz</strong><span class="t-card-label">Google Review</span></div>
+                    </div>
+                </article>
+
+                <!-- Duplicação set 3 (aria-hidden) -->
+                <article class="t-card" aria-hidden="true">
+                    <div class="t-card-top">
+                        <div class="t-card-google-icon"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg></div>
+                        <div class="t-card-stars">★★★★★</div>
+                        <p class="t-card-text">"Loja incrível, atendimento ótimo, super atenciosos. Me ajudou nas dúvidas sobre minhas medidas e a entrega foi rápida. Loja de confiança. Amei minha compra, vi carinho em cada detalhe."</p>
+                    </div>
+                    <div class="t-card-footer">
+                        <div class="t-card-avatar">RG</div>
+                        <div><strong class="t-card-name">Rose Gonçalves</strong><span class="t-card-label">Google Review</span></div>
+                    </div>
+                </article>
+                <article class="t-card" aria-hidden="true">
+                    <div class="t-card-top">
+                        <div class="t-card-google-icon"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg></div>
+                        <div class="t-card-stars">★★★★★</div>
+                        <p class="t-card-text">"Atendimento ótimo, roupas lindas, amo comprar nessa loja, entrega rápida e tudo de ótima qualidade, super recomendo."</p>
+                    </div>
+                    <div class="t-card-footer">
+                        <div class="t-card-avatar">MJ</div>
+                        <div><strong class="t-card-name">Marcella Jayme</strong><span class="t-card-label">Google Review</span></div>
+                    </div>
+                </article>
+                <article class="t-card" aria-hidden="true">
+                    <div class="t-card-top">
+                        <div class="t-card-google-icon"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg></div>
+                        <div class="t-card-stars">★★★★★</div>
+                        <p class="t-card-text">"Atendimento ótimo, peças com qualidade maravilhosa."</p>
+                    </div>
+                    <div class="t-card-footer">
+                        <div class="t-card-avatar">RC</div>
+                        <div><strong class="t-card-name">Rayza Cruz</strong><span class="t-card-label">Google Review</span></div>
+                    </div>
+                </article>
+
             </div>
         </div>
     </section>
@@ -1120,11 +1144,8 @@
                             <a href="https://wa.me/5521988501459?text=Olá,%20vim%20através%20do%20site%20e%20gostaria%20de%20saber%20sobre%20a%20Loja%20Santa%20Cruz"
                                 class="location-hub-btn location-hub-btn--secondary" target="_blank"
                                 rel="noopener noreferrer" aria-label="WhatsApp da Loja Santa Cruz - (21) 98850-1459">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                    <path
-                                        d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"
-                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round" />
+                                <svg width="18" height="18" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true">
+                                    <path d="M16 2C8.268 2 2 8.268 2 16c0 2.478.664 4.797 1.82 6.797L2 30l7.394-1.794A13.927 13.927 0 0016 30c7.732 0 14-6.268 14-14S23.732 2 16 2zm0 2c6.627 0 12 5.373 12 12S22.627 28 16 28a11.93 11.93 0 01-6.064-1.647l-.424-.254-4.39 1.065 1.1-4.274-.277-.44A11.926 11.926 0 014 16C4 9.373 9.373 4 16 4zm-3.5 6c-.278 0-.722.1-1.1.5-.378.4-1.4 1.367-1.4 3.333 0 1.967 1.433 3.867 1.633 4.134.2.266 2.767 4.399 6.834 5.999 3.4 1.333 4.067 1.066 4.8 1 .734-.067 2.367-.967 2.7-1.9.334-.933.334-1.733.234-1.9-.1-.166-.366-.266-.766-.466s-2.367-1.167-2.733-1.3c-.367-.133-.634-.2-.9.2-.267.4-1.033 1.3-1.267 1.567-.233.267-.466.3-.866.1-.4-.2-1.69-.624-3.22-1.987-1.19-1.06-1.993-2.369-2.226-2.769-.234-.4-.025-.616.175-.816.18-.18.4-.467.6-.7.2-.233.267-.4.4-.667.134-.266.067-.5-.033-.7-.1-.2-.878-2.133-1.212-2.933-.3-.733-.612-.667-.9-.667z"/>
                                 </svg>
                                 WhatsApp
                             </a>
@@ -1196,11 +1217,8 @@
                             <a href="https://wa.me/5521988501459?text=Olá,%20vim%20através%20do%20site%20e%20gostaria%20de%20saber%20sobre%20a%20Loja%20Campo%20Grande"
                                 class="location-hub-btn location-hub-btn--secondary" target="_blank"
                                 rel="noopener noreferrer" aria-label="WhatsApp da Loja Campo Grande - (21) 98850-1459">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                    <path
-                                        d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"
-                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round" />
+                                <svg width="18" height="18" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true">
+                                    <path d="M16 2C8.268 2 2 8.268 2 16c0 2.478.664 4.797 1.82 6.797L2 30l7.394-1.794A13.927 13.927 0 0016 30c7.732 0 14-6.268 14-14S23.732 2 16 2zm0 2c6.627 0 12 5.373 12 12S22.627 28 16 28a11.93 11.93 0 01-6.064-1.647l-.424-.254-4.39 1.065 1.1-4.274-.277-.44A11.926 11.926 0 014 16C4 9.373 9.373 4 16 4zm-3.5 6c-.278 0-.722.1-1.1.5-.378.4-1.4 1.367-1.4 3.333 0 1.967 1.433 3.867 1.633 4.134.2.266 2.767 4.399 6.834 5.999 3.4 1.333 4.067 1.066 4.8 1 .734-.067 2.367-.967 2.7-1.9.334-.933.334-1.733.234-1.9-.1-.166-.366-.266-.766-.466s-2.367-1.167-2.733-1.3c-.367-.133-.634-.2-.9.2-.267.4-1.033 1.3-1.267 1.567-.233.267-.466.3-.866.1-.4-.2-1.69-.624-3.22-1.987-1.19-1.06-1.993-2.369-2.226-2.769-.234-.4-.025-.616.175-.816.18-.18.4-.467.6-.7.2-.233.267-.4.4-.667.134-.266.067-.5-.033-.7-.1-.2-.878-2.133-1.212-2.933-.3-.733-.612-.667-.9-.667z"/>
                                 </svg>
                                 WhatsApp
                             </a>
@@ -1366,11 +1384,8 @@
                         <!-- 3. WhatsApp -->
                         <a href="https://wa.me/5521988501459?text=Ol%C3%A1%2C%20vim%20atrav%C3%A9s%20do%20site%20e%20gostaria%20de%20uma%20informa%C3%A7%C3%A3o."
                             class="footer-contact-item" target="_blank" rel="noopener noreferrer">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path
-                                    d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z">
-                                </path>
+                            <svg width="18" height="18" viewBox="0 0 32 32" fill="currentColor" aria-hidden="true">
+                                <path d="M16 2C8.268 2 2 8.268 2 16c0 2.478.664 4.797 1.82 6.797L2 30l7.394-1.794A13.927 13.927 0 0016 30c7.732 0 14-6.268 14-14S23.732 2 16 2zm0 2c6.627 0 12 5.373 12 12S22.627 28 16 28a11.93 11.93 0 01-6.064-1.647l-.424-.254-4.39 1.065 1.1-4.274-.277-.44A11.926 11.926 0 014 16C4 9.373 9.373 4 16 4zm-3.5 6c-.278 0-.722.1-1.1.5-.378.4-1.4 1.367-1.4 3.333 0 1.967 1.433 3.867 1.633 4.134.2.266 2.767 4.399 6.834 5.999 3.4 1.333 4.067 1.066 4.8 1 .734-.067 2.367-.967 2.7-1.9.334-.933.334-1.733.234-1.9-.1-.166-.366-.266-.766-.466s-2.367-1.167-2.733-1.3c-.367-.133-.634-.2-.9.2-.267.4-1.033 1.3-1.267 1.567-.233.267-.466.3-.866.1-.4-.2-1.69-.624-3.22-1.987-1.19-1.06-1.993-2.369-2.226-2.769-.234-.4-.025-.616.175-.816.18-.18.4-.467.6-.7.2-.233.267-.4.4-.667.134-.266.067-.5-.033-.7-.1-.2-.878-2.133-1.212-2.933-.3-.733-.612-.667-.9-.667z"/>
                             </svg>
                             (21) 98850-1459
                         </a>
