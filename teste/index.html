@@ -663,8 +663,22 @@
                 <p class="section-subtitle" id="catalogoSubtitle">Selecione uma categoria para explorar as peças</p>
             </header>
 
+            <!-- Barra de Pesquisa -->
+            <div class="cat-search-container">
+                <input type="text" id="catSearchInput" class="cat-search-input" placeholder="Pesquisar por tamanho, tipo, nome ou categoria..." aria-label="Pesquisar no catálogo">
+                <svg class="cat-search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </div>
+
+            <!-- Mensagem Nenhum Resultado -->
+            <div id="catNoResults" class="cat-no-results" hidden>
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#8C8C8C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:16px"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><path d="M8 11h6"></path></svg>
+                <h3>Nenhum resultado encontrado</h3>
+                <p>Não encontramos peças correspondentes à sua pesquisa. Tente usar outros termos como "Vestido", "M", "Azul".</p>
+                <button id="catClearSearch" class="cat-clear-btn">Limpar Pesquisa</button>
+            </div>
+
             <!-- Abas -->
-            <div class="cat-tabs" role="tablist" aria-label="Categorias">
+            <div class="cat-tabs" id="catTabs" role="tablist" aria-label="Categorias">
                 <button class="cat-tab active" data-cat="vestidos"      role="tab" aria-selected="true">Vestidos</button>
                 <button class="cat-tab" data-cat="macacoes"             role="tab" aria-selected="false">Macacões</button>
                 <button class="cat-tab" data-cat="conjuntos"            role="tab" aria-selected="false">Conjuntos</button>
@@ -3258,6 +3272,71 @@
     }
     .pmodal-cta:hover { filter: brightness(1.08); transform: translateY(-2px); }
 
+    /* ── Barra de Pesquisa ── */
+    .cat-search-container {
+        position: relative;
+        max-width: 600px;
+        margin: 0 auto 30px;
+    }
+    .cat-search-input {
+        width: 100%;
+        padding: 16px 20px 16px 48px;
+        border: 1px solid #E5E5E5;
+        border-radius: 100px;
+        font-size: 15px;
+        font-family: inherit;
+        background: #F9F9F9;
+        color: #000;
+        transition: border-color 0.3s, box-shadow 0.3s, background 0.3s;
+        outline: none;
+    }
+    .cat-search-input:focus {
+        border-color: #000;
+        background: #fff;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+    .cat-search-icon {
+        position: absolute;
+        left: 18px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #8C8C8C;
+        pointer-events: none;
+    }
+    .cat-no-results {
+        text-align: center;
+        padding: 60px 20px;
+        color: #000;
+    }
+    .cat-no-results h3 {
+        font-size: 20px;
+        margin-bottom: 8px;
+        font-weight: 600;
+    }
+    .cat-no-results p {
+        color: #8C8C8C;
+        font-size: 15px;
+        margin-bottom: 24px;
+        max-width: 400px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .cat-clear-btn {
+        background: #000;
+        color: #fff;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 100px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s, background 0.2s;
+    }
+    .cat-clear-btn:hover {
+        background: #333;
+        transform: translateY(-2px);
+    }
+
     /* ── Responsivo catálogo ── */
     @media (max-width: 900px) {
         .cat-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
@@ -3290,14 +3369,85 @@
                 var ativo = p.id === 'panel-' + cat;
                 p.classList.toggle('active', ativo);
                 p.hidden = !ativo;
+                // Ao ativar aba, garantir que os cards originais fiquem visíveis (se não houver pesquisa)
+                if (!document.getElementById('catSearchInput').value.trim()) {
+                    p.querySelectorAll('.cat-card').forEach(function(card) {
+                        card.style.display = '';
+                    });
+                }
             });
+            document.getElementById('catNoResults').hidden = true;
         }
 
         // ── Clique nas abas do catálogo ──
         document.querySelectorAll('.cat-tab').forEach(function(tab) {
             tab.addEventListener('click', function() {
+                var searchInput = document.getElementById('catSearchInput');
+                if(searchInput.value.trim().length > 0) {
+                    // Se estiver pesquisando e clicar na aba, limpar pesquisa para mostrar a aba normal
+                    searchInput.value = '';
+                    realizarPesquisa();
+                }
                 ativarAba(tab.dataset.cat);
             });
+        });
+
+        // ── Lógica de Pesquisa ──
+        var searchInput = document.getElementById('catSearchInput');
+        var noResultsDiv = document.getElementById('catNoResults');
+        var clearBtn = document.getElementById('catClearSearch');
+        var allPanels = document.querySelectorAll('.cat-panel');
+        var tabsContainer = document.getElementById('catTabs');
+
+        function realizarPesquisa() {
+            var termo = searchInput.value.toLowerCase().trim();
+            var encontrouAlgum = false;
+
+            if (termo.length === 0) {
+                // Restaurar estado normal (baseado na aba ativa)
+                tabsContainer.style.display = '';
+                noResultsDiv.hidden = true;
+                var abaAtiva = document.querySelector('.cat-tab.active');
+                if(abaAtiva) ativarAba(abaAtiva.dataset.cat);
+                return;
+            }
+
+            // Esconder abas durante pesquisa global
+            tabsContainer.style.display = 'none';
+
+            allPanels.forEach(function(panel) {
+                var encontrouNoPanel = false;
+                var cards = panel.querySelectorAll('.cat-card');
+                
+                cards.forEach(function(card) {
+                    // Obter texto do card (nome, tipo, categoria, tamanho)
+                    var textoCard = card.innerText.toLowerCase();
+                    // Adicionar também o nome da categoria do panel atual na pesquisa
+                    var categoriaTab = panel.id.replace('panel-', '').replace('-', ' ');
+                    
+                    if (textoCard.includes(termo) || categoriaTab.includes(termo)) {
+                        card.style.display = '';
+                        encontrouNoPanel = true;
+                        encontrouAlgum = true;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+
+                // Se houver algum card visível, mostrar o painel, senão escondê-lo
+                panel.classList.add('active'); // Forçar ativo para o display do grid funcionar
+                panel.hidden = !encontrouNoPanel;
+            });
+
+            noResultsDiv.hidden = encontrouAlgum;
+        }
+
+        searchInput.addEventListener('input', realizarPesquisa);
+
+        clearBtn.addEventListener('click', function() {
+            searchInput.value = '';
+            realizarPesquisa();
+            searchInput.focus();
         });
 
         // ── Links do bento-grid → ancoragem no catálogo ──
