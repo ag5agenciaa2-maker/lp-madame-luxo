@@ -3437,9 +3437,44 @@
     }
     </style>
 
+    <!-- ═══ MODAL DINÂMICO (PLANILHA) ═══ -->
+    <div class="pmodal-overlay" id="modal-dinamico" role="dialog" aria-modal="true" aria-label="Detalhes do produto" hidden>
+        <div class="pmodal-box">
+            <button class="pmodal-close" aria-label="Fechar" onclick="fecharModalDinamico()">✕</button>
+            <div class="pmodal-inner">
+                <div class="pmodal-galeria">
+                    <img src="" alt="" class="pmodal-img-main" id="pimg-dinamico">
+                    <div class="pmodal-thumbs" id="pmodal-thumbs-dinamico"></div>
+                </div>
+                <div class="pmodal-detalhes">
+                    <span class="pmodal-cat" id="pmodal-cat-dinamico"></span>
+                    <h2 class="pmodal-nome" id="pmodal-nome-dinamico"></h2>
+                    <div class="pmodal-precos">
+                        <span class="pmodal-de" id="pmodal-de-dinamico"></span>
+                        <span class="pmodal-por" id="pmodal-por-dinamico"></span>
+                        <span class="pmodal-desc" id="pmodal-desc-dinamico"></span>
+                    </div>
+                    <p class="pmodal-texto" id="pmodal-texto-dinamico"></p>
+                    <div class="pmodal-specs">
+                        <div class="pmodal-spec"><span class="pspec-l">Material</span><span class="pspec-v" id="pmodal-mat-dinamico"></span></div>
+                        <div class="pmodal-spec"><span class="pspec-l">Cor</span><span class="pspec-v" id="pmodal-cor-dinamico"></span></div>
+                        <div class="pmodal-spec"><span class="pspec-l">Tamanhos</span><span class="pspec-v" id="pmodal-tam-dinamico"></span></div>
+                        <div class="pmodal-spec"><span class="pspec-l">Estoque</span><span class="pspec-v" id="pmodal-est-dinamico"></span></div>
+                    </div>
+                    <a href="" target="_blank" rel="noopener" class="pmodal-cta" id="pmodal-cta-dinamico">Comprar pelo WhatsApp</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ═══ CATÁLOGO: JAVASCRIPT ═══ -->
     <script>
     (function() {
+        // 💡 PARA ATUALIZAR PELA PLANILHA:
+        // 1. No Google Sheets, vá em Arquivo > Compartilhar > Publicar na Web
+        // 2. Escolha "Valores separados por vírgula (.csv)" e clique em Publicar
+        // 3. Copie o link gerado e cole abaixo entre as aspas.
+        const URL_PLANILHA = ""; 
 
         // ── Ativa aba por nome de categoria ──
         function ativarAba(cat) {
@@ -3452,7 +3487,7 @@
                 var ativo = p.id === 'panel-' + cat;
                 p.classList.toggle('active', ativo);
                 p.hidden = !ativo;
-                // Ao ativar aba, garantir que os cards originais fiquem visíveis (se não houver pesquisa)
+                
                 if (!document.getElementById('catSearchInput').value.trim()) {
                     p.querySelectorAll('.cat-card').forEach(function(card) {
                         if (!card.classList.contains('hidden-card')) {
@@ -3466,12 +3501,10 @@
             document.getElementById('catNoResults').hidden = true;
         }
 
-        // ── Lógica de Paginação (Mais de 6 cards) ──
+        // ── Lógica de Paginação ──
         function initPagination() {
             document.querySelectorAll('.cat-panel').forEach(function(panel) {
                 var cards = Array.from(panel.querySelectorAll('.cat-card'));
-                
-                // Remover botão existente se rodar de novo
                 var existingBtn = panel.querySelector('.btn-ver-mais-wrap');
                 if(existingBtn) existingBtn.remove();
                 
@@ -3506,7 +3539,6 @@
                                 }
                             });
                             btn.innerText = 'Ver Mais';
-                            // Scroll back to top of the panel
                             var rect = panel.getBoundingClientRect();
                             var offset = rect.top + window.scrollY - 100;
                             window.scrollTo({ top: offset, behavior: 'smooth' });
@@ -3524,20 +3556,6 @@
                 }
             });
         }
-        initPagination();
-
-        // ── Clique nas abas do catálogo ──
-        document.querySelectorAll('.cat-tab').forEach(function(tab) {
-            tab.addEventListener('click', function() {
-                var searchInput = document.getElementById('catSearchInput');
-                if(searchInput.value.trim().length > 0) {
-                    // Se estiver pesquisando e clicar na aba, limpar pesquisa para mostrar a aba normal
-                    searchInput.value = '';
-                    realizarPesquisa();
-                }
-                ativarAba(tab.dataset.cat);
-            });
-        });
 
         // ── Lógica de Pesquisa ──
         var searchInput = document.getElementById('catSearchInput');
@@ -3551,7 +3569,6 @@
             var encontrouAlgum = false;
 
             if (termo.length === 0) {
-                // Restaurar estado normal (baseado na aba ativa)
                 tabsContainer.style.display = '';
                 noResultsDiv.hidden = true;
                 document.querySelectorAll('.btn-ver-mais-wrap').forEach(function(w) { w.style.display = 'block'; });
@@ -3560,7 +3577,6 @@
                 return;
             }
 
-            // Esconder abas durante pesquisa global
             tabsContainer.style.display = 'none';
             document.querySelectorAll('.btn-ver-mais-wrap').forEach(function(w) { w.style.display = 'none'; });
 
@@ -3569,9 +3585,7 @@
                 var cards = panel.querySelectorAll('.cat-card');
                 
                 cards.forEach(function(card) {
-                    // Obter texto do card (nome, tipo, categoria, tamanho)
                     var textoCard = card.innerText.toLowerCase();
-                    // Adicionar também o nome da categoria do panel atual na pesquisa
                     var categoriaTab = panel.id.replace('panel-', '').replace('-', ' ');
                     
                     if (textoCard.includes(termo) || categoriaTab.includes(termo)) {
@@ -3583,8 +3597,7 @@
                     }
                 });
 
-                // Se houver algum card visível, mostrar o painel, senão escondê-lo
-                panel.classList.add('active'); // Forçar ativo para o display do grid funcionar
+                panel.classList.add('active');
                 panel.hidden = !encontrouNoPanel;
             });
 
@@ -3592,7 +3605,6 @@
         }
 
         searchInput.addEventListener('input', realizarPesquisa);
-
         clearBtn.addEventListener('click', function() {
             searchInput.value = '';
             realizarPesquisa();
@@ -3604,28 +3616,31 @@
             link.addEventListener('click', function(e) {
                 e.preventDefault();
                 var cat = link.dataset.cat;
-                // Ativa a aba correspondente (fallback para vestidos se não existir)
                 var panel = document.getElementById('panel-' + cat);
                 ativarAba(panel ? cat : 'vestidos');
-                // Rola suavemente até o catálogo
                 var sec = document.getElementById('catalogo');
                 if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
         });
 
-        // ── Abrir modal ao clicar no card ──
-        document.querySelectorAll('.cat-card').forEach(function(card) {
-            card.addEventListener('click', function() {
-                var id = card.dataset.modal;
-                var overlay = document.getElementById(id);
-                if (!overlay) return;
-                overlay.hidden = false;
-                requestAnimationFrame(function() { overlay.classList.add('ml-open'); });
-                document.body.style.overflow = 'hidden';
+        // ── Eventos de Clique nos Cards Estáticos ──
+        function bindStaticCards() {
+            document.querySelectorAll('.cat-card').forEach(function(card) {
+                if (!card.dataset.dinamico) {
+                    card.addEventListener('click', function() {
+                        var id = card.dataset.modal;
+                        var overlay = document.getElementById(id);
+                        if (!overlay) return;
+                        overlay.hidden = false;
+                        requestAnimationFrame(function() { overlay.classList.add('ml-open'); });
+                        document.body.style.overflow = 'hidden';
+                    });
+                }
             });
-        });
+        }
+        bindStaticCards();
 
-        // ── Fechar modal ──
+        // ── Fechar Modais ──
         function mlFechar() {
             document.querySelectorAll('.pmodal-overlay.ml-open').forEach(function(o) {
                 o.classList.remove('ml-open');
@@ -3652,6 +3667,234 @@
             });
             thumb.classList.add('active');
         };
+
+        // ── LÓGICA DINÂMICA DA PLANILHA ──
+        
+        function parseCSV(text) {
+            const lines = text.split('\n');
+            if (lines.length < 2) return [];
+            
+            // Limpa aspas, espaços, passa para lowercase e remove acentos dos headers
+            const headers = lines[0].split(',').map(h => 
+                h.replace(/^"|"$/g, '').trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+            );
+            const data = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                
+                const regex = /(?:,|\n|^)("(?:(?:"")*[^"]*)*"|[^",\n]*|(?:\n|$))/g;
+                const row = [];
+                let match;
+                
+                while ((match = regex.exec(lines[i])) !== null) {
+                    let val = match[1];
+                    if (val && val.startsWith(',')) val = val.substring(1);
+                    val = val ? val.replace(/^"|"$/g, '').replace(/""/g, '"').trim() : '';
+                    row.push(val);
+                }
+                
+                if (row.length >= headers.length) {
+                    const obj = {};
+                    headers.forEach((header, index) => {
+                        obj[header] = row[index] || '';
+                    });
+                    data.push(obj);
+                }
+            }
+            return data;
+        }
+
+        function abrirModalDinamico(produto) {
+            const modal = document.getElementById('modal-dinamico');
+            if (!modal) return;
+
+            // Mapeamento das colunas da planilha do usuário
+            const nome = produto['nome da peca / conjunto *'] || produto['nome'];
+            const categoria = produto['categoria *'] || produto['categoria'];
+            const tipo = produto['tipo de produto *'] || produto['tipo'];
+            const precoDe = produto['preco de (r$)'] || produto['precode'];
+            const precoPor = produto['preco por (r$) *'] || produto['precopor'];
+            const desconto = produto['desconto %'] || produto['desconto'];
+            const tamanhos = produto['tamanhos disponiveis *'] || produto['tamanhos'];
+            const imagem1 = produto['🖼️ imagem destaque (url)'] || produto['imagem1'];
+            const imagem2 = produto['imagem 2 (url)'] || produto['imagem2'];
+            const imagem3 = produto['imagem 3 (url)'] || produto['imagem3'];
+            const descricao = produto['descricao *'] || produto['descricao'];
+            const material = produto['material / tecido'] || produto['material'];
+            const cor = produto['cor principal *'] || produto['cor'];
+            const estoque = produto['qtd. estoque'] || produto['estoque'];
+            const linkProduto = produto['link do produto (url)'];
+
+            document.getElementById('pimg-dinamico').src = imagem1;
+            document.getElementById('pimg-dinamico').alt = nome;
+            
+            const thumbsContainer = document.getElementById('pmodal-thumbs-dinamico');
+            thumbsContainer.innerHTML = '';
+            
+            const imagens = [imagem1, imagem2, imagem3].filter(img => img && img.trim() !== '');
+            
+            imagens.forEach((img, index) => {
+                const thumb = document.createElement('img');
+                thumb.src = img;
+                thumb.className = `pmodal-thumb ${index === 0 ? 'active' : ''}`;
+                thumb.alt = nome;
+                thumb.onclick = function() { window.mlTrocarImg('pimg-dinamico', this); };
+                thumbsContainer.appendChild(thumb);
+            });
+
+            document.getElementById('pmodal-cat-dinamico').innerText = categoria + (tipo ? ' · ' + tipo : '');
+            document.getElementById('pmodal-nome-dinamico').innerText = nome;
+            
+            const precoDeElem = document.getElementById('pmodal-de-dinamico');
+            if (precoDe) {
+                precoDeElem.innerText = precoDe;
+                precoDeElem.style.display = '';
+            } else {
+                precoDeElem.style.display = 'none';
+            }
+            
+            document.getElementById('pmodal-por-dinamico').innerText = precoPor;
+            
+            const descBadge = document.getElementById('pmodal-desc-dinamico');
+            if (desconto) {
+                descBadge.innerText = desconto.includes('%') ? desconto : desconto + '%';
+                descBadge.style.display = '';
+            } else {
+                descBadge.style.display = 'none';
+            }
+
+            document.getElementById('pmodal-texto-dinamico').innerText = descricao || '';
+            document.getElementById('pmodal-mat-dinamico').innerText = material || 'Não informado';
+            document.getElementById('pmodal-cor-dinamico').innerText = cor || 'Não informado';
+            document.getElementById('pmodal-tam-dinamico').innerText = tamanhos || 'Não informado';
+            document.getElementById('pmodal-est-dinamico').innerText = estoque || 'Não informado';
+
+            const cta = document.getElementById('pmodal-cta-dinamico');
+            
+            if (linkProduto && linkProduto.trim().startsWith('http')) {
+                cta.href = linkProduto;
+                cta.innerText = 'Ver Detalhes / Comprar';
+            } else {
+                let whatsMsg = `Olá! Tenho interesse no produto: ${nome}`;
+                if (precoPor) whatsMsg += ` por ${precoPor}`;
+                cta.href = `https://wa.me/5521988501459?text=${encodeURIComponent(whatsMsg)}`;
+                cta.innerText = 'Comprar pelo WhatsApp';
+            }
+
+            modal.hidden = false;
+            requestAnimationFrame(() => { modal.classList.add('ml-open'); });
+            document.body.style.overflow = 'hidden';
+        }
+
+        window.fecharModalDinamico = function() {
+            const modal = document.getElementById('modal-dinamico');
+            if (modal) {
+                modal.classList.remove('ml-open');
+                setTimeout(() => { modal.hidden = true; }, 350);
+            }
+            document.body.style.overflow = '';
+        };
+
+        function renderizarCatalogo(produtos) {
+            document.querySelectorAll('.cat-panel').forEach(panel => {
+                const grid = panel.querySelector('.cat-grid');
+                if (grid) grid.innerHTML = '';
+            });
+
+            produtos.forEach(prod => {
+                if (prod['status *'] && prod['status *'].toLowerCase() === 'inativo') return;
+
+                const nome = prod['nome da peca / conjunto *'] || prod['nome'];
+                const categoria = prod['categoria *'] || prod['categoria'];
+                const tipo = prod['tipo de produto *'] || prod['tipo'];
+                const precoDe = prod['preco de (r$)'] || prod['precode'];
+                const precoPor = prod['preco por (r$) *'] || prod['precopor'];
+                const desconto = prod['desconto %'] || prod['desconto'];
+                const tamanhos = prod['tamanhos disponiveis *'] || prod['tamanhos'];
+                const imagem1 = prod['🖼️ imagem destaque (url)'] || prod['imagem1'];
+                const ofertaDestaque = prod['🔥 oferta em destaque?'] || prod['novo'];
+
+                if (!categoria) return;
+
+                let catKey = categoria.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-');
+                
+                if (catKey.includes('vestido')) catKey = 'vestidos';
+                if (catKey.includes('macacao') || catKey.includes('macacoes')) catKey = 'macacoes';
+                if (catKey.includes('conjunto')) catKey = 'conjuntos';
+                if (catKey.includes('saia')) catKey = 'saias';
+                if (catKey.includes('body') || catKey.includes('bodys')) catKey = 'bodys';
+                if (catKey.includes('blusa')) catKey = 'blusas';
+                if (catKey.includes('plus')) catKey = 'plus-size';
+                if (catKey.includes('short')) catKey = 'shorts';
+                if (catKey.includes('acessorio')) catKey = 'acessorios';
+                if (catKey.includes('macaquinho')) catKey = 'macaquinhos';
+                if (catKey.includes('nova') || catKey.includes('colecao')) catKey = 'nova-colecao';
+
+                const panel = document.getElementById(`panel-${catKey}`);
+                if (!panel) return;
+
+                const grid = panel.querySelector('.cat-grid');
+                if (!grid) return;
+
+                const card = document.createElement('article');
+                card.className = 'cat-card';
+                card.dataset.dinamico = 'true';
+
+                let badgeHtml = '';
+                if (desconto) {
+                    const descTexto = desconto.includes('%') ? desconto : desconto + '%';
+                    badgeHtml = `<span class="cat-badge">${descTexto}</span>`;
+                } else if (ofertaDestaque && (ofertaDestaque.toLowerCase() === 'sim' || ofertaDestaque.toLowerCase() === 's')) {
+                    badgeHtml = `<span class="cat-badge-novo">Destaque</span>`;
+                }
+
+                card.innerHTML = `
+                    <div class="cat-card-img-wrap">
+                        <img src="${imagem1}" alt="${nome}" class="cat-card-img" loading="lazy">
+                        ${badgeHtml}
+                    </div>
+                    <div class="cat-card-info">
+                        <span class="cat-card-tipo">${tipo || ''}</span>
+                        <h3 class="cat-card-nome">${nome}</h3>
+                        <div class="cat-card-precos">
+                            ${precoDe ? `<span class="cat-preco-de">${precoDe}</span>` : ''}
+                            <span class="cat-preco-por">${precoPor}</span>
+                        </div>
+                        <span class="cat-card-tamanhos">${tamanhos || ''}</span>
+                    </div>
+                `;
+
+                card.addEventListener('click', () => { abrirModalDinamico(prod); });
+                grid.appendChild(card);
+            });
+
+            initPagination();
+            
+            const primeiraAba = document.querySelector('.cat-tab');
+            if (primeiraAba) ativarAba(primeiraAba.dataset.cat);
+        }
+
+        async function carregarDados() {
+            if (!URL_PLANILHA || URL_PLANILHA.trim() === '') {
+                console.log('URL da planilha não configurada. Mantendo catálogo estático.');
+                return;
+            }
+
+            try {
+                const response = await fetch(URL_PLANILHA);
+                if (!response.ok) throw new Error('Erro ao buscar dados da planilha');
+                const text = await response.text();
+                const produtos = parseCSV(text);
+                if (produtos.length > 0) {
+                    renderizarCatalogo(produtos);
+                }
+            } catch (e) {
+                console.error('Erro ao carregar catálogo da planilha:', e);
+            }
+        }
+
+        carregarDados();
 
     })();
     </script>
