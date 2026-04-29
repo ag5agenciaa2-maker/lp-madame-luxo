@@ -4170,6 +4170,13 @@
                 document.getElementById('catNoResults').hidden = true;
             }
 
+            // ── Eventos de Clique nas Abas ──
+            document.querySelectorAll('.cat-tab').forEach(function (tab) {
+                tab.addEventListener('click', function () {
+                    ativarAba(tab.dataset.cat);
+                });
+            });
+
             // ── Lógica de Paginação ──
             function initPagination() {
                 document.querySelectorAll('.cat-panel').forEach(function (panel) {
@@ -4343,13 +4350,23 @@
                 const lines = text.split('\n');
                 if (lines.length < 2) return [];
 
+                // Encontra a linha de headers (a primeira que contém "categoria" e "id" ou "nome")
+                let headerIndex = 0;
+                for (let i = 0; i < lines.length; i++) {
+                    const lineLower = lines[i].toLowerCase();
+                    if (lineLower.includes('categoria') && (lineLower.includes('id') || lineLower.includes('nome'))) {
+                        headerIndex = i;
+                        break;
+                    }
+                }
+
                 // Limpa aspas, espaços, passa para lowercase e remove acentos dos headers
-                const headers = lines[0].split(',').map(h =>
+                const headers = lines[headerIndex].split(',').map(h =>
                     h.replace(/^"|"$/g, '').trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
                 );
                 const data = [];
 
-                for (let i = 1; i < lines.length; i++) {
+                for (let i = headerIndex + 1; i < lines.length; i++) {
                     if (!lines[i].trim()) continue;
 
                     const regex = /(?:,|\n|^)("(?:(?:"")*[^"]*)*"|[^",\n]*|(?:\n|$))/g;
