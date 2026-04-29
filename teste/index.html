@@ -4143,7 +4143,7 @@
             // 1. No Google Sheets, vá em Arquivo > Compartilhar > Publicar na Web
             // 2. Escolha "Valores separados por vírgula (.csv)" e clique em Publicar
             // 3. Copie o link gerado e cole abaixo entre as aspas.
-            const URL_PLANILHA = "https://search.google.com/local/writereview?placeid=ChIJBVsZRV_6mwAR_dWXovN74ak";
+            const URL_PLANILHA = "https://docs.google.com/spreadsheets/d/13I0DBjImUK8R1rZe1Nt0FC-WzALALbkAencGH5HdsdA/edit?usp=sharing";
 
             // ── Ativa aba por nome de categoria ──
             function ativarAba(cat) {
@@ -4551,7 +4551,20 @@
                 }
 
                 try {
-                    const response = await fetch(URL_PLANILHA);
+                    let urlFinal = URL_PLANILHA;
+                    
+                    // Converte link de compartilhamento comum para link de exportação CSV
+                    if (urlFinal.includes('docs.google.com/spreadsheets')) {
+                        const match = urlFinal.match(/\/d\/([a-zA-Z0-9-_]+)/);
+                        if (match && match[1]) {
+                            urlFinal = `https://docs.google.com/spreadsheets/d/${match[1]}/export?format=csv`;
+                        }
+                    }
+                    
+                    // Adiciona cache buster para atualizar constantemente
+                    urlFinal += (urlFinal.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+
+                    const response = await fetch(urlFinal);
                     if (!response.ok) throw new Error('Erro ao buscar dados da planilha');
                     const text = await response.text();
                     const produtos = parseCSV(text);
