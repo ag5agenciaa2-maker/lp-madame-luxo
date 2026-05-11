@@ -36,9 +36,10 @@ const CONFIG = {
 // ============================================
 // ESTADO GLOBAL
 // ============================================
-let accessToken = 'local'; // sem OAuth — acesso direto
+let accessToken = 'local';
 let allProducts = [];
 let filteredProducts = [];
+let currentView = localStorage.getItem('ml_view') || 'grid'; // 'grid' | 'list'
 
 const SENHA_ADMIN = 'madame2025'; // senha local de acesso
 
@@ -61,6 +62,11 @@ function initEventListeners() {
     document.getElementById('filter-search').addEventListener('input', debounce(filterProducts, 300));
     document.getElementById('filter-categoria').addEventListener('change', filterProducts);
     document.getElementById('filter-status').addEventListener('change', filterProducts);
+
+    // View toggle
+    document.getElementById('btn-view-grid').addEventListener('click', () => setView('grid'));
+    document.getElementById('btn-view-list').addEventListener('click', () => setView('list'));
+    setView(currentView, false);
     
     // Botões header
     document.getElementById('btn-refresh').addEventListener('click', loadProducts);
@@ -252,8 +258,8 @@ function parseCSVLine(line) {
 // ============================================
 function updateStats() {
     const total = allProducts.length;
-    const ativos = allProducts.filter(p => p._status.toLowerCase() === 'ativo').length;
-    const inativos = allProducts.filter(p => p._status.toLowerCase() === 'inativo').length;
+    const ativos = allProducts.filter(p => ['ativo', 'oferta especial', 'últimas unidades'].includes(p._status.toLowerCase())).length;
+    const inativos = allProducts.filter(p => ['inativo', 'esgotado'].includes(p._status.toLowerCase())).length;
     const categorias = new Set(allProducts.map(p => p._categoria)).size;
     
     document.getElementById('stat-total').textContent = total;
@@ -262,63 +268,193 @@ function updateStats() {
     document.getElementById('stat-categorias').textContent = categorias;
 }
 
+function setView(view, rerender = true) {
+    currentView = view;
+    localStorage.setItem('ml_view', view);
+    document.getElementById('btn-view-grid').classList.toggle('active', view === 'grid');
+    document.getElementById('btn-view-list').classList.toggle('active', view === 'list');
+    if (rerender) renderTable();
+}
+
+const STATUS_MAP = {
+    'ativo':            { cls: 'status-ativo',    txt: 'Ativo' },
+    'inativo':          { cls: 'status-inativo',  txt: 'Inativo' },
+    'esgotado':         { cls: 'status-esgotado', txt: 'Esgotado' },
+    'últimas unidades': { cls: 'status-ultimas',  txt: 'Últimas Unidades' },
+    'oferta especial':  { cls: 'status-oferta',   txt: 'Oferta Especial' }
+};
+
 function renderTable() {
-    const tbody = document.getElementById('products-tbody');
-    const emptyEl = document.getElementById('empty-state');
-    
-    tbody.innerHTML = '';
-    
+    const container = document.getElementById('products-tbody');
+    const emptyEl   = document.getElementById('empty-state');
+
+    container.innerHTML = '';
+
     if (filteredProducts.length === 0) {
         emptyEl.hidden = false;
         return;
     }
-    
     emptyEl.hidden = true;
-    
-    filteredProducts.forEach((product, index) => {
-        const row = document.createElement('tr');
-        const statusClass = product._status.toLowerCase() === 'ativo' ? 'status-ativo' : 'status-inativo';
-        const statusText = product._status.toLowerCase() === 'ativo' ? 'Ativo' : 'Inativo';
-        
-        row.innerHTML = `
-            <td class="col-imagem">
-                <img src="${product._imagem1 || 'assets/madame-luxo-hero-colecao-verde-menta.webp'}" 
-                     alt="${product._nome}" 
-                     class="prod-img"
-                     onerror="this.src='assets/madame-luxo-hero-colecao-verde-menta.webp'">
-            </td>
-            <td class="col-nome">
-                <div class="prod-nome">${escapeHtml(product._nome)}</div>
-                <div class="prod-tipo">${escapeHtml(product._tipo)}</div>
-            </td>
-            <td class="col-categoria">
-                <span class="prod-categoria">${escapeHtml(product._categoria)}</span>
-            </td>
-            <td class="col-preco">
-                ${product._precoDe ? `<div class="prod-preco-de">R$ ${product._precoDe}</div>` : ''}
-                <div class="prod-preco-por">R$ ${product._precoPor || '-'}</div>
-            </td>
-            <td class="col-status">
-                <span class="status-badge ${statusClass}">${statusText}</span>
-            </td>
-            <td class="col-acoes">
-                <div class="acoes-btns">
-                    <button class="btn-acao btn-edit" title="Editar" data-index="${index}">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    </button>
-                    <button class="btn-acao btn-delete" title="Inativar" data-index="${index}">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
-                    </button>
+    container.className = currentView === 'list' ? 'products-list' : 'products-grid';
+
+    filteredProducts.forEach((product) => {
+        const statusKey  = (product._status || '').toLowerCase();
+        const statusInfo = STATUS_MAP[statusKey] || { cls: 'status-inativo', txt: product._status };
+        const imgEsgotado = statusKey === 'esgotado';
+        const imgClass = imgEsgotado ? 'prod-card-img prod-card-img--esgotado' : 'prod-card-img';
+        const faixaHtml = statusKey === 'últimas unidades'
+            ? `<span class="prod-faixa prod-faixa--ultimas">Últimas Unidades</span>`
+            : statusKey === 'oferta especial'
+            ? `<span class="prod-faixa prod-faixa--oferta">Oferta Especial</span>`
+            : imgEsgotado
+            ? `<span class="prod-faixa prod-faixa--esgotado">Esgotado</span>`
+            : '';
+
+        const acoesBtns = `
+            <button class="btn-acao btn-edit" title="Editar">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button class="btn-acao btn-delete" title="Inativar/Reativar">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+            </button>`;
+
+        const el = document.createElement('div');
+
+        if (currentView === 'list') {
+            el.className = 'prod-list-item';
+            el.innerHTML = `
+                <div class="prod-list-img-wrap">
+                    <img src="${product._imagem1 || 'assets/madame-luxo-hero-colecao-verde-menta.webp'}"
+                         alt="${escapeHtml(product._nome)}"
+                         class="${imgEsgotado ? 'prod-list-img prod-card-img--esgotado' : 'prod-list-img'}"
+                         onerror="this.src='assets/madame-luxo-hero-colecao-verde-menta.webp'">
+                    ${faixaHtml}
                 </div>
-            </td>
-        `;
-        
-        // Event listeners dos botões
-        row.querySelector('.btn-edit').addEventListener('click', () => openModal(product));
-        row.querySelector('.btn-delete').addEventListener('click', () => inactivateProduct(product));
-        
-        tbody.appendChild(row);
+                <div class="prod-list-info">
+                    <div class="prod-card-nome">${escapeHtml(product._nome)}</div>
+                    <div class="prod-card-tipo">${escapeHtml(product._tipo)}</div>
+                </div>
+                <div class="prod-list-cat">
+                    <span class="prod-categoria">${escapeHtml(product._categoria)}</span>
+                </div>
+                <div class="prod-list-preco">
+                    ${product._precoDe ? `<span class="prod-preco-de">R$ ${product._precoDe}</span>` : ''}
+                    <span class="prod-preco-por">R$ ${product._precoPor || '-'}</span>
+                </div>
+                <div class="prod-list-status">
+                    <span class="status-badge ${statusInfo.cls}">${statusInfo.txt}</span>
+                </div>
+                <div class="prod-list-acoes prod-card-acoes">${acoesBtns}</div>
+            `;
+        } else {
+            el.className = 'prod-card';
+            el.innerHTML = `
+                <div class="prod-card-img-wrap">
+                    <img src="${product._imagem1 || 'assets/madame-luxo-hero-colecao-verde-menta.webp'}"
+                         alt="${escapeHtml(product._nome)}"
+                         class="${imgClass}"
+                         onerror="this.src='assets/madame-luxo-hero-colecao-verde-menta.webp'">
+                    ${faixaHtml}
+                </div>
+                <div class="prod-card-body">
+                    <div class="prod-card-nome">${escapeHtml(product._nome)}</div>
+                    <div class="prod-card-tipo">${escapeHtml(product._tipo)}</div>
+                    <div class="prod-card-precos">
+                        ${product._precoDe ? `<span class="prod-preco-de">R$ ${product._precoDe}</span>` : ''}
+                        <span class="prod-preco-por">R$ ${product._precoPor || '-'}</span>
+                    </div>
+                    <div class="prod-card-footer">
+                        <span class="status-badge ${statusInfo.cls}">${statusInfo.txt}</span>
+                        <div class="prod-card-acoes">${acoesBtns}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        el.addEventListener('click', (e) => {
+            if (!e.target.closest('.btn-acao')) openDetailModal(product);
+        });
+        el.querySelector('.btn-edit').addEventListener('click', (e) => {
+            e.stopPropagation(); openModal(product);
+        });
+        el.querySelector('.btn-delete').addEventListener('click', (e) => {
+            e.stopPropagation(); inactivateProduct(product);
+        });
+
+        container.appendChild(el);
     });
+}
+
+// Modal de detalhes do produto (visualização ao clicar no card)
+function openDetailModal(product) {
+    const statusKey  = (product._status || '').toLowerCase();
+    const statusInfo = STATUS_MAP[statusKey] || { cls: 'status-inativo', txt: product._status };
+
+    let existing = document.getElementById('detail-modal');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'detail-modal';
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+        <div class="modal-content detail-modal-content">
+            <div class="modal-header">
+                <h2>${escapeHtml(product._nome)}</h2>
+                <button class="modal-close" id="detail-close">&times;</button>
+            </div>
+            <div class="detail-body">
+                <div class="detail-img-col">
+                    <img src="${product._imagem1 || 'assets/madame-luxo-hero-colecao-verde-menta.webp'}"
+                         alt="${escapeHtml(product._nome)}"
+                         class="detail-img-main"
+                         onerror="this.src='assets/madame-luxo-hero-colecao-verde-menta.webp'">
+                    <div class="detail-thumbs">
+                        ${[product._imagem1, product._imagem2, product._imagem3].filter(Boolean).map(url =>
+                            `<img src="${url}" class="detail-thumb" onerror="this.style.display='none'">`
+                        ).join('')}
+                    </div>
+                </div>
+                <div class="detail-info-col">
+                    <span class="prod-categoria">${escapeHtml(product._categoria)}</span>
+                    <p class="detail-tipo">${escapeHtml(product._tipo)}</p>
+                    <div class="detail-precos">
+                        ${product._precoDe ? `<span class="prod-preco-de">R$ ${product._precoDe}</span>` : ''}
+                        <span class="prod-preco-por detail-preco-por">R$ ${product._precoPor || '-'}</span>
+                        ${product._desconto ? `<span class="detail-desconto">${product._desconto}</span>` : ''}
+                    </div>
+                    <div class="detail-specs">
+                        ${product._material ? `<div class="detail-spec"><span>Material</span><span>${escapeHtml(product._material)}</span></div>` : ''}
+                        ${product._cor      ? `<div class="detail-spec"><span>Cor</span><span>${escapeHtml(product._cor)}</span></div>` : ''}
+                        ${product._tamanhos ? `<div class="detail-spec"><span>Tamanhos</span><span>${escapeHtml(product._tamanhos)}</span></div>` : ''}
+                        ${product._estoque  ? `<div class="detail-spec"><span>Estoque</span><span>${escapeHtml(product._estoque)} un.</span></div>` : ''}
+                    </div>
+                    ${product._descricao ? `<p class="detail-desc">${escapeHtml(product._descricao)}</p>` : ''}
+                    <div class="detail-status-row">
+                        <span class="status-badge ${statusInfo.cls}">${statusInfo.txt}</span>
+                        <button class="btn btn-primary detail-edit-btn">Editar Produto</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => { overlay.removeAttribute('hidden'); });
+
+    overlay.querySelector('#detail-close').addEventListener('click', () => overlay.remove());
+    overlay.querySelector('.detail-edit-btn').addEventListener('click', () => { overlay.remove(); openModal(product); });
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+
+    // Troca imagem principal ao clicar na thumbnail
+    overlay.querySelectorAll('.detail-thumb').forEach(thumb => {
+        thumb.addEventListener('click', () => {
+            overlay.querySelector('.detail-img-main').src = thumb.src;
+            overlay.querySelectorAll('.detail-thumb').forEach(t => t.classList.remove('active'));
+            thumb.classList.add('active');
+        });
+    });
+    const firstThumb = overlay.querySelector('.detail-thumb');
+    if (firstThumb) firstThumb.classList.add('active');
 }
 
 function filterProducts() {

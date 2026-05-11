@@ -716,17 +716,25 @@ window.openWhatsApp = (message = '') => {
                 });
             });
 
+            // ── Abrir Modal ──
+            function abrirModal(id) {
+                var overlay = document.getElementById(id);
+                if (!overlay) return;
+                overlay.removeAttribute('hidden');
+                requestAnimationFrame(function () {
+                    requestAnimationFrame(function () {
+                        overlay.classList.add('ml-open');
+                    });
+                });
+                document.body.style.overflow = 'hidden';
+            }
+
             // ── Eventos de Clique nos Cards Estáticos ──
             function bindStaticCards() {
                 document.querySelectorAll('.cat-card').forEach(function (card) {
                     if (!card.dataset.dinamico) {
                         card.addEventListener('click', function () {
-                            var id = card.dataset.modal;
-                            var overlay = document.getElementById(id);
-                            if (!overlay) return;
-                            overlay.hidden = false;
-                            requestAnimationFrame(function () { overlay.classList.add('ml-open'); });
-                            document.body.style.overflow = 'hidden';
+                            abrirModal(card.dataset.modal);
                         });
                     }
                 });
@@ -737,7 +745,7 @@ window.openWhatsApp = (message = '') => {
             function mlFechar() {
                 document.querySelectorAll('.pmodal-overlay.ml-open').forEach(function (o) {
                     o.classList.remove('ml-open');
-                    setTimeout(function () { o.hidden = true; }, 350);
+                    setTimeout(function () { o.setAttribute('hidden', ''); }, 350);
                 });
                 document.body.style.overflow = '';
             }
