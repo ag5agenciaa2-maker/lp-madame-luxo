@@ -10,7 +10,7 @@
 const CONFIG = {
     SPREADSHEET_ID: '13I0DBjImUK8R1rZe1Nt0FC-WzALALbkAencGH5HdsdA',
     SHEET_NAME: '👗 Catálogo',
-    APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxoXIGY4e8VPhagrXdl81LHgPqFBrnuWuBvP431PRhK5jEv0_WM_0cTVDTMJoKw4cCw/exec',
+    APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbzOYBLO4dhyhMPK5SSQrN3pc0gaNPBTknbm4eJ_i3EYJ6YafnSKTTUoLWFtZbnFIzKl0A/exec',
     COLS: {
         ID: 0,
         NOME: 1,
