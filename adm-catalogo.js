@@ -503,31 +503,68 @@ async function saveToGoogleSheets(data, isEdit, rowIndex) {
         ? { action: 'update', row: parseInt(rowIndex) + 1, values }
         : { action: 'append', values };
 
-    const response = await fetch(CONFIG.APPS_SCRIPT_URL, {
-        method: 'POST',
-        redirect: 'follow',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify(payload)
+    return new Promise((resolve, reject) => {
+        // Usa iframe oculto para contornar CORS do Apps Script
+        const iframeId = 'apps-script-iframe';
+        const formId = 'apps-script-form';
+
+        // Remove elementos anteriores se existirem
+        ['apps-script-iframe', 'apps-script-form'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        });
+
+        // Cria iframe oculto que receberá a resposta
+        const iframe = document.createElement('iframe');
+        iframe.id = iframeId;
+        iframe.name = iframeId;
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+
+        // Timeout de 15 segundos
+        const timeout = setTimeout(() => {
+            reject(new Error('Tempo esgotado. Verifique sua conexão.'));
+            cleanup();
+        }, 15000);
+
+        iframe.onload = () => {
+            clearTimeout(timeout);
+            resolve(true);
+            cleanup();
+        };
+
+        iframe.onerror = () => {
+            clearTimeout(timeout);
+            reject(new Error('Erro ao comunicar com o servidor'));
+            cleanup();
+        };
+
+        function cleanup() {
+            setTimeout(() => {
+                const el = document.getElementById(iframeId);
+                if (el) el.remove();
+                const f = document.getElementById(formId);
+                if (f) f.remove();
+            }, 1000);
+        }
+
+        // Cria formulário oculto apontando para o iframe
+        const form = document.createElement('form');
+        form.id = formId;
+        form.method = 'POST';
+        form.action = CONFIG.APPS_SCRIPT_URL;
+        form.target = iframeId;
+        form.style.display = 'none';
+
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'payload';
+        input.value = JSON.stringify(payload);
+        form.appendChild(input);
+
+        document.body.appendChild(form);
+        form.submit();
     });
-
-    const text = await response.text();
-    console.log('[ADM] Apps Script response status:', response.status);
-    console.log('[ADM] Apps Script response body:', text);
-
-    let result;
-    try {
-        result = JSON.parse(text);
-    } catch(e) {
-        console.error('[ADM] Resposta não é JSON:', text);
-        throw new Error('Resposta inválida do servidor: ' + text.substring(0, 200));
-    }
-
-    if (!result.success) {
-        console.error('[ADM] Erro do Apps Script:', result.error);
-        throw new Error(result.error || 'Erro desconhecido');
-    }
-
-    return true;
 }
 
 // ============================================
