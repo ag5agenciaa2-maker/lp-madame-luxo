@@ -203,13 +203,15 @@ function parseCSV(text) {
         product._imagem2  = values[9] || '';
         product._imagem3  = values[10] || '';
         product._link     = values[11] || '';
-        product._precoDe  = values[12] || '';
-        product._precoPor = values[13] || '';
+        // Remove "R$ " caso a planilha guarde com prefixo
+        product._precoDe  = (values[12] || '').replace(/R\$\s*/g, '').trim();
+        product._precoPor = (values[13] || '').replace(/R\$\s*/g, '').trim();
         product._desconto = values[14] || '';
         product._estoque  = values[15] || '';
         product._oferta   = values[16] || '';
         product._status   = values[17] || 'Ativo';
-        product._rowIndex = i;
+        // _rowIndex em 1-based (linha real na planilha, já conta o header na linha 1)
+        product._rowIndex = i + 1;
         
         products.push(product);
     }
@@ -510,7 +512,7 @@ async function saveToGoogleSheets(data, isEdit, rowIndex) {
     ];
 
     const payload = isEdit
-        ? { action: 'update', row: parseInt(rowIndex) + 1, values }
+        ? { action: 'update', row: parseInt(rowIndex), values }
         : { action: 'append', values };
 
     return new Promise((resolve, reject) => {
@@ -594,7 +596,7 @@ async function inactivateProduct(product) {
             headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({
                 action: 'update',
-                row: product._rowIndex + 1,
+                row: product._rowIndex,
                 values: [
                     product._id, product._nome, product._categoria, product._tipo,
                     product._cor, product._tamanhos, product._material, product._descricao,
