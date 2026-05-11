@@ -121,200 +121,214 @@
             <form id="form-produto" class="modal-form">
                 <input type="hidden" id="prod-row-index">
                 <input type="hidden" id="prod-id">
-                
-                <div class="form-grid">
-                    <div class="form-group form-group-full">
-                        <label for="prod-nome">Nome da Peça / Conjunto *</label>
-                        <input type="text" id="prod-nome" required placeholder="Ex: Vestido Midi Floral">
-                    </div>
 
-                    <div class="form-group">
-                        <label>Categoria *</label>
-                        <input type="hidden" id="prod-categoria" required>
-                        <div class="custom-select-wrap" id="wrap-categoria">
-                            <button type="button" class="custom-select-btn" id="btn-categoria">
-                                <span id="label-categoria">Selecione...</span>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                            </button>
-                            <div class="custom-select-dropdown" id="dropdown-categoria" hidden>
-                                <div class="csd-list" id="list-categoria"></div>
-                                <div class="csd-add-row">
-                                    <input type="text" class="csd-add-input" id="add-input-categoria" placeholder="Nova categoria...">
-                                    <button type="button" class="csd-add-btn" id="add-btn-categoria">+</button>
-                                </div>
-                            </div>
+                <!-- SEÇÃO 1: IDENTIFICAÇÃO -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 3H8a2 2 0 00-2 2v2h12V5a2 2 0 00-2-2z"/></svg>
+                        Identificação
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group form-group-full">
+                            <label for="prod-nome">Nome da Peça / Conjunto *</label>
+                            <input type="text" id="prod-nome" required placeholder="Ex: Vestido Midi Floral">
                         </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Tipo de Produto</label>
-                        <input type="hidden" id="prod-tipo">
-                        <div class="custom-select-wrap" id="wrap-tipo">
-                            <button type="button" class="custom-select-btn" id="btn-tipo">
-                                <span id="label-tipo">Selecione...</span>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                            </button>
-                            <div class="custom-select-dropdown" id="dropdown-tipo" hidden>
-                                <div class="csd-list" id="list-tipo"></div>
-                                <div class="csd-add-row">
-                                    <input type="text" class="csd-add-input" id="add-input-tipo" placeholder="Novo tipo...">
-                                    <button type="button" class="csd-add-btn" id="add-btn-tipo">+</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="prod-preco-de">Preço DE (R$)</label>
-                        <input type="text" id="prod-preco-de" placeholder="Ex: 219,90">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="prod-preco-por">Preço POR (R$) *</label>
-                        <input type="text" id="prod-preco-por" required placeholder="Ex: 179,90">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Desconto %</label>
-                        <input type="text" disabled placeholder="Calculado automaticamente pela planilha" style="opacity:0.5;cursor:not-allowed">
-                        <input type="hidden" id="prod-desconto">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="prod-tamanhos">Tamanhos Disponíveis *</label>
-                        <input type="text" id="prod-tamanhos" required placeholder="Ex: P · M · G · GG">
-                    </div>
-
-                    <!-- IMAGEM 1 - DESTAQUE -->
-                    <div class="form-group form-group-full">
-                        <label>🖼️ Imagem Destaque *</label>
-                        <div class="img-upload-wrap" data-field="imagem1">
-                            <input type="hidden" id="prod-imagem1" required>
-                            <div class="img-upload-area" id="area-imagem1">
-                                <input type="file" id="file-imagem1" accept="image/*" class="img-upload-input">
-                                <div class="img-upload-placeholder">
-                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                                    <span>Clique ou arraste uma foto aqui</span>
-                                    <small>JPG, PNG, WEBP · Máx 5MB</small>
-                                </div>
-                                <img id="preview-imagem1" class="img-upload-preview" hidden>
-                                <button type="button" class="img-upload-remove" id="remove-imagem1" hidden title="Remover imagem">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        <div class="form-group">
+                            <label>Categoria *</label>
+                            <input type="hidden" id="prod-categoria" required>
+                            <div class="custom-select-wrap" id="wrap-categoria">
+                                <button type="button" class="custom-select-btn" id="btn-categoria">
+                                    <span id="label-categoria">Selecione...</span>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
                                 </button>
-                                <div class="img-upload-progress" id="progress-imagem1" hidden>
-                                    <div class="img-upload-progress-bar"></div>
+                                <div class="custom-select-dropdown" id="dropdown-categoria" hidden>
+                                    <div class="csd-list" id="list-categoria"></div>
+                                    <div class="csd-add-row">
+                                        <input type="text" class="csd-add-input" id="add-input-categoria" placeholder="Nova categoria...">
+                                        <button type="button" class="csd-add-btn" id="add-btn-categoria">+</button>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="img-upload-url-row">
-                                <span class="img-upload-or">ou</span>
-                                <input type="url" id="url-imagem1" class="img-upload-url" placeholder="Cole uma URL de imagem...">
                             </div>
                         </div>
-                    </div>
-
-                    <!-- IMAGEM 2 -->
-                    <div class="form-group form-group-full">
-                        <label>Imagem 2 (Opcional)</label>
-                        <div class="img-upload-wrap" data-field="imagem2">
-                            <input type="hidden" id="prod-imagem2">
-                            <div class="img-upload-area" id="area-imagem2">
-                                <input type="file" id="file-imagem2" accept="image/*" class="img-upload-input">
-                                <div class="img-upload-placeholder">
-                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                                    <span>Clique ou arraste uma foto aqui</span>
-                                    <small>JPG, PNG, WEBP · Máx 5MB</small>
-                                </div>
-                                <img id="preview-imagem2" class="img-upload-preview" hidden>
-                                <button type="button" class="img-upload-remove" id="remove-imagem2" hidden title="Remover imagem">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        <div class="form-group">
+                            <label>Tipo de Produto</label>
+                            <input type="hidden" id="prod-tipo">
+                            <div class="custom-select-wrap" id="wrap-tipo">
+                                <button type="button" class="custom-select-btn" id="btn-tipo">
+                                    <span id="label-tipo">Selecione...</span>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
                                 </button>
-                                <div class="img-upload-progress" id="progress-imagem2" hidden>
-                                    <div class="img-upload-progress-bar"></div>
+                                <div class="custom-select-dropdown" id="dropdown-tipo" hidden>
+                                    <div class="csd-list" id="list-tipo"></div>
+                                    <div class="csd-add-row">
+                                        <input type="text" class="csd-add-input" id="add-input-tipo" placeholder="Novo tipo...">
+                                        <button type="button" class="csd-add-btn" id="add-btn-tipo">+</button>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="img-upload-url-row">
-                                <span class="img-upload-or">ou</span>
-                                <input type="url" id="url-imagem2" class="img-upload-url" placeholder="Cole uma URL de imagem...">
+                        </div>
+                        <div class="form-group">
+                            <label for="prod-cor">Cor Principal *</label>
+                            <input type="text" id="prod-cor" required placeholder="Ex: Terracota">
+                        </div>
+                        <div class="form-group">
+                            <label for="prod-tamanhos">Tamanhos Disponíveis *</label>
+                            <input type="text" id="prod-tamanhos" required placeholder="Ex: P · M · G · GG">
+                        </div>
+                        <div class="form-group">
+                            <label for="prod-material">Material / Tecido</label>
+                            <input type="text" id="prod-material" placeholder="Ex: Viscose">
+                        </div>
+                        <div class="form-group form-group-full">
+                            <label for="prod-descricao">Descrição *</label>
+                            <textarea id="prod-descricao" rows="3" required placeholder="Descrição do produto..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="form-divider">
+
+                <!-- SEÇÃO 2: IMAGENS (3 colunas) -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        Imagens do Produto
+                    </div>
+                    <div class="form-images-grid">
+                        <!-- IMAGEM 1 -->
+                        <div class="form-img-slot">
+                            <label>Destaque *</label>
+                            <div class="img-upload-wrap" data-field="imagem1">
+                                <input type="hidden" id="prod-imagem1" required>
+                                <div class="img-upload-area" id="area-imagem1">
+                                    <input type="file" id="file-imagem1" accept="image/*" class="img-upload-input">
+                                    <div class="img-upload-placeholder">
+                                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                        <span>Clique ou arraste</span>
+                                        <small>JPG, PNG, WEBP · 5MB</small>
+                                    </div>
+                                    <img id="preview-imagem1" class="img-upload-preview" hidden>
+                                    <button type="button" class="img-upload-remove" id="remove-imagem1" hidden title="Remover">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                    </button>
+                                    <div class="img-upload-progress" id="progress-imagem1" hidden><div class="img-upload-progress-bar"></div></div>
+                                </div>
+                                <input type="url" id="url-imagem1" hidden>
+                            </div>
+                        </div>
+                        <!-- IMAGEM 2 -->
+                        <div class="form-img-slot">
+                            <label>Imagem 2</label>
+                            <div class="img-upload-wrap" data-field="imagem2">
+                                <input type="hidden" id="prod-imagem2">
+                                <div class="img-upload-area" id="area-imagem2">
+                                    <input type="file" id="file-imagem2" accept="image/*" class="img-upload-input">
+                                    <div class="img-upload-placeholder">
+                                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                        <span>Clique ou arraste</span>
+                                        <small>JPG, PNG, WEBP · 5MB</small>
+                                    </div>
+                                    <img id="preview-imagem2" class="img-upload-preview" hidden>
+                                    <button type="button" class="img-upload-remove" id="remove-imagem2" hidden title="Remover">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                    </button>
+                                    <div class="img-upload-progress" id="progress-imagem2" hidden><div class="img-upload-progress-bar"></div></div>
+                                </div>
+                                <input type="url" id="url-imagem2" hidden>
+                            </div>
+                        </div>
+                        <!-- IMAGEM 3 -->
+                        <div class="form-img-slot">
+                            <label>Imagem 3</label>
+                            <div class="img-upload-wrap" data-field="imagem3">
+                                <input type="hidden" id="prod-imagem3">
+                                <div class="img-upload-area" id="area-imagem3">
+                                    <input type="file" id="file-imagem3" accept="image/*" class="img-upload-input">
+                                    <div class="img-upload-placeholder">
+                                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                        <span>Clique ou arraste</span>
+                                        <small>JPG, PNG, WEBP · 5MB</small>
+                                    </div>
+                                    <img id="preview-imagem3" class="img-upload-preview" hidden>
+                                    <button type="button" class="img-upload-remove" id="remove-imagem3" hidden title="Remover">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                    </button>
+                                    <div class="img-upload-progress" id="progress-imagem3" hidden><div class="img-upload-progress-bar"></div></div>
+                                </div>
+                                <input type="url" id="url-imagem3" hidden>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <!-- IMAGEM 3 -->
-                    <div class="form-group form-group-full">
-                        <label>Imagem 3 (Opcional)</label>
-                        <div class="img-upload-wrap" data-field="imagem3">
-                            <input type="hidden" id="prod-imagem3">
-                            <div class="img-upload-area" id="area-imagem3">
-                                <input type="file" id="file-imagem3" accept="image/*" class="img-upload-input">
-                                <div class="img-upload-placeholder">
-                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                                    <span>Clique ou arraste uma foto aqui</span>
-                                    <small>JPG, PNG, WEBP · Máx 5MB</small>
-                                </div>
-                                <img id="preview-imagem3" class="img-upload-preview" hidden>
-                                <button type="button" class="img-upload-remove" id="remove-imagem3" hidden title="Remover imagem">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <hr class="form-divider">
+
+                <!-- SEÇÃO 3: PREÇOS -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                        Preços
+                    </div>
+                    <div class="form-grid-3">
+                        <div class="form-group">
+                            <label for="prod-preco-de">Preço DE (R$)</label>
+                            <input type="text" id="prod-preco-de" placeholder="Ex: 219,90">
+                        </div>
+                        <div class="form-group">
+                            <label for="prod-preco-por">Preço POR (R$) *</label>
+                            <input type="text" id="prod-preco-por" required placeholder="Ex: 179,90">
+                        </div>
+                        <div class="form-group">
+                            <label>Desconto %</label>
+                            <input type="text" disabled placeholder="Auto pela planilha" style="opacity:0.45;cursor:not-allowed">
+                            <input type="hidden" id="prod-desconto">
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="form-divider">
+
+                <!-- SEÇÃO 4: ESTOQUE E STATUS -->
+                <div class="form-section">
+                    <div class="form-section-title">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        Estoque & Publicação
+                    </div>
+                    <div class="form-grid-3">
+                        <div class="form-group">
+                            <label for="prod-estoque">Qtd. Estoque</label>
+                            <input type="text" id="prod-estoque" placeholder="Ex: 15">
+                        </div>
+                        <div class="form-group">
+                            <label>Status *</label>
+                            <input type="hidden" id="prod-status" required>
+                            <div class="custom-select-wrap" id="wrap-status">
+                                <button type="button" class="custom-select-btn" id="btn-status">
+                                    <span id="label-status">Ativo</span>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
                                 </button>
-                                <div class="img-upload-progress" id="progress-imagem3" hidden>
-                                    <div class="img-upload-progress-bar"></div>
-                                </div>
-                            </div>
-                            <div class="img-upload-url-row">
-                                <span class="img-upload-or">ou</span>
-                                <input type="url" id="url-imagem3" class="img-upload-url" placeholder="Cole uma URL de imagem...">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group form-group-full">
-                        <label for="prod-descricao">Descrição *</label>
-                        <textarea id="prod-descricao" rows="3" required placeholder="Descrição do produto..."></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="prod-material">Material / Tecido</label>
-                        <input type="text" id="prod-material" placeholder="Ex: Viscose">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="prod-cor">Cor Principal *</label>
-                        <input type="text" id="prod-cor" required placeholder="Ex: Terracota">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="prod-estoque">Qtd. Estoque</label>
-                        <input type="text" id="prod-estoque" placeholder="Ex: 15">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Status *</label>
-                        <input type="hidden" id="prod-status" required>
-                        <div class="custom-select-wrap" id="wrap-status">
-                            <button type="button" class="custom-select-btn" id="btn-status">
-                                <span id="label-status">Ativo</span>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                            </button>
-                            <div class="custom-select-dropdown" id="dropdown-status" hidden>
-                                <div class="csd-list" id="list-status"></div>
-                                <div class="csd-add-row">
-                                    <input type="text" class="csd-add-input" id="add-input-status" placeholder="Novo status...">
-                                    <button type="button" class="csd-add-btn" id="add-btn-status">+</button>
+                                <div class="custom-select-dropdown" id="dropdown-status" hidden>
+                                    <div class="csd-list" id="list-status"></div>
+                                    <div class="csd-add-row">
+                                        <input type="text" class="csd-add-input" id="add-input-status" placeholder="Novo status...">
+                                        <button type="button" class="csd-add-btn" id="add-btn-status">+</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+                        <div class="form-group">
+                            <label for="prod-oferta">Oferta em Destaque?</label>
+                            <select id="prod-oferta">
+                                <option value="">Não</option>
+                                <option value="Sim">Sim</option>
+                            </select>
+                        </div>
                     </div>
-
-                    <div class="form-group">
-                        <label for="prod-oferta">🔥 Oferta em Destaque?</label>
-                        <select id="prod-oferta">
-                            <option value="">Não</option>
-                            <option value="Sim">Sim</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group form-group-full">
-                        <label for="prod-link">Link do Produto (URL)</label>
-                        <input type="url" id="prod-link" placeholder="https://...">
+                    <div class="form-grid" style="margin-top:14px">
+                        <div class="form-group form-group-full">
+                            <label for="prod-link">Link do Produto (URL)</label>
+                            <input type="url" id="prod-link" placeholder="https://...">
+                        </div>
                     </div>
                 </div>
 

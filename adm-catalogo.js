@@ -177,7 +177,9 @@ function logout() {
 // UI HELPERS
 // ============================================
 function showLoginScreen() {
-    document.getElementById('login-screen').hidden = false;
+    const loginEl = document.getElementById('login-screen');
+    loginEl.classList.remove('hide');
+    loginEl.hidden = false;
     document.getElementById('admin-panel').hidden = true;
     document.getElementById('login-erro').hidden = true;
     const input = document.getElementById('login-senha');
@@ -185,8 +187,11 @@ function showLoginScreen() {
 }
 
 function showAdminPanel() {
-    document.getElementById('login-screen').hidden = true;
+    const loginEl = document.getElementById('login-screen');
+    // Mostra o painel atrás e anima o login saindo
     document.getElementById('admin-panel').hidden = false;
+    loginEl.classList.add('hide');
+    setTimeout(() => { loginEl.hidden = true; }, 500);
 }
 
 // ============================================
@@ -729,19 +734,21 @@ async function handleImageUpload(field, file) {
     if (progressBar) progressBar.style.width = '20%';
 
     try {
+        if (progressBar) progressBar.style.width = '20%';
+
+        // Converte para WEBP 85% qualidade, máx 1200px largura
+        const webpFile = await convertToWebp(file);
         if (progressBar) progressBar.style.width = '40%';
 
-        // Gera nome único para o arquivo
+        // Gera nome único com extensão .webp
         const timestamp = Date.now();
         const random = Math.random().toString(36).substring(2, 8);
-        const ext = file.name.split('.').pop().toLowerCase();
-        const safeExt = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) ? ext : 'jpg';
-        const filename = `produtos/${timestamp}-${random}.${safeExt}`;
+        const filename = `produtos/${timestamp}-${random}.webp`;
 
         if (progressBar) progressBar.style.width = '60%';
 
         // Upload direto para R2 do navegador
-        const publicUrl = await uploadToR2Direct(filename, file);
+        const publicUrl = await uploadToR2Direct(filename, webpFile);
 
         if (progressBar) progressBar.style.width = '100%';
 
@@ -765,6 +772,41 @@ async function handleImageUpload(field, file) {
             if (progressBar) progressBar.style.width = '0%';
         }, 500);
     }
+}
+
+/**
+ * Converte qualquer imagem para WEBP com qualidade 85% e máx 1200px de largura
+ */
+function convertToWebp(file) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+
+        img.onload = () => {
+            URL.revokeObjectURL(url);
+
+            const MAX_WIDTH = 1200;
+            let { naturalWidth: w, naturalHeight: h } = img;
+
+            if (w > MAX_WIDTH) {
+                h = Math.round(h * MAX_WIDTH / w);
+                w = MAX_WIDTH;
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+
+            canvas.toBlob(blob => {
+                if (!blob) { reject(new Error('Falha ao converter imagem')); return; }
+                resolve(new File([blob], 'imagem.webp', { type: 'image/webp' }));
+            }, 'image/webp', 0.92);
+        };
+
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Falha ao carregar imagem')); };
+        img.src = url;
+    });
 }
 
 /**

@@ -47,12 +47,24 @@ body {
    LOGIN SCREEN
    ============================================ */
 .login-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
     display: flex;
     align-items: center;
     justify-content: center;
     min-height: 100vh;
     background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #0f0f0f 100%);
     padding: 24px;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+    opacity: 1;
+    visibility: visible;
+}
+
+.login-screen.hide {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
 }
 
 .login-card {
@@ -145,10 +157,17 @@ body {
 .admin-panel {
     min-height: 100vh;
     padding-bottom: 40px;
+    opacity: 0;
+    animation: panelFadeIn 0.4s ease 0.3s forwards;
 }
 
 .admin-panel[hidden] {
     display: none !important;
+}
+
+@keyframes panelFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
 /* Header */
@@ -985,9 +1004,9 @@ body {
     background: var(--admin-surface);
     border: 1px solid var(--admin-border);
     border-radius: var(--admin-radius);
-    max-width: 720px;
+    max-width: 860px;
     width: 100%;
-    max-height: 90vh;
+    max-height: 92vh;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -1258,11 +1277,42 @@ body {
     background: var(--admin-primary-hover);
 }
 
+/* ============================================
+   FORM — SEÇÕES COM TÍTULO
+   ============================================ */
+.form-section {
+    margin-bottom: 4px;
+}
+
+.form-section-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--admin-primary);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--admin-border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.form-section-title svg {
+    opacity: 0.7;
+}
+
 /* Form Grid */
 .form-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+    gap: 14px;
+}
+
+.form-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
 }
 
 .form-group {
@@ -1276,7 +1326,7 @@ body {
 }
 
 .form-group label {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     color: var(--admin-text-secondary);
     text-transform: uppercase;
@@ -1286,7 +1336,7 @@ body {
 .form-group input,
 .form-group select,
 .form-group textarea {
-    padding: 12px 14px;
+    padding: 10px 14px;
     background: var(--admin-bg);
     border: 1px solid var(--admin-border);
     border-radius: var(--admin-radius-sm);
@@ -1330,6 +1380,55 @@ body {
     border-radius: var(--admin-radius-sm);
     margin-top: 8px;
     border: 1px solid var(--admin-border);
+}
+
+/* ── Imagens lado a lado ── */
+.form-images-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.form-img-slot {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-img-slot label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--admin-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.form-img-slot .img-upload-area {
+    min-height: 130px;
+}
+
+.form-img-slot .img-upload-placeholder span {
+    font-size: 12px;
+}
+
+.form-img-slot .img-upload-placeholder small {
+    font-size: 10px;
+}
+
+.form-img-slot .img-upload-url-row {
+    gap: 6px;
+}
+
+.form-img-slot .img-upload-url {
+    font-size: 11px;
+    padding: 7px 10px;
+}
+
+/* Separador visual entre seções */
+.form-divider {
+    border: none;
+    border-top: 1px solid var(--admin-border);
+    margin: 6px 0;
 }
 
 /* ============================================
@@ -1910,8 +2009,16 @@ body {
         grid-template-columns: 1fr;
     }
 
+    .form-grid-3 {
+        grid-template-columns: 1fr;
+    }
+
     .form-group-full {
         grid-column: 1;
+    }
+
+    .form-images-grid {
+        grid-template-columns: 1fr;
     }
 
     .modal-overlay {
