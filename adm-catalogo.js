@@ -729,8 +729,6 @@ async function handleImageUpload(field, file) {
     if (progressBar) progressBar.style.width = '20%';
 
     try {
-        // Converte arquivo para Base64
-        const base64 = await fileToBase64(file);
         if (progressBar) progressBar.style.width = '40%';
 
         // Gera nome único para o arquivo
@@ -742,8 +740,8 @@ async function handleImageUpload(field, file) {
 
         if (progressBar) progressBar.style.width = '60%';
 
-        // Envia para o Apps Script (proxy seguro)
-        const publicUrl = await uploadToR2ViaAppsScript(filename, base64, file.type);
+        // Upload direto para R2 do navegador
+        const publicUrl = await uploadToR2Direct(filename, file);
 
         if (progressBar) progressBar.style.width = '100%';
 
@@ -770,57 +768,83 @@ async function handleImageUpload(field, file) {
 }
 
 /**
- * Converte File para Base64
+ * Upload direto do navegador para Cloudflare R2 usando AWS Signature V4
  */
-function fileToBase64(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result.split(',')[1]); // remove o prefixo data:image/...
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-    });
-}
+async function uploadToR2Direct(filename, file) {
+    const { ACCOUNT_ID, ACCESS_KEY_ID, SECRET_ACCESS_KEY, BUCKET_NAME, PUBLIC_URL } = CONFIG.R2;
 
-/**
- * Envia imagem para R2 via Google Apps Script (proxy seguro)
- * O Apps Script recebe Base64, faz upload para R2 e retorna a URL pública
- */
-async function uploadToR2ViaAppsScript(filename, base64Data, mimeType) {
-    const payload = {
-        action: 'upload_r2',
-        filename: filename,
-        data: base64Data,
-        mimeType: mimeType,
-        r2Config: {
-            accountId: CONFIG.R2.ACCOUNT_ID,
-            accessKeyId: CONFIG.R2.ACCESS_KEY_ID,
-            secretAccessKey: CONFIG.R2.SECRET_ACCESS_KEY,
-            bucketName: CONFIG.R2.BUCKET_NAME,
-            publicUrl: CONFIG.R2.PUBLIC_URL
-        }
+    const host = `${ACCOUNT_ID}.r2.cloudflarestorage.com`;
+    const endpoint = `https://${host}/${BUCKET_NAME}/${filename}`;
+
+    const now = new Date();
+    const dateStamp = now.toISOString().slice(0, 10).replace(/-/g, '');
+    const amzDate = now.toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+    const region = 'auto';
+    const service = 's3';
+
+    const payloadHash = 'UNSIGNED-PAYLOAD';
+
+    // Headers ordenados alfabeticamente
+    const headersToSign = {
+        'content-type': file.type,
+        'host': host,
+        'x-amz-content-sha256': payloadHash,
+        'x-amz-date': amzDate
     };
 
-    // Apps Script requer form-urlencoded para evitar preflight CORS
-    const formData = new FormData();
-    formData.append('payload', JSON.stringify(payload));
+    const signedHeadersStr = Object.keys(headersToSign).sort().join(';');
+    const canonicalHeaders = Object.keys(headersToSign).sort()
+        .map(k => `${k}:${headersToSign[k]}\n`).join('');
 
-    const response = await fetch(CONFIG.APPS_SCRIPT_URL, {
-        method: 'POST',
-        body: formData,
-        redirect: 'follow'
+    const canonicalRequest = [
+        'PUT',
+        `/${BUCKET_NAME}/${filename}`,
+        '',
+        canonicalHeaders,
+        signedHeadersStr,
+        payloadHash
+    ].join('\n');
+
+    const credentialScope = `${dateStamp}/${region}/${service}/aws4_request`;
+    const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(canonicalRequest));
+    const hashHex = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+    const stringToSign = ['AWS4-HMAC-SHA256', amzDate, credentialScope, hashHex].join('\n');
+
+    // Gera chave de assinatura
+    const sign = async (key, msg) => {
+        const k = typeof key === 'string'
+            ? await crypto.subtle.importKey('raw', new TextEncoder().encode(key), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
+            : await crypto.subtle.importKey('raw', key, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+        return crypto.subtle.sign('HMAC', k, new TextEncoder().encode(msg));
+    };
+
+    const kDate    = await sign('AWS4' + SECRET_ACCESS_KEY, dateStamp);
+    const kRegion  = await sign(kDate, region);
+    const kService = await sign(kRegion, service);
+    const kSigning = await sign(kService, 'aws4_request');
+    const sigBuffer = await sign(kSigning, stringToSign);
+    const signature = Array.from(new Uint8Array(sigBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+    const authorization = `AWS4-HMAC-SHA256 Credential=${ACCESS_KEY_ID}/${credentialScope}, SignedHeaders=${signedHeadersStr}, Signature=${signature}`;
+
+    const response = await fetch(endpoint, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': file.type,
+            'x-amz-content-sha256': payloadHash,
+            'x-amz-date': amzDate,
+            'Authorization': authorization
+        },
+        body: file
     });
 
     if (!response.ok) {
-        throw new Error(`Erro HTTP ${response.status}`);
+        const txt = await response.text();
+        throw new Error(`R2 retornou ${response.status}: ${txt}`);
     }
 
-    const result = await response.json();
-
-    if (!result.success) {
-        throw new Error(result.error || 'Erro desconhecido no upload');
-    }
-
-    return result.url;
+    return `${PUBLIC_URL}/${filename}`;
 }
 
 /**
