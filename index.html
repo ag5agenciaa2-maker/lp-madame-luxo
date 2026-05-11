@@ -2408,6 +2408,36 @@
         </div>
     </div>
 
+    <!-- Modal Dinâmico (Planilha) -->
+    <div class="pmodal-overlay" id="modal-dinamico" role="dialog" aria-modal="true" aria-label="Detalhes do produto" hidden>
+        <div class="pmodal-box">
+            <button class="pmodal-close" aria-label="Fechar" onclick="fecharModalDinamico()">✕</button>
+            <div class="pmodal-inner">
+                <div class="pmodal-galeria">
+                    <img id="pimg-dinamico" src="" alt="" class="pmodal-img-main">
+                    <div class="pmodal-thumbs" id="pmodal-thumbs-dinamico"></div>
+                </div>
+                <div class="pmodal-detalhes">
+                    <span class="pmodal-cat" id="pmodal-cat-dinamico"></span>
+                    <h2 class="pmodal-nome" id="pmodal-nome-dinamico"></h2>
+                    <div class="pmodal-precos">
+                        <span class="pmodal-de" id="pmodal-de-dinamico"></span>
+                        <span class="pmodal-por" id="pmodal-por-dinamico"></span>
+                        <span class="pmodal-desc" id="pmodal-desc-dinamico"></span>
+                    </div>
+                    <p class="pmodal-texto" id="pmodal-texto-dinamico"></p>
+                    <div class="pmodal-specs">
+                        <div class="pmodal-spec"><span class="pspec-l">Material</span><span class="pspec-v" id="pmodal-mat-dinamico"></span></div>
+                        <div class="pmodal-spec"><span class="pspec-l">Cor</span><span class="pspec-v" id="pmodal-cor-dinamico"></span></div>
+                        <div class="pmodal-spec"><span class="pspec-l">Tamanhos</span><span class="pspec-v" id="pmodal-tam-dinamico"></span></div>
+                        <div class="pmodal-spec"><span class="pspec-l">Estoque</span><span class="pspec-v" id="pmodal-est-dinamico"></span></div>
+                    </div>
+                    <a href="#" id="pmodal-cta-dinamico" target="_blank" rel="noopener" class="pmodal-cta">Comprar pelo WhatsApp</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Seção Dor e Solução -->
     <section class="pain-solution" id="proposito" aria-labelledby="painTitle">
         <div class="container">

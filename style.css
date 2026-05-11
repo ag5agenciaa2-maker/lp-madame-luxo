@@ -2970,8 +2970,52 @@ ol {
             border-radius: 100px;
         }
 
+        /* Faixas de status */
+        .cat-faixa {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 8px 0;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            text-align: center;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .cat-faixa--ultimas {
+            background: linear-gradient(90deg, #b8860b, #C9A227, #b8860b);
+            color: #000;
+        }
+
+        .cat-faixa--oferta {
+            background: linear-gradient(90deg, #8b0000, #c0392b, #8b0000);
+            color: #fff;
+        }
+
+        .cat-faixa--esgotado {
+            top: 0;
+            bottom: 0;
+            padding: 0;
+            background: rgba(0, 0, 0, 0.55);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+            color: #fff;
+        }
+
+        .cat-card--esgotado .cat-card-img {
+            filter: grayscale(40%) brightness(0.7);
+        }
+
         /* Botão "Ver produto" ao hover */
-        .cat-card-img-wrap::after {
+        .cat-card:not(.cat-card--esgotado) .cat-card-img-wrap::after {
             content: 'Ver produto';
             position: absolute;
             inset: 0;
@@ -2988,7 +3032,7 @@ ol {
             transition: opacity 0.3s ease;
             pointer-events: none;
         }
-        .cat-card:hover .cat-card-img-wrap::after {
+        .cat-card:not(.cat-card--esgotado):hover .cat-card-img-wrap::after {
             opacity: 1;
         }
 

@@ -953,11 +953,20 @@ window.openWhatsApp = (message = '') => {
                     if (!grid) return;
 
                     const card = document.createElement('article');
-                    card.className = 'cat-card';
+                    const status = (prod['status *'] || prod['status'] || '').toLowerCase().trim();
+                    const esgotado = status === 'esgotado';
+
+                    card.className = 'cat-card' + (esgotado ? ' cat-card--esgotado' : '');
                     card.dataset.dinamico = 'true';
 
                     let badgeHtml = '';
-                    if (desconto) {
+                    if (esgotado) {
+                        badgeHtml = `<span class="cat-faixa cat-faixa--esgotado">Esgotado</span>`;
+                    } else if (status === 'últimas unidades' || status === 'ultimas unidades') {
+                        badgeHtml = `<span class="cat-faixa cat-faixa--ultimas">Últimas Unidades</span>`;
+                    } else if (status === 'oferta especial') {
+                        badgeHtml = `<span class="cat-faixa cat-faixa--oferta">Oferta Especial</span>`;
+                    } else if (desconto) {
                         const descTexto = desconto.includes('%') ? desconto : desconto + '%';
                         badgeHtml = `<span class="cat-badge">${descTexto}</span>`;
                     } else if (ofertaDestaque && (ofertaDestaque.toLowerCase() === 'sim' || ofertaDestaque.toLowerCase() === 's')) {
