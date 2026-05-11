@@ -893,8 +893,12 @@ window.openWhatsApp = (message = '') => {
                     cta.innerText = 'Comprar pelo WhatsApp';
                 }
 
-                modal.hidden = false;
-                requestAnimationFrame(() => { modal.classList.add('ml-open'); });
+                modal.removeAttribute('hidden');
+                requestAnimationFrame(function () {
+                    requestAnimationFrame(function () {
+                        modal.classList.add('ml-open');
+                    });
+                });
                 document.body.style.overflow = 'hidden';
             }
 
@@ -902,7 +906,7 @@ window.openWhatsApp = (message = '') => {
                 const modal = document.getElementById('modal-dinamico');
                 if (modal) {
                     modal.classList.remove('ml-open');
-                    setTimeout(() => { modal.hidden = true; }, 350);
+                    setTimeout(() => { modal.setAttribute('hidden', ''); }, 350);
                 }
                 document.body.style.overflow = '';
             };
