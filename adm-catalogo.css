@@ -1332,6 +1332,188 @@ body {
     border: 1px solid var(--admin-border);
 }
 
+/* ============================================
+   UPLOAD DE IMAGENS - CLOUDFLARE R2
+   ============================================ */
+.img-upload-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.img-upload-area {
+    position: relative;
+    width: 100%;
+    min-height: 160px;
+    background: var(--admin-bg);
+    border: 2px dashed var(--admin-border-light);
+    border-radius: var(--admin-radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    transition: var(--admin-transition);
+}
+
+.img-upload-area:hover {
+    border-color: var(--admin-primary);
+    background: rgba(201, 162, 39, 0.03);
+}
+
+.img-upload-area.has-image {
+    border-style: solid;
+    border-color: var(--admin-primary);
+    min-height: 200px;
+}
+
+.img-upload-area.drag-over {
+    border-color: var(--admin-primary);
+    background: rgba(201, 162, 39, 0.08);
+    transform: scale(1.01);
+}
+
+.img-upload-input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 10;
+}
+
+.img-upload-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: var(--admin-text-muted);
+    pointer-events: none;
+    padding: 20px;
+    text-align: center;
+}
+
+.img-upload-placeholder svg {
+    color: var(--admin-text-muted);
+    transition: color 0.2s;
+}
+
+.img-upload-area:hover .img-upload-placeholder svg {
+    color: var(--admin-primary);
+}
+
+.img-upload-placeholder span {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.img-upload-placeholder small {
+    font-size: 11px;
+    opacity: 0.7;
+}
+
+.img-upload-preview {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    z-index: 5;
+}
+
+.img-upload-remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    transition: background 0.2s;
+}
+
+.img-upload-remove:hover {
+    background: var(--admin-danger);
+}
+
+.img-upload-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 20;
+}
+
+.img-upload-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: var(--admin-primary);
+    transition: width 0.3s ease;
+    border-radius: 0 2px 2px 0;
+}
+
+.img-upload-url-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.img-upload-or {
+    font-size: 12px;
+    color: var(--admin-text-muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    flex-shrink: 0;
+}
+
+.img-upload-url {
+    flex: 1;
+    padding: 10px 14px;
+    background: var(--admin-bg);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius-sm);
+    color: var(--admin-text);
+    font-family: inherit;
+    font-size: 13px;
+    outline: none;
+    transition: var(--admin-transition);
+}
+
+.img-upload-url:focus {
+    border-color: var(--admin-primary);
+    box-shadow: 0 0 0 3px var(--admin-primary-light);
+}
+
+.img-upload-url::placeholder {
+    color: var(--admin-text-muted);
+}
+
+/* Estado de upload em andamento */
+.img-upload-area.is-uploading .img-upload-placeholder {
+    opacity: 0.5;
+}
+
+.img-upload-area.is-uploading {
+    pointer-events: none;
+}
+
+/* Toast de upload */
+.toast-upload {
+    background: var(--admin-primary) !important;
+    color: #1a1a1a !important;
+    font-weight: 600;
+}
+
 /* Form Actions */
 .form-actions {
     display: flex;

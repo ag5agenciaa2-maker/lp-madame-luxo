@@ -30,6 +30,15 @@ const CONFIG = {
         ESTOQUE: 15,
         OFERTA: 16,
         LINK: 17
+    },
+    // CLOUDFLARE R2 - CONFIGURAÇÃO DE UPLOAD
+    R2: {
+        ACCOUNT_ID: 'e8dec03248c6ed3f1f5b6c3ca374dd0c',
+        ACCESS_KEY_ID: '9597e7e801605a68038627877e38be25',
+        SECRET_ACCESS_KEY: '1a71281a77f45c3e1c543b1367ec56cc58500ef959c7636d50f9f6d055ee7f10',
+        BUCKET_NAME: 'madame-luxo-produtos',
+        PUBLIC_URL: 'https://pub-c86c7f3fba99486db39ef1a2653e0377.r2.dev',
+        REGION: 'auto'
     }
 };
 
@@ -46,21 +55,35 @@ const ITENS_POR_PAGINA = 24;
 // Hash SHA-256 da senha de acesso ao painel administrativo
 // IMPORTANTE: Nunca armazene a senha em texto plano neste arquivo
 // Para gerar um novo hash, use a função hashSenha() no console do navegador
-const SENHA_HASH = '2c26d46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae';
+const SENHA_HASH = '02ba00c9acf0d3c4472d3e987ceab03767e8dea6534ebba6c39362c4dcb6dd7b';
 
 // ============================================
 // INICIALIZAÇÃO
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
-    initEventListeners();
-    initCustomSelects();
-    populateFormSelects(); // Preenche filtros e dropdowns com dados padrão
+    console.log('DOM carregado. Inicializando painel...');
+    
+    try {
+        initEventListeners();
+        initCustomSelects();
+        initImageUploads(); // Inicializa upload de imagens
+        populateFormSelects(); // Preenche filtros e dropdowns com dados padrão
 
-    // Verifica se já está autenticado na sessão
-    const autenticado = sessionStorage.getItem('ml_admin_auth');
-    if (autenticado === '1') {
-        showAdminPanel();
-        loadProducts();
+        // Verifica se já está autenticado na sessão
+        const autenticado = sessionStorage.getItem('ml_admin_auth');
+        console.log('Autenticado?', autenticado);
+        
+        if (autenticado === '1') {
+            console.log('Usuário já autenticado. Mostrando painel...');
+            showAdminPanel();
+            loadProducts();
+        } else {
+            console.log('Usuário não autenticado. Mostrando login...');
+            showLoginScreen();
+        }
+    } catch (error) {
+        console.error('ERRO NA INICIALIZAÇÃO:', error);
+        alert('Erro ao carregar o painel. Verifique o console (F12) para detalhes.');
     }
 });
 
@@ -93,7 +116,7 @@ function initEventListeners() {
     document.getElementById('btn-cancelar').addEventListener('click', closeModal);
     document.getElementById('form-produto').addEventListener('submit', handleSubmit);
     
-    // Preview de imagem
+    // Preview de imagem (URL manual)
     document.getElementById('prod-imagem1').addEventListener('input', updateImagePreview);
     
     // Fechar modal ao clicar fora
@@ -572,7 +595,7 @@ function openModal(product = null) {
     
     form.reset();
     document.getElementById('prod-row-index').value = '';
-    document.getElementById('preview-imagem1').hidden = true;
+    resetImageFields();
     
     if (product) {
         title.textContent = 'Editar Produto';
@@ -585,9 +608,6 @@ function openModal(product = null) {
         document.getElementById('prod-preco-por').value = product._precoPor;
         document.getElementById('prod-desconto').value = product._desconto;
         document.getElementById('prod-tamanhos').value = product._tamanhos;
-        document.getElementById('prod-imagem1').value = product._imagem1;
-        document.getElementById('prod-imagem2').value = product._imagem2;
-        document.getElementById('prod-imagem3').value = product._imagem3;
         document.getElementById('prod-descricao').value = product._descricao;
         document.getElementById('prod-material').value = product._material;
         document.getElementById('prod-cor').value = product._cor;
@@ -596,7 +616,8 @@ function openModal(product = null) {
         document.getElementById('prod-oferta').value = product._oferta;
         document.getElementById('prod-link').value = product._link;
         
-        updateImagePreview();
+        // Popula campos de imagem com upload
+        populateImageFields(product);
     } else {
         title.textContent = 'Novo Produto';
         csdSetValue('categoria', '');
@@ -622,6 +643,259 @@ function updateImagePreview() {
     } else {
         preview.hidden = true;
     }
+}
+
+// ============================================
+// UPLOAD DE IMAGENS - CLOUDFLARE R2
+// ============================================
+
+/**
+ * Inicializa os handlers de upload para todos os campos de imagem
+ * Chamado no DOMContentLoaded
+ */
+function initImageUploads() {
+    ['imagem1', 'imagem2', 'imagem3'].forEach(field => {
+        const fileInput = document.getElementById(`file-${field}`);
+        const urlInput = document.getElementById(`url-${field}`);
+        const removeBtn = document.getElementById(`remove-${field}`);
+        const area = document.getElementById(`area-${field}`);
+
+        if (!fileInput) return;
+
+        // Upload via seleção de arquivo
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) handleImageUpload(field, file);
+        });
+
+        // Upload via drag and drop
+        area.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            area.classList.add('drag-over');
+        });
+        area.addEventListener('dragleave', () => {
+            area.classList.remove('drag-over');
+        });
+        area.addEventListener('drop', (e) => {
+            e.preventDefault();
+            area.classList.remove('drag-over');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleImageUpload(field, file);
+            } else {
+                showToast('Por favor, arraste apenas imagens.', 'error');
+            }
+        });
+
+        // URL manual (colar link)
+        if (urlInput) {
+            urlInput.addEventListener('input', () => {
+                const url = urlInput.value.trim();
+                if (url && url.startsWith('http')) {
+                    setImagePreview(field, url);
+                    document.getElementById(`prod-${field}`).value = url;
+                }
+            });
+        }
+
+        // Remover imagem
+        if (removeBtn) {
+            removeBtn.addEventListener('click', () => removeImage(field));
+        }
+    });
+}
+
+/**
+ * Processa o upload de uma imagem para o Cloudflare R2
+ * Via Google Apps Script (proxy seguro)
+ */
+async function handleImageUpload(field, file) {
+    // Validações
+    if (!file.type.startsWith('image/')) {
+        showToast('O arquivo deve ser uma imagem (JPG, PNG, WEBP).', 'error');
+        return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+        showToast('A imagem deve ter no máximo 5MB.', 'error');
+        return;
+    }
+
+    const area = document.getElementById(`area-${field}`);
+    const progressEl = document.getElementById(`progress-${field}`);
+    const progressBar = progressEl?.querySelector('.img-upload-progress-bar');
+
+    area.classList.add('is-uploading');
+    if (progressEl) progressEl.hidden = false;
+    if (progressBar) progressBar.style.width = '20%';
+
+    try {
+        // Converte arquivo para Base64
+        const base64 = await fileToBase64(file);
+        if (progressBar) progressBar.style.width = '40%';
+
+        // Gera nome único para o arquivo
+        const timestamp = Date.now();
+        const random = Math.random().toString(36).substring(2, 8);
+        const ext = file.name.split('.').pop().toLowerCase();
+        const safeExt = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) ? ext : 'jpg';
+        const filename = `produtos/${timestamp}-${random}.${safeExt}`;
+
+        if (progressBar) progressBar.style.width = '60%';
+
+        // Envia para o Apps Script (proxy seguro)
+        const publicUrl = await uploadToR2ViaAppsScript(filename, base64, file.type);
+
+        if (progressBar) progressBar.style.width = '100%';
+
+        // Atualiza o campo hidden e preview
+        document.getElementById(`prod-${field}`).value = publicUrl;
+        setImagePreview(field, publicUrl);
+        
+        // Atualiza o input de URL
+        const urlInput = document.getElementById(`url-${field}`);
+        if (urlInput) urlInput.value = publicUrl;
+
+        showToast('Imagem enviada com sucesso!', 'success');
+
+    } catch (error) {
+        console.error('Erro no upload:', error);
+        showToast('Erro ao enviar imagem: ' + error.message, 'error');
+    } finally {
+        area.classList.remove('is-uploading');
+        setTimeout(() => {
+            if (progressEl) progressEl.hidden = true;
+            if (progressBar) progressBar.style.width = '0%';
+        }, 500);
+    }
+}
+
+/**
+ * Converte File para Base64
+ */
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]); // remove o prefixo data:image/...
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+/**
+ * Envia imagem para R2 via Google Apps Script (proxy seguro)
+ * O Apps Script recebe Base64, faz upload para R2 e retorna a URL pública
+ */
+async function uploadToR2ViaAppsScript(filename, base64Data, mimeType) {
+    const payload = {
+        action: 'upload_r2',
+        filename: filename,
+        data: base64Data,
+        mimeType: mimeType,
+        r2Config: {
+            accountId: CONFIG.R2.ACCOUNT_ID,
+            accessKeyId: CONFIG.R2.ACCESS_KEY_ID,
+            secretAccessKey: CONFIG.R2.SECRET_ACCESS_KEY,
+            bucketName: CONFIG.R2.BUCKET_NAME,
+            publicUrl: CONFIG.R2.PUBLIC_URL
+        }
+    };
+
+    // Apps Script requer form-urlencoded para evitar preflight CORS
+    const formData = new FormData();
+    formData.append('payload', JSON.stringify(payload));
+
+    const response = await fetch(CONFIG.APPS_SCRIPT_URL, {
+        method: 'POST',
+        body: formData,
+        redirect: 'follow'
+    });
+
+    if (!response.ok) {
+        throw new Error(`Erro HTTP ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    if (!result.success) {
+        throw new Error(result.error || 'Erro desconhecido no upload');
+    }
+
+    return result.url;
+}
+
+/**
+ * Define o preview da imagem no campo
+ */
+function setImagePreview(field, url) {
+    const preview = document.getElementById(`preview-${field}`);
+    const area = document.getElementById(`area-${field}`);
+    const removeBtn = document.getElementById(`remove-${field}`);
+    const placeholder = area?.querySelector('.img-upload-placeholder');
+
+    if (preview) {
+        preview.src = url;
+        preview.hidden = false;
+        preview.onload = () => {
+            if (area) area.classList.add('has-image');
+            if (placeholder) placeholder.style.display = 'none';
+        };
+        preview.onerror = () => {
+            preview.hidden = true;
+            if (area) area.classList.remove('has-image');
+            if (placeholder) placeholder.style.display = 'flex';
+        };
+    }
+    if (removeBtn) removeBtn.hidden = false;
+}
+
+/**
+ * Remove a imagem do campo
+ */
+function removeImage(field) {
+    const preview = document.getElementById(`preview-${field}`);
+    const area = document.getElementById(`area-${field}`);
+    const removeBtn = document.getElementById(`remove-${field}`);
+    const placeholder = area?.querySelector('.img-upload-placeholder');
+    const fileInput = document.getElementById(`file-${field}`);
+    const urlInput = document.getElementById(`url-${field}`);
+
+    document.getElementById(`prod-${field}`).value = '';
+    
+    if (preview) {
+        preview.src = '';
+        preview.hidden = true;
+    }
+    if (area) area.classList.remove('has-image');
+    if (placeholder) placeholder.style.display = 'flex';
+    if (removeBtn) removeBtn.hidden = true;
+    if (fileInput) fileInput.value = '';
+    if (urlInput) urlInput.value = '';
+}
+
+/**
+ * Reseta todos os campos de imagem ao abrir o modal
+ */
+function resetImageFields() {
+    ['imagem1', 'imagem2', 'imagem3'].forEach(field => {
+        removeImage(field);
+    });
+}
+
+/**
+ * Popula os campos de imagem ao editar um produto
+ */
+function populateImageFields(product) {
+    ['imagem1', 'imagem2', 'imagem3'].forEach(field => {
+        const url = product[`_${field}`] || '';
+        if (url) {
+            document.getElementById(`prod-${field}`).value = url;
+            setImagePreview(field, url);
+            const urlInput = document.getElementById(`url-${field}`);
+            if (urlInput) urlInput.value = url;
+        } else {
+            removeImage(field);
+        }
+    });
 }
 
 // ============================================

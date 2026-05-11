@@ -185,20 +185,85 @@
                         <input type="text" id="prod-tamanhos" required placeholder="Ex: P · M · G · GG">
                     </div>
 
+                    <!-- IMAGEM 1 - DESTAQUE -->
                     <div class="form-group form-group-full">
-                        <label for="prod-imagem1">🖼️ Imagem Destaque (URL) *</label>
-                        <input type="url" id="prod-imagem1" required placeholder="https://...">
-                        <img id="preview-imagem1" class="img-preview" hidden>
+                        <label>🖼️ Imagem Destaque *</label>
+                        <div class="img-upload-wrap" data-field="imagem1">
+                            <input type="hidden" id="prod-imagem1" required>
+                            <div class="img-upload-area" id="area-imagem1">
+                                <input type="file" id="file-imagem1" accept="image/*" class="img-upload-input">
+                                <div class="img-upload-placeholder">
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                    <span>Clique ou arraste uma foto aqui</span>
+                                    <small>JPG, PNG, WEBP · Máx 5MB</small>
+                                </div>
+                                <img id="preview-imagem1" class="img-upload-preview" hidden>
+                                <button type="button" class="img-upload-remove" id="remove-imagem1" hidden title="Remover imagem">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                </button>
+                                <div class="img-upload-progress" id="progress-imagem1" hidden>
+                                    <div class="img-upload-progress-bar"></div>
+                                </div>
+                            </div>
+                            <div class="img-upload-url-row">
+                                <span class="img-upload-or">ou</span>
+                                <input type="url" id="url-imagem1" class="img-upload-url" placeholder="Cole uma URL de imagem...">
+                            </div>
+                        </div>
                     </div>
 
+                    <!-- IMAGEM 2 -->
                     <div class="form-group form-group-full">
-                        <label for="prod-imagem2">Imagem 2 (URL)</label>
-                        <input type="url" id="prod-imagem2" placeholder="https://...">
+                        <label>Imagem 2 (Opcional)</label>
+                        <div class="img-upload-wrap" data-field="imagem2">
+                            <input type="hidden" id="prod-imagem2">
+                            <div class="img-upload-area" id="area-imagem2">
+                                <input type="file" id="file-imagem2" accept="image/*" class="img-upload-input">
+                                <div class="img-upload-placeholder">
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                    <span>Clique ou arraste uma foto aqui</span>
+                                    <small>JPG, PNG, WEBP · Máx 5MB</small>
+                                </div>
+                                <img id="preview-imagem2" class="img-upload-preview" hidden>
+                                <button type="button" class="img-upload-remove" id="remove-imagem2" hidden title="Remover imagem">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                </button>
+                                <div class="img-upload-progress" id="progress-imagem2" hidden>
+                                    <div class="img-upload-progress-bar"></div>
+                                </div>
+                            </div>
+                            <div class="img-upload-url-row">
+                                <span class="img-upload-or">ou</span>
+                                <input type="url" id="url-imagem2" class="img-upload-url" placeholder="Cole uma URL de imagem...">
+                            </div>
+                        </div>
                     </div>
 
+                    <!-- IMAGEM 3 -->
                     <div class="form-group form-group-full">
-                        <label for="prod-imagem3">Imagem 3 (URL)</label>
-                        <input type="url" id="prod-imagem3" placeholder="https://...">
+                        <label>Imagem 3 (Opcional)</label>
+                        <div class="img-upload-wrap" data-field="imagem3">
+                            <input type="hidden" id="prod-imagem3">
+                            <div class="img-upload-area" id="area-imagem3">
+                                <input type="file" id="file-imagem3" accept="image/*" class="img-upload-input">
+                                <div class="img-upload-placeholder">
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                    <span>Clique ou arraste uma foto aqui</span>
+                                    <small>JPG, PNG, WEBP · Máx 5MB</small>
+                                </div>
+                                <img id="preview-imagem3" class="img-upload-preview" hidden>
+                                <button type="button" class="img-upload-remove" id="remove-imagem3" hidden title="Remover imagem">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                </button>
+                                <div class="img-upload-progress" id="progress-imagem3" hidden>
+                                    <div class="img-upload-progress-bar"></div>
+                                </div>
+                            </div>
+                            <div class="img-upload-url-row">
+                                <span class="img-upload-or">ou</span>
+                                <input type="url" id="url-imagem3" class="img-upload-url" placeholder="Cole uma URL de imagem...">
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-group form-group-full">
@@ -302,6 +367,17 @@
     <!-- Toast Notifications -->
     <div id="toast-container" class="toast-container"></div>
 
-    <script src="adm-catalogo.js"></script>
+    <script src="adm-catalogo.js?v=3"></script>
+    <!-- Debug: verifica se o JS carregou corretamente -->
+    <script>
+        window.addEventListener('load', function() {
+            console.log('=== DEBUG LOGIN ===');
+            console.log('handleLogin existe?', typeof window.handleLogin);
+            console.log('login-senha existe?', !!document.getElementById('login-senha'));
+            console.log('login-screen existe?', !!document.getElementById('login-screen'));
+            console.log('admin-panel existe?', !!document.getElementById('admin-panel'));
+            console.log('SENHA_HASH:', typeof SENHA_HASH !== 'undefined' ? SENHA_HASH.substring(0, 20) + '...' : 'NÃO DEFINIDO');
+        });
+    </script>
 </body>
 </html>
