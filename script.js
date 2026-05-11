@@ -555,7 +555,12 @@ window.openWhatsApp = (message = '') => {
             // 1. No Google Sheets, vá em Arquivo > Compartilhar > Publicar na Web
             // 2. Escolha "Valores separados por vírgula (.csv)" e clique em Publicar
             // 3. Copie o link gerado e cole abaixo entre as aspas.
-            const URL_PLANILHA = "https://docs.google.com/spreadsheets/d/13I0DBjImUK8R1rZe1Nt0FC-WzALALbkAencGH5HdsdA/edit?usp=sharing";
+            //
+            //    EXEMPLO DE URL CORRETA:
+            //    https://docs.google.com/spreadsheets/d/e/2PACX-.../pub?output=csv
+            //
+            //    NÃO use o link de edição (com /edit no final).
+            const URL_PLANILHA = "https://docs.google.com/spreadsheets/d/13I0DBjImUK8R1rZe1Nt0FC-WzALALbkAencGH5HdsdA/export?format=csv"; // Exportação CSV direta
 
             // ── Ativa aba por nome de categoria ──
             function ativarAba(cat) {
