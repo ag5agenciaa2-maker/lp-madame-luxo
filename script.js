@@ -716,6 +716,63 @@ window.openWhatsApp = (message = '') => {
                 });
             });
 
+            // ── Lightbox ──
+            var lbOverlay = document.getElementById('img-lightbox');
+            var lbImg = document.getElementById('img-lightbox-img');
+            var lbClose = document.getElementById('img-lightbox-close');
+            var lbPrev = document.getElementById('lb-prev');
+            var lbNext = document.getElementById('lb-next');
+            var _lbImages = [];
+            var _lbIndex = 0;
+
+            function lbMostrar(index) {
+                _lbIndex = index;
+                lbImg.style.opacity = '0';
+                setTimeout(function () {
+                    lbImg.src = _lbImages[_lbIndex].src;
+                    lbImg.alt = _lbImages[_lbIndex].alt || '';
+                    lbImg.style.opacity = '1';
+                }, 150);
+                lbPrev.style.display = _lbImages.length > 1 ? '' : 'none';
+                lbNext.style.display = _lbImages.length > 1 ? '' : 'none';
+            }
+
+            function abrirLightbox(src, alt, imagens) {
+                if (!lbOverlay || !src) return;
+                _lbImages = imagens || [{ src: src, alt: alt || '' }];
+                _lbIndex = _lbImages.findIndex(function (i) { return i.src === src; });
+                if (_lbIndex < 0) _lbIndex = 0;
+                lbImg.style.opacity = '1';
+                lbImg.src = _lbImages[_lbIndex].src;
+                lbImg.alt = _lbImages[_lbIndex].alt || '';
+                lbPrev.style.display = _lbImages.length > 1 ? '' : 'none';
+                lbNext.style.display = _lbImages.length > 1 ? '' : 'none';
+                lbOverlay.removeAttribute('hidden');
+                requestAnimationFrame(function () {
+                    requestAnimationFrame(function () {
+                        lbOverlay.classList.add('lb-open');
+                    });
+                });
+                history.pushState({ lightbox: true }, '');
+            }
+
+            function fecharLightbox() {
+                if (!lbOverlay) return;
+                lbOverlay.classList.remove('lb-open');
+                setTimeout(function () { lbOverlay.setAttribute('hidden', ''); }, 250);
+            }
+
+            if (lbPrev) lbPrev.addEventListener('click', function () {
+                lbMostrar((_lbIndex - 1 + _lbImages.length) % _lbImages.length);
+            });
+            if (lbNext) lbNext.addEventListener('click', function () {
+                lbMostrar((_lbIndex + 1) % _lbImages.length);
+            });
+            if (lbClose) lbClose.addEventListener('click', fecharLightbox);
+            if (lbOverlay) lbOverlay.addEventListener('click', function (e) {
+                if (e.target === lbOverlay) fecharLightbox();
+            });
+
             // ── Abrir Modal ──
             function abrirModal(id) {
                 var overlay = document.getElementById(id);
@@ -727,6 +784,7 @@ window.openWhatsApp = (message = '') => {
                     });
                 });
                 document.body.style.overflow = 'hidden';
+                history.pushState({ modal: id }, '');
             }
 
             // ── Eventos de Clique nos Cards Estáticos ──
@@ -742,12 +800,16 @@ window.openWhatsApp = (message = '') => {
             bindStaticCards();
 
             // ── Fechar Modais ──
+            var _fechandoModal = false;
             function mlFechar() {
+                if (_fechandoModal) return;
+                _fechandoModal = true;
                 document.querySelectorAll('.pmodal-overlay.ml-open').forEach(function (o) {
                     o.classList.remove('ml-open');
                     setTimeout(function () { o.setAttribute('hidden', ''); }, 350);
                 });
                 document.body.style.overflow = '';
+                setTimeout(function () { _fechandoModal = false; }, 400);
             }
             document.querySelectorAll('.pmodal-close').forEach(function (btn) {
                 btn.addEventListener('click', mlFechar);
@@ -755,7 +817,34 @@ window.openWhatsApp = (message = '') => {
             document.querySelectorAll('.pmodal-overlay').forEach(function (o) {
                 o.addEventListener('click', function (e) { if (e.target === o) mlFechar(); });
             });
-            document.addEventListener('keydown', function (e) { if (e.key === 'Escape') mlFechar(); });
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    if (lbOverlay && lbOverlay.classList.contains('lb-open')) fecharLightbox();
+                    else mlFechar();
+                }
+            });
+
+            // ── Botão Voltar (popstate) fecha modal/lightbox em vez de sair do site ──
+            window.addEventListener('popstate', function (e) {
+                if (lbOverlay && lbOverlay.classList.contains('lb-open')) {
+                    fecharLightbox();
+                } else if (document.querySelector('.pmodal-overlay.ml-open')) {
+                    mlFechar();
+                }
+            });
+
+            // ── Imagens dos modais estáticos clicáveis (lightbox) ──
+            document.querySelectorAll('.pmodal-overlay').forEach(function (modal) {
+                var mainImg = modal.querySelector('.pmodal-img-main');
+                if (!mainImg) return;
+                mainImg.addEventListener('click', function () {
+                    var thumbs = modal.querySelectorAll('.pmodal-thumb');
+                    var imagens = thumbs.length
+                        ? Array.from(thumbs).map(function (t) { return { src: t.src, alt: t.alt || '' }; })
+                        : [{ src: mainImg.src, alt: mainImg.alt || '' }];
+                    abrirLightbox(mainImg.src, mainImg.alt, imagens);
+                });
+            });
 
             // ── Trocar imagem na galeria do modal ──
             window.mlTrocarImg = function (imgId, thumb) {
@@ -875,22 +964,47 @@ window.openWhatsApp = (message = '') => {
                     descBadge.style.display = 'none';
                 }
 
+                const statusProd = (produto['status *'] || produto['status'] || '').toLowerCase().trim();
+                const esgotadoProd = statusProd === 'esgotado';
+
                 document.getElementById('pmodal-texto-dinamico').innerText = descricao || '';
                 document.getElementById('pmodal-mat-dinamico').innerText = material || 'Não informado';
                 document.getElementById('pmodal-cor-dinamico').innerText = cor || 'Não informado';
                 document.getElementById('pmodal-tam-dinamico').innerText = tamanhos || 'Não informado';
                 document.getElementById('pmodal-est-dinamico').innerText = estoque || 'Não informado';
 
-                const cta = document.getElementById('pmodal-cta-dinamico');
+                // Badge esgotado dentro do modal
+                var badgeEsgotado = document.getElementById('pmodal-badge-esgotado');
+                if (badgeEsgotado) badgeEsgotado.style.display = esgotadoProd ? '' : 'none';
 
-                if (linkProduto && linkProduto.trim().startsWith('http')) {
-                    cta.href = linkProduto;
-                    cta.innerText = 'Ver Detalhes / Comprar';
+                // Preço riscado quando esgotado
+                const porElem = document.getElementById('pmodal-por-dinamico');
+                porElem.innerText = precoPor;
+                porElem.style.opacity = esgotadoProd ? '0.4' : '1';
+                porElem.style.textDecoration = esgotadoProd ? 'line-through' : '';
+
+                const cta = document.getElementById('pmodal-cta-dinamico');
+                if (esgotadoProd) {
+                    const msgAviso = `Olá, vim através do site e gostaria de ser avisada quando o produto "${nome}" estiver disponível novamente.`;
+                    cta.href = `https://wa.me/5521988501459?text=${encodeURIComponent(msgAviso)}`;
+                    cta.innerText = '🔔 Avisar quando disponível';
+                    cta.className = 'pmodal-cta pmodal-cta--aviso';
                 } else {
-                    let whatsMsg = `Olá! Tenho interesse no produto: ${nome}`;
-                    if (precoPor) whatsMsg += ` por ${precoPor}`;
-                    cta.href = `https://wa.me/5521988501459?text=${encodeURIComponent(whatsMsg)}`;
+                    const msgCompra = `Olá, vim através do site e tenho interesse no produto: ${nome}${precoPor ? ' por ' + precoPor : ''}.`;
+                    cta.href = `https://wa.me/5521988501459?text=${encodeURIComponent(msgCompra)}`;
                     cta.innerText = 'Comprar pelo WhatsApp';
+                    cta.className = 'pmodal-cta';
+                }
+
+                const mainImg = document.getElementById('pimg-dinamico');
+                if (mainImg) {
+                    mainImg.onclick = function () {
+                        var thumbsEl = document.querySelectorAll('#pmodal-thumbs-dinamico .pmodal-thumb');
+                        var imgs = thumbsEl.length
+                            ? Array.from(thumbsEl).map(function (t) { return { src: t.src, alt: t.alt || '' }; })
+                            : [{ src: mainImg.src, alt: mainImg.alt || '' }];
+                        abrirLightbox(mainImg.src, mainImg.alt, imgs);
+                    };
                 }
 
                 modal.removeAttribute('hidden');
@@ -900,6 +1014,7 @@ window.openWhatsApp = (message = '') => {
                     });
                 });
                 document.body.style.overflow = 'hidden';
+                history.pushState({ modal: 'modal-dinamico' }, '');
             }
 
             window.fecharModalDinamico = function () {

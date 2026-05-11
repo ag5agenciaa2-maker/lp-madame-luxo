@@ -40,6 +40,10 @@
                 <button class="btn-header" id="btn-refresh" title="Atualizar">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
                 </button>
+                <button class="btn-header btn-historico" id="btn-historico" title="Histórico de alterações">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Histórico
+                </button>
                 <button class="btn-header btn-primary" id="btn-novo-produto">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                     Novo Produto
@@ -141,26 +145,39 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="prod-categoria">Categoria *</label>
-                        <select id="prod-categoria" required>
-                            <option value="">Selecione...</option>
-                            <option value="Vestidos">Vestidos</option>
-                            <option value="Macacões">Macacões</option>
-                            <option value="Conjuntos">Conjuntos</option>
-                            <option value="Saias">Saias</option>
-                            <option value="Bodys">Bodys</option>
-                            <option value="Blusas">Blusas</option>
-                            <option value="Plus Size">Plus Size</option>
-                            <option value="Shorts">Shorts</option>
-                            <option value="Acessórios">Acessórios</option>
-                            <option value="Macaquinhos">Macaquinhos</option>
-                            <option value="Nova Coleção">Nova Coleção</option>
-                        </select>
+                        <label>Categoria *</label>
+                        <input type="hidden" id="prod-categoria" required>
+                        <div class="custom-select-wrap" id="wrap-categoria">
+                            <button type="button" class="custom-select-btn" id="btn-categoria">
+                                <span id="label-categoria">Selecione...</span>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+                            <div class="custom-select-dropdown" id="dropdown-categoria" hidden>
+                                <div class="csd-list" id="list-categoria"></div>
+                                <div class="csd-add-row">
+                                    <input type="text" class="csd-add-input" id="add-input-categoria" placeholder="Nova categoria...">
+                                    <button type="button" class="csd-add-btn" id="add-btn-categoria">+</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="prod-tipo">Tipo de Produto *</label>
-                        <input type="text" id="prod-tipo" required placeholder="Ex: Vestido Midi · Viscose · Terracota">
+                        <label>Tipo de Produto</label>
+                        <input type="hidden" id="prod-tipo">
+                        <div class="custom-select-wrap" id="wrap-tipo">
+                            <button type="button" class="custom-select-btn" id="btn-tipo">
+                                <span id="label-tipo">Selecione...</span>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+                            <div class="custom-select-dropdown" id="dropdown-tipo" hidden>
+                                <div class="csd-list" id="list-tipo"></div>
+                                <div class="csd-add-row">
+                                    <input type="text" class="csd-add-input" id="add-input-tipo" placeholder="Novo tipo...">
+                                    <button type="button" class="csd-add-btn" id="add-btn-tipo">+</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -221,14 +238,21 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="prod-status">Status *</label>
-                        <select id="prod-status" required>
-                            <option value="Ativo">Ativo</option>
-                            <option value="Inativo">Inativo</option>
-                            <option value="Esgotado">Esgotado</option>
-                            <option value="Últimas Unidades">Últimas Unidades</option>
-                            <option value="Oferta Especial">Oferta Especial</option>
-                        </select>
+                        <label>Status *</label>
+                        <input type="hidden" id="prod-status" required>
+                        <div class="custom-select-wrap" id="wrap-status">
+                            <button type="button" class="custom-select-btn" id="btn-status">
+                                <span id="label-status">Ativo</span>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+                            <div class="custom-select-dropdown" id="dropdown-status" hidden>
+                                <div class="csd-list" id="list-status"></div>
+                                <div class="csd-add-row">
+                                    <input type="text" class="csd-add-input" id="add-input-status" placeholder="Novo status...">
+                                    <button type="button" class="csd-add-btn" id="add-btn-status">+</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -253,6 +277,25 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal: Histórico de Alterações -->
+    <div id="modal-historico" class="modal-overlay" hidden>
+        <div class="modal-content modal-historico-content">
+            <div class="modal-header">
+                <h2>Histórico de Alterações</h2>
+                <button class="modal-close" id="historico-close">&times;</button>
+            </div>
+            <div class="historico-toolbar">
+                <input type="text" id="historico-search" class="filter-input" placeholder="Buscar por produto ou ação...">
+                <button class="btn-header" id="historico-refresh" title="Atualizar histórico">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+                </button>
+            </div>
+            <div id="historico-body" class="historico-body">
+                <div class="loading-state"><div class="spinner"></div><p>Carregando histórico...</p></div>
+            </div>
         </div>
     </div>
 

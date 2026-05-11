@@ -40,8 +40,13 @@ let accessToken = 'local';
 let allProducts = [];
 let filteredProducts = [];
 let currentView = localStorage.getItem('ml_view') || 'grid'; // 'grid' | 'list'
+let currentPage = 1;
+const ITENS_POR_PAGINA = 24;
 
-const SENHA_ADMIN = 'madame2025'; // senha local de acesso
+// Hash SHA-256 da senha de acesso ao painel administrativo
+// IMPORTANTE: Nunca armazene a senha em texto plano neste arquivo
+// Para gerar um novo hash, use a função hashSenha() no console do navegador
+const SENHA_HASH = '2c26d46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae';
 
 // ============================================
 // INICIALIZAÇÃO
@@ -50,10 +55,12 @@ document.addEventListener('DOMContentLoaded', () => {
     initEventListeners();
 
     // Verifica se já está autenticado na sessão
+    initCustomSelects();
     const autenticado = sessionStorage.getItem('ml_admin_auth');
     if (autenticado === '1') {
         showAdminPanel();
         loadProducts();
+        loadConfigListas();
     }
 });
 
@@ -72,6 +79,13 @@ function initEventListeners() {
     document.getElementById('btn-refresh').addEventListener('click', loadProducts);
     document.getElementById('btn-novo-produto').addEventListener('click', () => openModal());
     document.getElementById('btn-logout').addEventListener('click', logout);
+    document.getElementById('btn-historico').addEventListener('click', openHistorico);
+    document.getElementById('historico-close').addEventListener('click', closeHistorico);
+    document.getElementById('historico-refresh').addEventListener('click', loadHistorico);
+    document.getElementById('historico-search').addEventListener('input', debounce(filterHistorico, 300));
+    document.getElementById('modal-historico').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('modal-historico')) closeHistorico();
+    });
     
     // Modal
     document.getElementById('modal-close').addEventListener('click', closeModal);
@@ -91,16 +105,38 @@ function initEventListeners() {
 // AUTENTICAÇÃO POR SENHA LOCAL
 // ============================================
 
-function handleLogin() {
+/**
+ * Gera hash SHA-256 de uma string
+ * Usado para comparar senha sem expor a senha original no código
+ */
+async function hashSenha(senha) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(senha);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function handleLogin() {
     const input = document.getElementById('login-senha');
     const erro = document.getElementById('login-erro');
 
-    if (input.value === SENHA_ADMIN) {
-        sessionStorage.setItem('ml_admin_auth', '1');
-        showAdminPanel();
-        loadProducts();
-        showToast('Bem-vinda ao painel!', 'success');
-    } else {
+    try {
+        const hashDigitado = await hashSenha(input.value);
+
+        if (hashDigitado === SENHA_HASH) {
+            sessionStorage.setItem('ml_admin_auth', '1');
+            showAdminPanel();
+            loadProducts();
+            loadConfigListas(); // carrega listas da planilha e atualiza seletores
+            showToast('Bem-vinda ao painel!', 'success');
+        } else {
+            erro.hidden = false;
+            input.value = '';
+            input.focus();
+        }
+    } catch (e) {
+        console.error('Erro ao validar senha:', e);
         erro.hidden = false;
         input.value = '';
         input.focus();
@@ -273,7 +309,7 @@ function setView(view, rerender = true) {
     localStorage.setItem('ml_view', view);
     document.getElementById('btn-view-grid').classList.toggle('active', view === 'grid');
     document.getElementById('btn-view-list').classList.toggle('active', view === 'list');
-    if (rerender) renderTable();
+    if (rerender) { currentPage = 1; renderTable(); }
 }
 
 const STATUS_MAP = {
@@ -292,12 +328,20 @@ function renderTable() {
 
     if (filteredProducts.length === 0) {
         emptyEl.hidden = false;
+        renderPaginacao();
         return;
     }
     emptyEl.hidden = true;
     container.className = currentView === 'list' ? 'products-list' : 'products-grid';
 
-    filteredProducts.forEach((product) => {
+    const totalPaginas = Math.ceil(filteredProducts.length / ITENS_POR_PAGINA);
+    if (currentPage > totalPaginas) currentPage = totalPaginas || 1;
+
+    const inicio = (currentPage - 1) * ITENS_POR_PAGINA;
+    const fim    = inicio + ITENS_POR_PAGINA;
+    const produtosPagina = filteredProducts.slice(inicio, fim);
+
+    produtosPagina.forEach((product) => {
         const statusKey  = (product._status || '').toLowerCase();
         const statusInfo = STATUS_MAP[statusKey] || { cls: 'status-inativo', txt: product._status };
         const imgEsgotado = statusKey === 'esgotado';
@@ -314,7 +358,10 @@ function renderTable() {
             <button class="btn-acao btn-edit" title="Editar">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </button>
-            <button class="btn-acao btn-delete" title="Inativar/Reativar">
+            <button class="btn-acao btn-toggle" title="Inativar/Reativar">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+            </button>
+            <button class="btn-acao btn-excluir" title="Excluir produto">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
             </button>`;
 
@@ -377,12 +424,17 @@ function renderTable() {
         el.querySelector('.btn-edit').addEventListener('click', (e) => {
             e.stopPropagation(); openModal(product);
         });
-        el.querySelector('.btn-delete').addEventListener('click', (e) => {
+        el.querySelector('.btn-toggle').addEventListener('click', (e) => {
             e.stopPropagation(); inactivateProduct(product);
+        });
+        el.querySelector('.btn-excluir').addEventListener('click', (e) => {
+            e.stopPropagation(); deleteProduct(product);
         });
 
         container.appendChild(el);
     });
+
+    renderPaginacao();
 }
 
 // Modal de detalhes do produto (visualização ao clicar no card)
@@ -477,6 +529,7 @@ function filterProducts() {
         return matchSearch && matchCategoria && matchStatus;
     });
     
+    currentPage = 1;
     renderTable();
 }
 
@@ -513,8 +566,8 @@ function openModal(product = null) {
         document.getElementById('prod-row-index').value = product._rowIndex;
         document.getElementById('prod-id').value = product._id;
         document.getElementById('prod-nome').value = product._nome;
-        document.getElementById('prod-categoria').value = product._categoria;
-        document.getElementById('prod-tipo').value = product._tipo;
+        csdSetValue('categoria', product._categoria);
+        csdSetValue('tipo', product._tipo);
         document.getElementById('prod-preco-de').value = product._precoDe;
         document.getElementById('prod-preco-por').value = product._precoPor;
         document.getElementById('prod-desconto').value = product._desconto;
@@ -526,14 +579,16 @@ function openModal(product = null) {
         document.getElementById('prod-material').value = product._material;
         document.getElementById('prod-cor').value = product._cor;
         document.getElementById('prod-estoque').value = product._estoque;
-        document.getElementById('prod-status').value = product._status;
+        csdSetValue('status', product._status);
         document.getElementById('prod-oferta').value = product._oferta;
         document.getElementById('prod-link').value = product._link;
         
         updateImagePreview();
     } else {
         title.textContent = 'Novo Produto';
-        document.getElementById('prod-status').value = 'Ativo';
+        csdSetValue('categoria', '');
+        csdSetValue('tipo', '');
+        csdSetValue('status', 'Ativo');
     }
     
     modal.hidden = false;
@@ -573,7 +628,21 @@ async function handleSubmit(e) {
     try {
         const rowIndex = document.getElementById('prod-row-index').value;
         const isEdit = !!rowIndex;
-        
+
+        // Valida campos dos custom selects
+        if (!document.getElementById('prod-categoria').value) {
+            showToast('Selecione uma categoria.', 'error');
+            btnSalvar.disabled = false; btnText.hidden = false; btnSpinner.hidden = true;
+            document.getElementById('btn-categoria').focus();
+            return;
+        }
+        if (!document.getElementById('prod-status').value) {
+            showToast('Selecione um status.', 'error');
+            btnSalvar.disabled = false; btnText.hidden = false; btnSpinner.hidden = true;
+            document.getElementById('btn-status').focus();
+            return;
+        }
+
         const productData = {
             id: document.getElementById('prod-id').value,
             nome: document.getElementById('prod-nome').value,
@@ -606,8 +675,9 @@ async function handleSubmit(e) {
         
         if (success) {
             showToast(isEdit ? 'Produto atualizado!' : 'Produto criado!', 'success');
+            registrarHistorico(isEdit ? 'Editado' : 'Criado', productData.nome, isEdit ? 'Dados atualizados' : 'Novo produto adicionado');
             closeModal();
-            loadProducts(); // Recarrega a lista
+            loadProducts();
         } else {
             showToast('Erro ao salvar. Verifique as permissões da planilha.', 'error');
         }
@@ -658,52 +728,41 @@ async function saveToGoogleSheets(data, isEdit, rowIndex) {
         ? { action: 'update_skip_desconto', row: parseInt(rowIndex), valuesSemDesconto, valuesAposDesconto }
         : { action: 'append', values: [...valuesSemDesconto, '', ...valuesAposDesconto] };
 
-    return new Promise((resolve, reject) => {
-        // Usa iframe oculto para contornar CORS do Apps Script
-        const iframeId = 'apps-script-iframe';
-        const formId = 'apps-script-form';
+    return enviarViaIframe(payload);
+}
 
-        // Remove elementos anteriores se existirem
+// Envia qualquer payload ao Apps Script via iframe (contorna CORS)
+function enviarViaIframe(payload) {
+    return new Promise((resolve, reject) => {
+        const iframeId = 'apps-script-iframe';
+        const formId   = 'apps-script-form';
+
         ['apps-script-iframe', 'apps-script-form'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.remove();
         });
 
-        // Cria iframe oculto que receberá a resposta
         const iframe = document.createElement('iframe');
         iframe.id = iframeId;
         iframe.name = iframeId;
         iframe.style.display = 'none';
         document.body.appendChild(iframe);
 
-        // Timeout de 15 segundos
         const timeout = setTimeout(() => {
             reject(new Error('Tempo esgotado. Verifique sua conexão.'));
             cleanup();
         }, 15000);
 
-        iframe.onload = () => {
-            clearTimeout(timeout);
-            resolve(true);
-            cleanup();
-        };
-
-        iframe.onerror = () => {
-            clearTimeout(timeout);
-            reject(new Error('Erro ao comunicar com o servidor'));
-            cleanup();
-        };
+        iframe.onload  = () => { clearTimeout(timeout); resolve(true); cleanup(); };
+        iframe.onerror = () => { clearTimeout(timeout); reject(new Error('Erro ao comunicar com o servidor')); cleanup(); };
 
         function cleanup() {
             setTimeout(() => {
-                const el = document.getElementById(iframeId);
-                if (el) el.remove();
-                const f = document.getElementById(formId);
-                if (f) f.remove();
+                document.getElementById(iframeId)?.remove();
+                document.getElementById(formId)?.remove();
             }, 1000);
         }
 
-        // Cria formulário oculto apontando para o iframe
         const form = document.createElement('form');
         form.id = formId;
         form.method = 'POST';
@@ -711,11 +770,11 @@ async function saveToGoogleSheets(data, isEdit, rowIndex) {
         form.target = iframeId;
         form.style.display = 'none';
 
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'payload';
-        input.value = JSON.stringify(payload);
-        form.appendChild(input);
+        const inp = document.createElement('input');
+        inp.type  = 'hidden';
+        inp.name  = 'payload';
+        inp.value = JSON.stringify(payload);
+        form.appendChild(inp);
 
         document.body.appendChild(form);
         form.submit();
@@ -732,34 +791,416 @@ async function inactivateProduct(product) {
     
     try {
         const novoStatus = product._status.toLowerCase() === 'ativo' ? 'Inativo' : 'Ativo';
-
-        const response = await fetch(CONFIG.APPS_SCRIPT_URL, {
-            method: 'POST',
-            redirect: 'follow',
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({
-                action: 'update',
-                row: product._rowIndex,
-                values: [
-                    product._id, product._nome, product._categoria, product._tipo,
-                    product._cor, product._tamanhos, product._material, product._descricao,
-                    product._imagem1, product._imagem2, product._imagem3, product._link,
-                    product._precoDe, product._precoPor, product._desconto,
-                    product._estoque, product._oferta, novoStatus
-                ]
-            })
+        await enviarViaIframe({
+            action: 'update',
+            row: product._rowIndex,
+            values: [
+                product._id, product._nome, product._categoria, product._tipo,
+                product._cor, product._tamanhos, product._material, product._descricao,
+                product._imagem1, product._imagem2, product._imagem3, product._link,
+                product._precoDe, product._precoPor, product._desconto,
+                product._estoque, product._oferta, novoStatus
+            ]
         });
-
-        const text = await response.text();
-        const result = JSON.parse(text);
-        if (result.success) {
-            showToast(`Produto ${novoStatus === 'Ativo' ? 'reativado' : 'inativado'}!`, 'success');
-            loadProducts();
-        } else {
-            showToast('Erro ao alterar status: ' + (result.error || ''), 'error');
-        }
+        showToast(`Produto ${novoStatus === 'Ativo' ? 'reativado' : 'inativado'}!`, 'success');
+        registrarHistorico('Status', product._nome, `Status alterado para ${novoStatus}`);
+        loadProducts();
     } catch (error) {
         showToast('Erro ao alterar status: ' + error.message, 'error');
+    }
+}
+
+// ============================================
+// CONFIGURAÇÕES DE LISTAS
+// ============================================
+let _configListaAtual = 'categorias';
+let _configDados = {
+    categorias: ['Vestidos','Macacões','Conjuntos','Saias','Bodys','Blusas','Plus Size','Shorts','Acessórios','Macaquinhos','Nova Coleção'],
+    status: ['Ativo','Inativo','Esgotado','Últimas Unidades','Oferta Especial'],
+    tipos: [], cores: [], materiais: []
+};
+let _configEditandoIndex = null;
+
+const CONFIG_LABELS = {
+    categorias: 'categoria',
+    status: 'status',
+    tipos: 'tipo de produto',
+    cores: 'cor',
+    materiais: 'material'
+};
+
+function openConfig() {
+    document.getElementById('modal-config').removeAttribute('hidden');
+    _configEditandoIndex = null;
+    loadConfigListas();
+}
+
+function closeConfig() {
+    document.getElementById('modal-config').setAttribute('hidden', '');
+    configCancelarEdicao();
+}
+
+function switchConfigTab(lista) {
+    _configListaAtual = lista;
+    _configEditandoIndex = null;
+    document.querySelectorAll('.config-tab').forEach(t => t.classList.toggle('active', t.dataset.lista === lista));
+    configCancelarEdicao();
+    renderConfigLista();
+    document.getElementById('config-input').placeholder = `Nova ${CONFIG_LABELS[lista] || lista}...`;
+}
+
+async function loadConfigListas() {
+    document.getElementById('config-lista').innerHTML =
+        '<div class="loading-state"><div class="spinner"></div><p>Carregando...</p></div>';
+
+    try {
+        const url = CONFIG.APPS_SCRIPT_URL + '?action=get_config&t=' + Date.now();
+        const res = await fetch(url);
+        const json = await res.json();
+        if (json.success) {
+            _configDados = json.data || {};
+            // Garante que todas as chaves existem
+            ['categorias','status','tipos','cores','materiais'].forEach(k => {
+                if (!_configDados[k]) _configDados[k] = [];
+            });
+        }
+    } catch (e) {
+        // Se falhar, usa valores padrão
+        _configDados = {
+            categorias: ['Vestidos','Macacões','Conjuntos','Saias','Bodys','Blusas','Plus Size','Shorts','Acessórios','Macaquinhos','Nova Coleção'],
+            status: ['Ativo','Inativo','Esgotado','Últimas Unidades','Oferta Especial'],
+            tipos: [],
+            cores: [],
+            materiais: []
+        };
+    }
+
+    renderConfigLista();
+    switchConfigTab(_configListaAtual);
+    populateFormSelects();
+}
+
+function renderConfigLista() {
+    const lista = document.getElementById('config-lista');
+    const itens = _configDados[_configListaAtual] || [];
+
+    if (!itens.length) {
+        lista.innerHTML = `<div class="config-empty">Nenhum item cadastrado. Adicione o primeiro acima.</div>`;
+        return;
+    }
+
+    lista.innerHTML = itens.map((item, i) => `
+        <div class="config-item" data-index="${i}">
+            <span class="config-item-name">${escapeHtml(item)}</span>
+            <div class="config-item-actions">
+                <button class="btn-item-edit" title="Editar" onclick="configEditarItem(${i})">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4z"/></svg>
+                </button>
+                <button class="btn-item-delete" title="Excluir" onclick="configExcluirItem(${i})">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function configEditarItem(index) {
+    _configEditandoIndex = index;
+    const valor = _configDados[_configListaAtual][index];
+    document.getElementById('config-input').value = valor;
+    document.getElementById('config-input').focus();
+    document.getElementById('config-btn-label').textContent = 'Salvar';
+    document.getElementById('config-btn-cancel-edit').removeAttribute('hidden');
+
+    // Destaca o item sendo editado
+    document.querySelectorAll('.config-item').forEach((el, i) => {
+        el.style.borderColor = i === index ? 'var(--admin-primary)' : '';
+    });
+}
+
+function configCancelarEdicao() {
+    _configEditandoIndex = null;
+    document.getElementById('config-input').value = '';
+    document.getElementById('config-btn-label').textContent = 'Adicionar';
+    document.getElementById('config-btn-cancel-edit').setAttribute('hidden', '');
+    document.querySelectorAll('.config-item').forEach(el => el.style.borderColor = '');
+}
+
+function configExcluirItem(index) {
+    const item = _configDados[_configListaAtual][index];
+    if (!confirm(`Excluir "${item}" da lista de ${CONFIG_LABELS[_configListaAtual]}?`)) return;
+    _configDados[_configListaAtual].splice(index, 1);
+    salvarConfig();
+}
+
+async function configSalvarItem() {
+    const input = document.getElementById('config-input');
+    const valor = input.value.trim();
+    if (!valor) { input.focus(); return; }
+
+    const lista = _configDados[_configListaAtual];
+
+    if (_configEditandoIndex !== null) {
+        lista[_configEditandoIndex] = valor;
+        configCancelarEdicao();
+    } else {
+        if (lista.map(i => i.toLowerCase()).includes(valor.toLowerCase())) {
+            showToast('Este item já existe na lista.', 'error'); return;
+        }
+        lista.push(valor);
+        input.value = '';
+        input.focus();
+    }
+
+    await salvarConfig();
+}
+
+async function salvarConfig() {
+    try {
+        await enviarViaIframe({ action: 'save_config', data: _configDados });
+        showToast('Lista atualizada!', 'success');
+        renderConfigLista();
+        populateFormSelects();
+    } catch (e) {
+        showToast('Erro ao salvar configurações: ' + e.message, 'error');
+    }
+}
+
+// Preenche filtros da barra principal e re-renderiza dropdowns abertos
+function populateFormSelects() {
+    // Re-renderiza dropdowns (atualiza lista sem fechar se estiver aberto)
+    CSD_KEYS.forEach(({ key }) => csdRender(key));
+
+    const filtroCat = document.getElementById('filter-categoria');
+    const filtroStatus = document.getElementById('filter-status');
+    if (filtroCat) {
+        filtroCat.innerHTML = '<option value="">Todas as Categorias</option>' +
+            (_configDados.categorias || []).map(c => {
+                const val = c.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,'-');
+                return `<option value="${val}">${escapeHtml(c)}</option>`;
+            }).join('');
+    }
+    if (filtroStatus) {
+        filtroStatus.innerHTML = '<option value="">Todos os Status</option>' +
+            (_configDados.status || []).map(s =>
+                `<option value="${s.toLowerCase()}">${escapeHtml(s)}</option>`).join('');
+    }
+}
+
+// ══════════════════════════════════════════════
+// CUSTOM SELECT — dropdown com edição inline
+// ══════════════════════════════════════════════
+// Mapa: key do campo → chave em _configDados
+const CSD_KEYS = [
+    { key: 'categoria', listaKey: 'categorias', placeholder: 'Nova categoria...' },
+    { key: 'status',    listaKey: 'status',      placeholder: 'Novo status...'    },
+    { key: 'tipo',      listaKey: 'tipos',        placeholder: 'Novo tipo...'      },
+];
+
+const _csdState = {};  // valor selecionado por key
+
+function csdListaKey(key) {
+    return CSD_KEYS.find(k => k.key === key)?.listaKey || key;
+}
+
+// Renderiza as opções na lista
+function csdRender(key) {
+    const list = document.getElementById('list-' + key);
+    if (!list) return;
+    const listaKey = csdListaKey(key);
+    const itens = _configDados[listaKey] || [];
+    const atual = _csdState[key] || '';
+
+    if (!itens.length) {
+        list.innerHTML = '<div style="padding:10px 14px;font-size:13px;color:var(--admin-text-muted)">Nenhuma opção. Adicione abaixo.</div>';
+        return;
+    }
+
+    list.innerHTML = itens.map(item => {
+        const sel = item === atual ? ' is-selected' : '';
+        return `<div class="csd-option${sel}" data-value="${escapeHtml(item)}">
+            <span class="csd-option-label">${escapeHtml(item)}</span>
+            ${sel ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+        </div>`;
+    }).join('');
+
+    list.querySelectorAll('.csd-option').forEach(opt => {
+        opt.addEventListener('click', () => csdSelect(key, opt.dataset.value));
+    });
+}
+
+function csdSelect(key, valor) {
+    _csdState[key] = valor;
+    document.getElementById('prod-' + key).value = valor;
+    const label = document.getElementById('label-' + key);
+    label.textContent = valor || 'Selecione...';
+    label.style.opacity = valor ? '1' : '0.5';
+    csdFechar(key);
+    csdRender(key);
+}
+
+function csdAbrir(key) {
+    CSD_KEYS.forEach(({ key: k }) => { if (k !== key) csdFechar(k); });
+    const dd = document.getElementById('dropdown-' + key);
+    const btn = document.getElementById('btn-' + key);
+    csdRender(key); // atualiza lista antes de abrir
+    dd?.removeAttribute('hidden');
+    btn?.classList.add('is-open');
+}
+
+function csdFechar(key) {
+    document.getElementById('dropdown-' + key)?.setAttribute('hidden', '');
+    document.getElementById('btn-' + key)?.classList.remove('is-open');
+}
+
+async function csdAdicionar(key) {
+    const input = document.getElementById('add-input-' + key);
+    const valor = input?.value.trim();
+    if (!valor) { input?.focus(); return; }
+    const listaKey = csdListaKey(key);
+    if (!_configDados[listaKey]) _configDados[listaKey] = [];
+    if (_configDados[listaKey].map(i => i.toLowerCase()).includes(valor.toLowerCase())) {
+        showToast('Já existe na lista.', 'error'); return;
+    }
+    _configDados[listaKey].push(valor);
+    input.value = '';
+    await salvarConfig();
+    csdSelect(key, valor); // seleciona o novo automaticamente
+}
+
+function initCustomSelects() {
+    CSD_KEYS.forEach(({ key }) => {
+        document.getElementById('btn-' + key)?.addEventListener('click', () => {
+            const dd = document.getElementById('dropdown-' + key);
+            dd?.hasAttribute('hidden') ? csdAbrir(key) : csdFechar(key);
+        });
+        document.getElementById('add-btn-' + key)?.addEventListener('click', () => csdAdicionar(key));
+        document.getElementById('add-input-' + key)?.addEventListener('keydown', e => {
+            if (e.key === 'Enter')  { e.preventDefault(); e.stopPropagation(); csdAdicionar(key); }
+            if (e.key === 'Escape') csdFechar(key);
+        });
+    });
+
+    // Fecha ao clicar fora
+    document.addEventListener('click', e => {
+        CSD_KEYS.forEach(({ key }) => {
+            const wrap = document.getElementById('wrap-' + key);
+            if (wrap && !wrap.contains(e.target)) csdFechar(key);
+        });
+    });
+
+    // Renderiza com os dados padrão já disponíveis
+    populateFormSelects();
+    csdSetValue('status', 'Ativo');
+    csdSetValue('categoria', '');
+    csdSetValue('tipo', '');
+}
+
+function csdSetValue(key, valor) {
+    _csdState[key] = valor;
+    document.getElementById('prod-' + key).value = valor;
+    const label = document.getElementById('label-' + key);
+    if (label) { label.textContent = valor || 'Selecione...'; label.style.opacity = valor ? '1' : '0.5'; }
+    csdRender(key);
+}
+
+// ============================================
+// HISTÓRICO DE ALTERAÇÕES
+// ============================================
+let _historicoCache = [];
+
+function openHistorico() {
+    document.getElementById('modal-historico').removeAttribute('hidden');
+    loadHistorico();
+}
+
+function closeHistorico() {
+    document.getElementById('modal-historico').setAttribute('hidden', '');
+}
+
+async function loadHistorico() {
+    const body = document.getElementById('historico-body');
+    body.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Carregando histórico...</p></div>';
+
+    try {
+        const url = CONFIG.APPS_SCRIPT_URL + '?action=get_historico&t=' + Date.now();
+        const res = await fetch(url);
+        const json = await res.json();
+        if (json.success && json.rows) {
+            _historicoCache = json.rows;
+            renderHistorico(_historicoCache);
+        } else {
+            body.innerHTML = '<div class="hist-empty"><p>Nenhum registro encontrado.</p></div>';
+        }
+    } catch (e) {
+        body.innerHTML = '<div class="hist-empty"><p>Erro ao carregar histórico.</p></div>';
+    }
+}
+
+function renderHistorico(rows) {
+    const body = document.getElementById('historico-body');
+    if (!rows.length) {
+        body.innerHTML = `<div class="hist-empty">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <p>Nenhum registro no histórico ainda.</p>
+        </div>`;
+        return;
+    }
+
+    const ICON = {
+        'Criado':  { cls: 'criar',   svg: '<path d="M12 5v14M5 12h14"/>' },
+        'Editado': { cls: 'editar',  svg: '<path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4z"/>' },
+        'Status':  { cls: 'status',  svg: '<circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>' },
+        'Excluído':{ cls: 'excluir', svg: '<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>' },
+    };
+
+    body.innerHTML = rows.map(r => {
+        const tipo = r[1] || 'Editado';
+        const ic = ICON[tipo] || ICON['Editado'];
+        return `<div class="hist-item">
+            <div class="hist-icon hist-icon--${ic.cls}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${ic.svg}</svg>
+            </div>
+            <div class="hist-info">
+                <span class="hist-acao">${escapeHtml(tipo)} — ${escapeHtml(r[2] || '')}</span>
+                <span class="hist-produto">${escapeHtml(r[3] || '')}</span>
+            </div>
+            <span class="hist-data">${escapeHtml(r[0] || '')}</span>
+        </div>`;
+    }).join('');
+}
+
+function filterHistorico() {
+    const termo = document.getElementById('historico-search').value.toLowerCase().trim();
+    if (!termo) { renderHistorico(_historicoCache); return; }
+    const filtrado = _historicoCache.filter(r =>
+        (r[2] || '').toLowerCase().includes(termo) ||
+        (r[3] || '').toLowerCase().includes(termo) ||
+        (r[1] || '').toLowerCase().includes(termo)
+    );
+    renderHistorico(filtrado);
+}
+
+async function registrarHistorico(tipo, nomeProduto, detalhe) {
+    try {
+        await enviarViaIframe({ action: 'append_historico', tipo, produto: nomeProduto, detalhe: detalhe || '' });
+    } catch (e) { /* histórico é não-crítico */ }
+}
+
+// ============================================
+// EXCLUIR PRODUTO
+// ============================================
+async function deleteProduct(product) {
+    if (!confirm(`⚠️ Tem certeza que deseja EXCLUIR o produto "${product._nome}"?\n\nEsta ação removerá a linha da planilha permanentemente.`)) return;
+    if (!confirm(`Confirmação final: excluir "${product._nome}" permanentemente?`)) return;
+
+    try {
+        await enviarViaIframe({ action: 'delete_row', row: product._rowIndex });
+        showToast(`Produto "${product._nome}" excluído.`, 'success');
+        registrarHistorico('Excluído', product._nome, 'Produto removido da planilha');
+        loadProducts();
+    } catch (error) {
+        showToast('Erro ao excluir: ' + error.message, 'error');
     }
 }
 
@@ -783,6 +1224,71 @@ function debounce(func, wait) {
         clearTimeout(timeout);
         timeout = setTimeout(later, wait);
     };
+}
+
+function renderPaginacao() {
+    let nav = document.getElementById('pagination-nav');
+    if (!nav) {
+        nav = document.createElement('div');
+        nav.id = 'pagination-nav';
+        nav.className = 'pagination-nav';
+        document.querySelector('.table-container').appendChild(nav);
+    }
+
+    const total = filteredProducts.length;
+    if (total === 0) { nav.innerHTML = ''; return; }
+
+    const totalPaginas = Math.ceil(total / ITENS_POR_PAGINA);
+    const inicio = (currentPage - 1) * ITENS_POR_PAGINA + 1;
+    const fim    = Math.min(currentPage * ITENS_POR_PAGINA, total);
+
+    let html = '';
+
+    // Botão Anterior
+    html += `<button class="pg-btn pg-prev" ${currentPage === 1 ? 'disabled' : ''} data-page="${currentPage - 1}">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>`;
+
+    // Números das páginas (com elipses se muitas)
+    const maxVisiveis = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiveis / 2));
+    let endPage   = Math.min(totalPaginas, startPage + maxVisiveis - 1);
+    if (endPage - startPage + 1 < maxVisiveis) {
+        startPage = Math.max(1, endPage - maxVisiveis + 1);
+    }
+
+    if (startPage > 1) {
+        html += `<button class="pg-btn" data-page="1">1</button>`;
+        if (startPage > 2) html += `<span class="pg-ellipsis">...</span>`;
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+        html += `<button class="pg-btn ${i === currentPage ? 'pg-active' : ''}" data-page="${i}">${i}</button>`;
+    }
+
+    if (endPage < totalPaginas) {
+        if (endPage < totalPaginas - 1) html += `<span class="pg-ellipsis">...</span>`;
+        html += `<button class="pg-btn" data-page="${totalPaginas}">${totalPaginas}</button>`;
+    }
+
+    // Botão Próximo
+    html += `<button class="pg-btn pg-next" ${currentPage === totalPaginas ? 'disabled' : ''} data-page="${currentPage + 1}">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>`;
+
+    // Info
+    html += `<span class="pg-info">${inicio}–${fim} de ${total}</span>`;
+
+    nav.innerHTML = html;
+
+    // Event listeners
+    nav.querySelectorAll('.pg-btn:not([disabled])').forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentPage = parseInt(btn.dataset.page);
+            renderTable();
+            document.querySelector('.table-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
 }
 
 function showToast(message, type = 'info') {
