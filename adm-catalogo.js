@@ -720,8 +720,8 @@ async function handleImageUpload(field, file) {
         showToast('O arquivo deve ser uma imagem (JPG, PNG, WEBP).', 'error');
         return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-        showToast('A imagem deve ter no máximo 5MB.', 'error');
+    if (file.size > 30 * 1024 * 1024) {
+        showToast('A imagem deve ter no máximo 30MB.', 'error');
         return;
     }
 
