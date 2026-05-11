@@ -488,9 +488,11 @@ async function handleSubmit(e) {
 async function saveToGoogleSheets(data, isEdit, rowIndex) {
     // Ordem real da planilha:
     // 0:ID 1:Nome 2:Categoria 3:Tipo 4:Cor 5:Tamanhos 6:Material 7:Descrição
-    // 8:Imagem1 9:Imagem2 10:Imagem3 11:Link 12:PrecoDe 13:PrecoPor 14:Desconto
-    // 15:Estoque 16:Oferta 17:Status
-    const values = [
+    // 8:Imagem1 9:Imagem2 10:Imagem3 11:Link 12:PrecoDe 13:PrecoPor
+    // 14:Desconto (NÃO ENVIADO — fórmula da planilha) 15:Estoque 16:Oferta 17:Status
+
+    // Colunas A até N (sem Desconto na col O)
+    const valuesSemDesconto = [
         isEdit ? data.id : (allProducts.length + 1).toString(),
         data.nome,
         data.categoria,
@@ -504,16 +506,21 @@ async function saveToGoogleSheets(data, isEdit, rowIndex) {
         data.imagem3,
         data.link,
         data.precoDe,
-        data.precoPor,
-        data.desconto,
+        data.precoPor
+    ];
+
+    // Colunas P até R (Estoque, Oferta, Status — pula col O Desconto)
+    const valuesAposDesconto = [
         data.estoque,
         data.oferta,
         data.status
     ];
 
+    // Para edição: envia dois blocos separados, pulando a coluna de desconto (col 15 = O)
+    // Para novo produto: envia tudo junto (desconto vazio, fórmula será criada manualmente)
     const payload = isEdit
-        ? { action: 'update', row: parseInt(rowIndex), values }
-        : { action: 'append', values };
+        ? { action: 'update_skip_desconto', row: parseInt(rowIndex), valuesSemDesconto, valuesAposDesconto }
+        : { action: 'append', values: [...valuesSemDesconto, '', ...valuesAposDesconto] };
 
     return new Promise((resolve, reject) => {
         // Usa iframe oculto para contornar CORS do Apps Script
