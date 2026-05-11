@@ -187,24 +187,28 @@ function parseCSV(text) {
             product[h] = values[idx] || '';
         });
         
-        // Mapeia campos comuns
-        product._nome = product['nome da peca / conjunto *'] || product['nome'] || '';
-        product._categoria = product['categoria *'] || product['categoria'] || '';
-        product._tipo = product['tipo de produto *'] || product['tipo'] || '';
-        product._precoDe = product['preco de (r$)'] || product['precode'] || '';
-        product._precoPor = product['preco por (r$) *'] || product['precopor'] || '';
-        product._desconto = product['desconto %'] || product['desconto'] || '';
-        product._tamanhos = product['tamanhos disponiveis *'] || product['tamanhos'] || '';
-        product._imagem1 = product['imagem destaque (url)'] || product['imagem1'] || '';
-        product._imagem2 = product['imagem 2 (url)'] || product['imagem2'] || '';
-        product._imagem3 = product['imagem 3 (url)'] || product['imagem3'] || '';
-        product._descricao = product['descricao *'] || product['descricao'] || '';
-        product._material = product['material / tecido'] || product['material'] || '';
-        product._cor = product['cor principal *'] || product['cor'] || '';
-        product._estoque = product['qtd. estoque'] || product['estoque'] || '';
-        product._status = product['status *'] || product['status'] || 'Ativo';
-        product._oferta = product['oferta em destaque?'] || product['oferta'] || product['novo'] || '';
-        product._link = product['link do produto (url)'] || product['link'] || '';
+        // Mapeamento direto pela posição das colunas (ordem real da planilha)
+        // 0:ID 1:Nome 2:Categoria 3:Tipo 4:Cor 5:Tamanhos 6:Material 7:Descrição
+        // 8:Imagem1 9:Imagem2 10:Imagem3 11:Link 12:PrecoDe 13:PrecoPor 14:Desconto
+        // 15:Estoque 16:Oferta 17:Status
+        product._id       = values[0] || '';
+        product._nome     = values[1] || '';
+        product._categoria= values[2] || '';
+        product._tipo     = values[3] || '';
+        product._cor      = values[4] || '';
+        product._tamanhos = values[5] || '';
+        product._material = values[6] || '';
+        product._descricao= values[7] || '';
+        product._imagem1  = values[8] || '';
+        product._imagem2  = values[9] || '';
+        product._imagem3  = values[10] || '';
+        product._link     = values[11] || '';
+        product._precoDe  = values[12] || '';
+        product._precoPor = values[13] || '';
+        product._desconto = values[14] || '';
+        product._estoque  = values[15] || '';
+        product._oferta   = values[16] || '';
+        product._status   = values[17] || 'Ativo';
         product._rowIndex = i;
         
         products.push(product);
@@ -369,6 +373,7 @@ function openModal(product = null) {
     if (product) {
         title.textContent = 'Editar Produto';
         document.getElementById('prod-row-index').value = product._rowIndex;
+        document.getElementById('prod-id').value = product._id;
         document.getElementById('prod-nome').value = product._nome;
         document.getElementById('prod-categoria').value = product._categoria;
         document.getElementById('prod-tipo').value = product._tipo;
@@ -432,6 +437,7 @@ async function handleSubmit(e) {
         const isEdit = !!rowIndex;
         
         const productData = {
+            id: document.getElementById('prod-id').value,
             nome: document.getElementById('prod-nome').value,
             categoria: document.getElementById('prod-categoria').value,
             tipo: document.getElementById('prod-tipo').value,
@@ -478,25 +484,29 @@ async function handleSubmit(e) {
 }
 
 async function saveToGoogleSheets(data, isEdit, rowIndex) {
+    // Ordem real da planilha:
+    // 0:ID 1:Nome 2:Categoria 3:Tipo 4:Cor 5:Tamanhos 6:Material 7:Descrição
+    // 8:Imagem1 9:Imagem2 10:Imagem3 11:Link 12:PrecoDe 13:PrecoPor 14:Desconto
+    // 15:Estoque 16:Oferta 17:Status
     const values = [
-        isEdit ? '' : (allProducts.length + 1).toString(),
+        isEdit ? data.id : (allProducts.length + 1).toString(),
         data.nome,
-        data.status,
         data.categoria,
         data.tipo,
         data.cor,
         data.tamanhos,
         data.material,
-        data.precoDe,
-        data.precoPor,
-        data.desconto,
+        data.descricao,
         data.imagem1,
         data.imagem2,
         data.imagem3,
-        data.descricao,
+        data.link,
+        data.precoDe,
+        data.precoPor,
+        data.desconto,
         data.estoque,
         data.oferta,
-        data.link
+        data.status
     ];
 
     const payload = isEdit
@@ -586,11 +596,11 @@ async function inactivateProduct(product) {
                 action: 'update',
                 row: product._rowIndex + 1,
                 values: [
-                    '', product._nome, novoStatus, product._categoria,
-                    product._tipo, product._cor, product._tamanhos, product._material,
+                    product._id, product._nome, product._categoria, product._tipo,
+                    product._cor, product._tamanhos, product._material, product._descricao,
+                    product._imagem1, product._imagem2, product._imagem3, product._link,
                     product._precoDe, product._precoPor, product._desconto,
-                    product._imagem1, product._imagem2, product._imagem3,
-                    product._descricao, product._estoque, product._oferta, product._link
+                    product._estoque, product._oferta, novoStatus
                 ]
             })
         });
