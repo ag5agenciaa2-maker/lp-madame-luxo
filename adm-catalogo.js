@@ -36,7 +36,7 @@ const CONFIG = {
 // ============================================
 // ESTADO GLOBAL
 // ============================================
-let accessToken = 'local';
+// Estado global do painel
 let allProducts = [];
 let filteredProducts = [];
 let currentView = localStorage.getItem('ml_view') || 'grid'; // 'grid' | 'list'
@@ -53,14 +53,14 @@ const SENHA_HASH = '2c26d46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
     initEventListeners();
+    initCustomSelects();
+    populateFormSelects(); // Preenche filtros e dropdowns com dados padrão
 
     // Verifica se já está autenticado na sessão
-    initCustomSelects();
     const autenticado = sessionStorage.getItem('ml_admin_auth');
     if (autenticado === '1') {
         showAdminPanel();
         loadProducts();
-        loadConfigListas();
     }
 });
 
@@ -86,6 +86,7 @@ function initEventListeners() {
     document.getElementById('modal-historico').addEventListener('click', (e) => {
         if (e.target === document.getElementById('modal-historico')) closeHistorico();
     });
+    initHistoricoFiltros();
     
     // Modal
     document.getElementById('modal-close').addEventListener('click', closeModal);
@@ -128,7 +129,7 @@ async function handleLogin() {
             sessionStorage.setItem('ml_admin_auth', '1');
             showAdminPanel();
             loadProducts();
-            loadConfigListas(); // carrega listas da planilha e atualiza seletores
+            populateFormSelects(); // preenche filtros e dropdowns com dados atualizados
             showToast('Bem-vinda ao painel!', 'success');
         } else {
             erro.hidden = false;
@@ -186,7 +187,19 @@ async function loadProducts() {
         const csvText = await response.text();
         allProducts = parseCSV(csvText);
         filteredProducts = [...allProducts];
-        
+
+        // Extrai valores únicos da planilha para popular os seletores
+        _configDados.tipos = [...new Set(allProducts.map(p => p._tipo).filter(Boolean))].sort();
+        _configDados.categorias = [...new Set([
+            ..._configDados.categorias,
+            ...allProducts.map(p => p._categoria).filter(Boolean)
+        ])].sort();
+        _configDados.status = [...new Set([
+            ..._configDados.status,
+            ...allProducts.map(p => p._status).filter(Boolean)
+        ])];
+        populateFormSelects();
+
         updateStats();
         renderTable();
         
@@ -675,7 +688,10 @@ async function handleSubmit(e) {
         
         if (success) {
             showToast(isEdit ? 'Produto atualizado!' : 'Produto criado!', 'success');
-            registrarHistorico(isEdit ? 'Editado' : 'Criado', productData.nome, isEdit ? 'Dados atualizados' : 'Novo produto adicionado');
+            const detalheHist = isEdit
+                ? `Categoria: ${productData.categoria} | Status: ${productData.status} | Preço: R$ ${productData.precoPor}`
+                : `Categoria: ${productData.categoria} | Status: ${productData.status} | Preço: R$ ${productData.precoPor}`;
+            registrarHistorico(isEdit ? 'Editado' : 'Criado', productData.nome, detalheHist);
             closeModal();
             loadProducts();
         } else {
@@ -811,160 +827,13 @@ async function inactivateProduct(product) {
 }
 
 // ============================================
-// CONFIGURAÇÕES DE LISTAS
+// DADOS DAS LISTAS (categorias, status, tipos)
 // ============================================
-let _configListaAtual = 'categorias';
 let _configDados = {
     categorias: ['Vestidos','Macacões','Conjuntos','Saias','Bodys','Blusas','Plus Size','Shorts','Acessórios','Macaquinhos','Nova Coleção'],
     status: ['Ativo','Inativo','Esgotado','Últimas Unidades','Oferta Especial'],
     tipos: [], cores: [], materiais: []
 };
-let _configEditandoIndex = null;
-
-const CONFIG_LABELS = {
-    categorias: 'categoria',
-    status: 'status',
-    tipos: 'tipo de produto',
-    cores: 'cor',
-    materiais: 'material'
-};
-
-function openConfig() {
-    document.getElementById('modal-config').removeAttribute('hidden');
-    _configEditandoIndex = null;
-    loadConfigListas();
-}
-
-function closeConfig() {
-    document.getElementById('modal-config').setAttribute('hidden', '');
-    configCancelarEdicao();
-}
-
-function switchConfigTab(lista) {
-    _configListaAtual = lista;
-    _configEditandoIndex = null;
-    document.querySelectorAll('.config-tab').forEach(t => t.classList.toggle('active', t.dataset.lista === lista));
-    configCancelarEdicao();
-    renderConfigLista();
-    document.getElementById('config-input').placeholder = `Nova ${CONFIG_LABELS[lista] || lista}...`;
-}
-
-async function loadConfigListas() {
-    document.getElementById('config-lista').innerHTML =
-        '<div class="loading-state"><div class="spinner"></div><p>Carregando...</p></div>';
-
-    try {
-        const url = CONFIG.APPS_SCRIPT_URL + '?action=get_config&t=' + Date.now();
-        const res = await fetch(url);
-        const json = await res.json();
-        if (json.success) {
-            _configDados = json.data || {};
-            // Garante que todas as chaves existem
-            ['categorias','status','tipos','cores','materiais'].forEach(k => {
-                if (!_configDados[k]) _configDados[k] = [];
-            });
-        }
-    } catch (e) {
-        // Se falhar, usa valores padrão
-        _configDados = {
-            categorias: ['Vestidos','Macacões','Conjuntos','Saias','Bodys','Blusas','Plus Size','Shorts','Acessórios','Macaquinhos','Nova Coleção'],
-            status: ['Ativo','Inativo','Esgotado','Últimas Unidades','Oferta Especial'],
-            tipos: [],
-            cores: [],
-            materiais: []
-        };
-    }
-
-    renderConfigLista();
-    switchConfigTab(_configListaAtual);
-    populateFormSelects();
-}
-
-function renderConfigLista() {
-    const lista = document.getElementById('config-lista');
-    const itens = _configDados[_configListaAtual] || [];
-
-    if (!itens.length) {
-        lista.innerHTML = `<div class="config-empty">Nenhum item cadastrado. Adicione o primeiro acima.</div>`;
-        return;
-    }
-
-    lista.innerHTML = itens.map((item, i) => `
-        <div class="config-item" data-index="${i}">
-            <span class="config-item-name">${escapeHtml(item)}</span>
-            <div class="config-item-actions">
-                <button class="btn-item-edit" title="Editar" onclick="configEditarItem(${i})">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4z"/></svg>
-                </button>
-                <button class="btn-item-delete" title="Excluir" onclick="configExcluirItem(${i})">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
-                </button>
-            </div>
-        </div>
-    `).join('');
-}
-
-function configEditarItem(index) {
-    _configEditandoIndex = index;
-    const valor = _configDados[_configListaAtual][index];
-    document.getElementById('config-input').value = valor;
-    document.getElementById('config-input').focus();
-    document.getElementById('config-btn-label').textContent = 'Salvar';
-    document.getElementById('config-btn-cancel-edit').removeAttribute('hidden');
-
-    // Destaca o item sendo editado
-    document.querySelectorAll('.config-item').forEach((el, i) => {
-        el.style.borderColor = i === index ? 'var(--admin-primary)' : '';
-    });
-}
-
-function configCancelarEdicao() {
-    _configEditandoIndex = null;
-    document.getElementById('config-input').value = '';
-    document.getElementById('config-btn-label').textContent = 'Adicionar';
-    document.getElementById('config-btn-cancel-edit').setAttribute('hidden', '');
-    document.querySelectorAll('.config-item').forEach(el => el.style.borderColor = '');
-}
-
-function configExcluirItem(index) {
-    const item = _configDados[_configListaAtual][index];
-    if (!confirm(`Excluir "${item}" da lista de ${CONFIG_LABELS[_configListaAtual]}?`)) return;
-    _configDados[_configListaAtual].splice(index, 1);
-    salvarConfig();
-}
-
-async function configSalvarItem() {
-    const input = document.getElementById('config-input');
-    const valor = input.value.trim();
-    if (!valor) { input.focus(); return; }
-
-    const lista = _configDados[_configListaAtual];
-
-    if (_configEditandoIndex !== null) {
-        lista[_configEditandoIndex] = valor;
-        configCancelarEdicao();
-    } else {
-        if (lista.map(i => i.toLowerCase()).includes(valor.toLowerCase())) {
-            showToast('Este item já existe na lista.', 'error'); return;
-        }
-        lista.push(valor);
-        input.value = '';
-        input.focus();
-    }
-
-    await salvarConfig();
-}
-
-async function salvarConfig() {
-    try {
-        await enviarViaIframe({ action: 'save_config', data: _configDados });
-        showToast('Lista atualizada!', 'success');
-        renderConfigLista();
-        populateFormSelects();
-    } catch (e) {
-        showToast('Erro ao salvar configurações: ' + e.message, 'error');
-    }
-}
 
 // Preenche filtros da barra principal e re-renderiza dropdowns abertos
 function populateFormSelects() {
@@ -1064,7 +933,7 @@ async function csdAdicionar(key) {
     }
     _configDados[listaKey].push(valor);
     input.value = '';
-    await salvarConfig();
+    populateFormSelects(); // atualiza filtros e dropdowns
     csdSelect(key, valor); // seleciona o novo automaticamente
 }
 
@@ -1108,9 +977,23 @@ function csdSetValue(key, valor) {
 // HISTÓRICO DE ALTERAÇÕES
 // ============================================
 let _historicoCache = [];
+let _histPagina     = 1;
+const _HIST_POR_PAG = 10;
+let _histPeriodo    = 'todos';
+
+const HIST_ICON = {
+    'Criado':  { cls: 'criar',   svg: '<path d="M12 5v14M5 12h14"/>' },
+    'Editado': { cls: 'editar',  svg: '<path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4z"/>' },
+    'Status':  { cls: 'status',  svg: '<circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>' },
+    'Excluído':{ cls: 'excluir', svg: '<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>' },
+};
 
 function openHistorico() {
     document.getElementById('modal-historico').removeAttribute('hidden');
+    _histPagina  = 1;
+    _histPeriodo = 'todos';
+    document.querySelectorAll('.hist-data-btn').forEach(b => b.classList.toggle('active', b.dataset.periodo === 'todos'));
+    document.getElementById('hist-datas-custom').setAttribute('hidden', '');
     loadHistorico();
 }
 
@@ -1121,14 +1004,16 @@ function closeHistorico() {
 async function loadHistorico() {
     const body = document.getElementById('historico-body');
     body.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Carregando histórico...</p></div>';
+    document.getElementById('historico-paginacao').innerHTML = '';
 
     try {
         const url = CONFIG.APPS_SCRIPT_URL + '?action=get_historico&t=' + Date.now();
         const res = await fetch(url);
         const json = await res.json();
         if (json.success && json.rows) {
-            _historicoCache = json.rows;
-            renderHistorico(_historicoCache);
+            _historicoCache = json.rows; // cada row: [data, tipo, produto, detalhe]
+            _histPagina = 1;
+            aplicarFiltroHistorico();
         } else {
             body.innerHTML = '<div class="hist-empty"><p>Nenhum registro encontrado.</p></div>';
         }
@@ -1137,48 +1022,200 @@ async function loadHistorico() {
     }
 }
 
+// Converte qualquer formato de data em Date
+// Suporta: "dd/MM/yyyy HH:mm", "MM/dd/yyyy HH:mm", objetos Date, timestamps
+function histParseData(str) {
+    if (!str) return null;
+
+    // Se já é um objeto Date válido (vindo do Apps Script como objeto)
+    if (str instanceof Date) return isNaN(str) ? null : str;
+
+    // Converte para string e limpa
+    const s = String(str).trim();
+    if (!s) return null;
+
+    // Tenta "dd/MM/yyyy HH:mm" ou "dd/MM/yyyy"
+    const m1 = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
+    if (m1) {
+        const dia = +m1[1], mes = +m1[2], ano = +m1[3];
+        const h = +(m1[4] || 0), min = +(m1[5] || 0);
+        // Heurística: se dia > 12, certamente é dd/MM; senão assume dd/MM (padrão Brasil)
+        return new Date(ano, mes - 1, dia, h, min, 0);
+    }
+
+    // Fallback: deixa o JS tentar (cobre ISO 8601 e outros)
+    const d = new Date(s);
+    return isNaN(d) ? null : d;
+}
+
+// Debug: mostra o formato real das datas no cache (chame no console: debugHistDatas())
+window.debugHistDatas = function() {
+    console.table((_historicoCache || []).slice(0, 5).map(r => ({
+        raw: r[0],
+        parsed: String(histParseData(r[0])),
+        tipo: r[1], produto: r[2]
+    })));
+};
+
+// Retorna meia-noite do dia de hoje
+function _hojeInicio() {
+    const d = new Date(); d.setHours(0, 0, 0, 0); return d;
+}
+
+function histFiltrarPorPeriodo(rows) {
+    if (_histPeriodo === 'todos') return rows;
+
+    const hoje   = _hojeInicio();
+    const ontem  = new Date(hoje); ontem.setDate(ontem.getDate() - 1);
+    const semana = new Date(hoje); semana.setDate(semana.getDate() - 6);
+    const amanha = new Date(hoje); amanha.setDate(amanha.getDate() + 1);
+
+    if (_histPeriodo === 'hoje') {
+        return rows.filter(r => {
+            const d = histParseData(r[0]);
+            return d && d >= hoje && d < amanha;
+        });
+    }
+    if (_histPeriodo === 'ontem') {
+        return rows.filter(r => {
+            const d = histParseData(r[0]);
+            return d && d >= ontem && d < hoje;
+        });
+    }
+    if (_histPeriodo === 'semana') {
+        return rows.filter(r => {
+            const d = histParseData(r[0]);
+            return d && d >= semana && d < amanha;
+        });
+    }
+    if (_histPeriodo === 'custom') {
+        const de  = document.getElementById('hist-data-de').value;
+        const ate = document.getElementById('hist-data-ate').value;
+        return rows.filter(r => {
+            const d = histParseData(r[0]); if (!d) return false;
+            if (de) {
+                const inicio = new Date(de); inicio.setHours(0,0,0,0);
+                if (d < inicio) return false;
+            }
+            if (ate) {
+                const fim = new Date(ate); fim.setHours(23,59,59,999);
+                if (d > fim) return false;
+            }
+            return true;
+        });
+    }
+    return rows;
+}
+
+function aplicarFiltroHistorico() {
+    const termo = (document.getElementById('historico-search').value || '').toLowerCase().trim();
+    let rows = [..._historicoCache];
+
+    // Filtro por texto
+    if (termo) {
+        rows = rows.filter(r =>
+            (r[0] || '').toLowerCase().includes(termo) ||
+            (r[1] || '').toLowerCase().includes(termo) ||
+            (r[2] || '').toLowerCase().includes(termo) ||
+            (r[3] || '').toLowerCase().includes(termo)
+        );
+    }
+
+    // Filtro por período
+    rows = histFiltrarPorPeriodo(rows);
+
+    renderHistorico(rows);
+}
+
 function renderHistorico(rows) {
     const body = document.getElementById('historico-body');
+    const nav  = document.getElementById('historico-paginacao');
+
     if (!rows.length) {
         body.innerHTML = `<div class="hist-empty">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            <p>Nenhum registro no histórico ainda.</p>
+            <p>Nenhum registro encontrado.</p>
         </div>`;
+        nav.innerHTML = '';
         return;
     }
 
-    const ICON = {
-        'Criado':  { cls: 'criar',   svg: '<path d="M12 5v14M5 12h14"/>' },
-        'Editado': { cls: 'editar',  svg: '<path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4z"/>' },
-        'Status':  { cls: 'status',  svg: '<circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>' },
-        'Excluído':{ cls: 'excluir', svg: '<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>' },
-    };
+    // Paginação
+    const total      = rows.length;
+    const totalPags  = Math.ceil(total / _HIST_POR_PAG);
+    if (_histPagina > totalPags) _histPagina = totalPags;
+    const inicio = (_histPagina - 1) * _HIST_POR_PAG;
+    const pagina = rows.slice(inicio, inicio + _HIST_POR_PAG);
 
-    body.innerHTML = rows.map(r => {
-        const tipo = r[1] || 'Editado';
-        const ic = ICON[tipo] || ICON['Editado'];
+    body.innerHTML = pagina.map(r => {
+        const tipo    = r[1] || 'Editado';
+        const produto = r[2] || '';
+        const detalhe = r[3] || '';
+        const data    = r[0] || '';
+        const ic      = HIST_ICON[tipo] || HIST_ICON['Editado'];
+
         return `<div class="hist-item">
             <div class="hist-icon hist-icon--${ic.cls}">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${ic.svg}</svg>
             </div>
             <div class="hist-info">
-                <span class="hist-acao">${escapeHtml(tipo)} — ${escapeHtml(r[2] || '')}</span>
-                <span class="hist-produto">${escapeHtml(r[3] || '')}</span>
+                <span class="hist-acao">${escapeHtml(tipo)}: <strong>${escapeHtml(produto)}</strong></span>
+                ${detalhe ? `<span class="hist-produto">${escapeHtml(detalhe)}</span>` : ''}
             </div>
-            <span class="hist-data">${escapeHtml(r[0] || '')}</span>
+            <span class="hist-data">${escapeHtml(data)}</span>
         </div>`;
     }).join('');
+
+    // Renderiza paginação
+    if (totalPags <= 1) { nav.innerHTML = ''; return; }
+
+    let pgHtml = `<span class="pg-info">${inicio + 1}–${Math.min(inicio + _HIST_POR_PAG, total)} de ${total}</span>`;
+    pgHtml += `<button class="pg-btn" ${_histPagina === 1 ? 'disabled' : ''} data-hp="${_histPagina - 1}">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>`;
+
+    // Páginas numéricas
+    for (let p = 1; p <= totalPags; p++) {
+        if (totalPags > 7 && p > 2 && p < totalPags - 1 && Math.abs(p - _histPagina) > 1) {
+            if (p === 3 || p === totalPags - 2) pgHtml += `<span class="pg-ellipsis">…</span>`;
+            continue;
+        }
+        pgHtml += `<button class="pg-btn${p === _histPagina ? ' active' : ''}" data-hp="${p}">${p}</button>`;
+    }
+
+    pgHtml += `<button class="pg-btn" ${_histPagina === totalPags ? 'disabled' : ''} data-hp="${_histPagina + 1}">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>`;
+
+    nav.innerHTML = pgHtml;
+    nav.querySelectorAll('.pg-btn:not([disabled])').forEach(btn => {
+        btn.addEventListener('click', () => {
+            _histPagina = +btn.dataset.hp;
+            renderHistorico(rows);
+            document.getElementById('historico-body').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
 }
 
 function filterHistorico() {
-    const termo = document.getElementById('historico-search').value.toLowerCase().trim();
-    if (!termo) { renderHistorico(_historicoCache); return; }
-    const filtrado = _historicoCache.filter(r =>
-        (r[2] || '').toLowerCase().includes(termo) ||
-        (r[3] || '').toLowerCase().includes(termo) ||
-        (r[1] || '').toLowerCase().includes(termo)
-    );
-    renderHistorico(filtrado);
+    _histPagina = 1;
+    aplicarFiltroHistorico();
+}
+
+function initHistoricoFiltros() {
+    document.querySelectorAll('.hist-data-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            _histPeriodo = btn.dataset.periodo;
+            _histPagina  = 1;
+            document.querySelectorAll('.hist-data-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const custom = document.getElementById('hist-datas-custom');
+            _histPeriodo === 'custom' ? custom.removeAttribute('hidden') : custom.setAttribute('hidden', '');
+            aplicarFiltroHistorico();
+        });
+    });
+    document.getElementById('hist-data-de')?.addEventListener('change', () => { _histPagina = 1; aplicarFiltroHistorico(); });
+    document.getElementById('hist-data-ate')?.addEventListener('change', () => { _histPagina = 1; aplicarFiltroHistorico(); });
 }
 
 async function registrarHistorico(tipo, nomeProduto, detalhe) {

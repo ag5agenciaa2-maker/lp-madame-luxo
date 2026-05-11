@@ -247,142 +247,6 @@ body {
     background: rgba(52, 152, 219, 0.1);
 }
 
-.btn-header.btn-config {
-    color: var(--admin-warning);
-    border-color: rgba(243, 156, 18, 0.3);
-}
-
-.btn-header.btn-config:hover {
-    background: rgba(243, 156, 18, 0.1);
-}
-
-/* ── Modal Configurações ── */
-.modal-config-content {
-    max-width: 620px;
-    max-height: 80vh;
-    display: flex;
-    flex-direction: column;
-}
-
-.config-tabs {
-    display: flex;
-    gap: 4px;
-    padding: 0 24px 16px;
-    border-bottom: 1px solid var(--admin-border);
-    flex-wrap: wrap;
-}
-
-.config-tab {
-    padding: 7px 16px;
-    border-radius: var(--admin-radius-sm);
-    border: 1px solid var(--admin-border);
-    background: transparent;
-    color: var(--admin-text-secondary);
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: var(--admin-transition);
-}
-
-.config-tab:hover {
-    background: var(--admin-surface-hover);
-    color: var(--admin-text);
-}
-
-.config-tab.active {
-    background: var(--admin-primary-light);
-    border-color: var(--admin-primary);
-    color: var(--admin-primary);
-    font-weight: 600;
-}
-
-.config-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 20px 24px 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.config-form-row {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-}
-
-.config-form-row .filter-input {
-    flex: 1;
-    margin: 0;
-}
-
-.config-lista {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.config-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    background: var(--admin-surface);
-    border: 1px solid var(--admin-border);
-    border-radius: var(--admin-radius-sm);
-    padding: 10px 14px;
-    transition: border-color 0.2s;
-}
-
-.config-item:hover {
-    border-color: var(--admin-border-light);
-}
-
-.config-item-name {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--admin-text);
-    flex: 1;
-}
-
-.config-item-actions {
-    display: flex;
-    gap: 6px;
-}
-
-.config-item-actions button {
-    width: 30px;
-    height: 30px;
-    border-radius: var(--admin-radius-sm);
-    border: 1px solid var(--admin-border);
-    background: transparent;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--admin-text-secondary);
-    transition: var(--admin-transition);
-}
-
-.config-item-actions .btn-item-edit:hover {
-    color: var(--admin-info);
-    border-color: var(--admin-info);
-    background: rgba(52,152,219,0.1);
-}
-
-.config-item-actions .btn-item-delete:hover {
-    color: var(--admin-danger);
-    border-color: var(--admin-danger);
-    background: rgba(231,76,60,0.1);
-}
-
-.config-empty {
-    text-align: center;
-    padding: 40px 20px;
-    color: var(--admin-text-muted);
-    font-size: 13px;
-}
-
 /* ── Modal Histórico ── */
 .modal-historico-content {
     max-width: 780px;
@@ -393,13 +257,85 @@ body {
 
 .historico-toolbar {
     display: flex;
-    gap: 10px;
-    padding: 0 24px 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0 24px 14px;
     align-items: center;
 }
 
 .historico-toolbar .filter-input {
     flex: 1;
+    min-width: 180px;
+}
+
+.hist-filtros-data {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.hist-data-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    border-radius: var(--admin-radius-sm);
+    border: 1px solid var(--admin-border-light);
+    background: transparent;
+    color: var(--admin-text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: var(--admin-transition);
+    white-space: nowrap;
+}
+
+.hist-data-btn:hover {
+    background: var(--admin-surface-hover);
+    color: var(--admin-text);
+}
+
+.hist-data-btn.active {
+    background: var(--admin-primary-light);
+    border-color: var(--admin-primary);
+    color: var(--admin-primary);
+    font-weight: 600;
+}
+
+.hist-datas-custom {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 24px 10px;
+}
+
+.hist-datas-custom[hidden] { display: none !important; }
+
+.hist-date-input {
+    padding: 6px 10px;
+    background: var(--admin-surface);
+    border: 1px solid var(--admin-border-light);
+    border-radius: var(--admin-radius-sm);
+    color: var(--admin-text);
+    font-size: 12px;
+    font-family: inherit;
+    outline: none;
+    cursor: pointer;
+}
+
+.hist-date-input:focus {
+    border-color: var(--admin-primary);
+}
+
+.historico-paginacao {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 24px 8px;
+    border-top: 1px solid var(--admin-border);
+    flex-wrap: wrap;
 }
 
 .historico-body {
