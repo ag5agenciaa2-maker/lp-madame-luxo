@@ -1248,7 +1248,7 @@ window.openWhatsApp = (message = '') => {
                         modal.classList.add('ml-open');
                     });
                 });
-                document.body.style.overflow = 'hidden';
+                window.BodyScroll.lock();
                 history.pushState({ modal: 'modal-dinamico' }, '');
             }
 
@@ -1258,7 +1258,7 @@ window.openWhatsApp = (message = '') => {
                     modal.classList.remove('ml-open');
                     setTimeout(() => { modal.setAttribute('hidden', ''); }, 350);
                 }
-                document.body.style.overflow = '';
+                window.BodyScroll.unlock();
             };
 
             function formatarPreco(valor) {
@@ -1529,18 +1529,16 @@ window.openWhatsApp = (message = '') => {
                     if (_moreDropdownOrigParent) {
                         _moreDropdownOrigParent.appendChild(moreDropdown);
                         _moreDropdownOrigParent = null;
-                        document.body.style.overflow = '';
+                        window.BodyScroll.unlock();
                     }
                 }
 
                 function abrirMore() {
-                    // Em mobile: move o dropdown pro <body> pra escapar de stacking contexts
-                    // (.cat-tabs, transforms, etc) e garantir que cliques cheguem nele.
-                    // Lock leve: só esconde overflow — não usa position:fixed (causa salto visual).
+                    // Em mobile: move o dropdown pro <body> pra escapar de stacking contexts.
                     if (window.matchMedia('(max-width: 640px)').matches) {
                         _moreDropdownOrigParent = moreDropdown.parentNode;
                         document.body.appendChild(moreDropdown);
-                        document.body.style.overflow = 'hidden';
+                        window.BodyScroll.lock();
                     }
                     moreDropdown.removeAttribute('hidden');
                     moreBtn.setAttribute('aria-expanded', 'true');
@@ -2102,7 +2100,7 @@ window.openWhatsApp = (message = '') => {
                         requestAnimationFrame(() => p.classList.add('is-open'));
                     });
                     p.setAttribute('aria-hidden', 'false');
-                    document.body.style.overflow = 'hidden';
+                    window.BodyScroll.lock();
                     // Empilha estado para que o botão "voltar" do celular feche a sacola
                     // em vez de sair do site.
                     if (!_sacolaPushedHistory) {
@@ -2120,7 +2118,7 @@ window.openWhatsApp = (message = '') => {
                     p.setAttribute('aria-hidden', 'true');
                     setTimeout(() => {
                         p.hidden = true;
-                        document.body.style.overflow = '';
+                        window.BodyScroll.unlock();
                         _sacolaFechando = false;
                     }, 300); // bate com o transition do CSS
                     // Quando o usuário fecha pelo X/overlay, desempilha o estado que adicionamos.
@@ -2186,9 +2184,7 @@ window.openWhatsApp = (message = '') => {
 
                     pop.hidden = false;
                     pop.setAttribute('aria-hidden', 'false');
-                    // Lock leve: só esconde o overflow do body. Não usa position:fixed,
-                    // que em mobile causa "salto" visual de scroll ao abrir/fechar o popover.
-                    document.body.style.overflow = 'hidden';
+                    window.BodyScroll.lock();
                 }
 
                 function fecharPopover() {
@@ -2196,7 +2192,7 @@ window.openWhatsApp = (message = '') => {
                     if (!pop || pop.hidden) return;
                     pop.hidden = true;
                     pop.setAttribute('aria-hidden', 'true');
-                    document.body.style.overflow = '';
+                    window.BodyScroll.unlock();
                     _produtoTemp = null;
                     _tamanhoTemp = null;
                     _aposConfirmar = null;
