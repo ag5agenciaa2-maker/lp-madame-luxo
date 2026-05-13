@@ -248,7 +248,7 @@ class NavbarController {
         const openMenu = () => {
             drawer.classList.add('is-open');
             overlay.classList.add('is-active');
-            window.ScrollLock.lock();
+            document.body.style.overflow = 'hidden';
             drawer.setAttribute('aria-hidden', 'false');
             overlay.setAttribute('aria-hidden', 'false');
         };
@@ -256,7 +256,7 @@ class NavbarController {
         const closeMenu = () => {
             drawer.classList.remove('is-open');
             overlay.classList.remove('is-active');
-            window.ScrollLock.unlock();
+            document.body.style.overflow = '';
             drawer.setAttribute('aria-hidden', 'true');
             overlay.setAttribute('aria-hidden', 'true');
         };
@@ -892,7 +892,7 @@ window.openWhatsApp = (message = '') => {
                         overlay.classList.add('ml-open');
                     });
                 });
-                window.ScrollLock.lock();
+                document.body.style.overflow = 'hidden';
                 history.pushState({ modal: id }, '');
             }
 
@@ -917,7 +917,7 @@ window.openWhatsApp = (message = '') => {
                     o.classList.remove('ml-open');
                     setTimeout(function () { o.setAttribute('hidden', ''); }, 350);
                 });
-                window.ScrollLock.unlock();
+                document.body.style.overflow = '';
                 setTimeout(function () { _fechandoModal = false; }, 400);
             }
             document.querySelectorAll('.pmodal-close').forEach(function (btn) {
@@ -1127,7 +1127,7 @@ window.openWhatsApp = (message = '') => {
                         modal.classList.add('ml-open');
                     });
                 });
-                window.ScrollLock.lock();
+                document.body.style.overflow = 'hidden';
                 history.pushState({ modal: 'modal-dinamico' }, '');
             }
 
@@ -1137,7 +1137,7 @@ window.openWhatsApp = (message = '') => {
                     modal.classList.remove('ml-open');
                     setTimeout(() => { modal.setAttribute('hidden', ''); }, 350);
                 }
-                window.ScrollLock.unlock();
+                document.body.style.overflow = '';
             };
 
             function formatarPreco(valor) {
@@ -1404,21 +1404,22 @@ window.openWhatsApp = (message = '') => {
                     moreBtn.setAttribute('aria-expanded', 'false');
                     moreBtn.classList.remove('is-open');
                     document.body.classList.remove('cat-more-open');
-                    // Em mobile: devolve o dropdown ao parent original e destrava scroll.
+                    // Em mobile: devolve o dropdown ao parent original e destrava o scroll leve.
                     if (_moreDropdownOrigParent) {
                         _moreDropdownOrigParent.appendChild(moreDropdown);
                         _moreDropdownOrigParent = null;
-                        window.ScrollLock.unlock();
+                        document.body.style.overflow = '';
                     }
                 }
 
                 function abrirMore() {
                     // Em mobile: move o dropdown pro <body> pra escapar de stacking contexts
                     // (.cat-tabs, transforms, etc) e garantir que cliques cheguem nele.
+                    // Lock leve: só esconde overflow — não usa position:fixed (causa salto visual).
                     if (window.matchMedia('(max-width: 640px)').matches) {
                         _moreDropdownOrigParent = moreDropdown.parentNode;
                         document.body.appendChild(moreDropdown);
-                        window.ScrollLock.lock();
+                        document.body.style.overflow = 'hidden';
                     }
                     moreDropdown.removeAttribute('hidden');
                     moreBtn.setAttribute('aria-expanded', 'true');
@@ -1958,7 +1959,7 @@ window.openWhatsApp = (message = '') => {
                     renderPainel();
                     p.hidden = false;
                     p.setAttribute('aria-hidden', 'false');
-                    window.ScrollLock.lock();
+                    document.body.style.overflow = 'hidden';
                 }
 
                 function fecharPainel() {
@@ -1966,7 +1967,7 @@ window.openWhatsApp = (message = '') => {
                     if (!p || p.hidden) return;
                     p.hidden = true;
                     p.setAttribute('aria-hidden', 'true');
-                    window.ScrollLock.unlock();
+                    document.body.style.overflow = '';
                 }
 
                 // Lista de tamanhos disponíveis a partir do campo "tamanhos" do produto.
