@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../../04 - Links 360/madame-luxo"
+		},
+		{
+			"path": "../../04 - Links 360"
+		},
+		{
+			"path": "../LP - Fabio Oliveira"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "LP - Fabio Oliveira"
+	}
+}
