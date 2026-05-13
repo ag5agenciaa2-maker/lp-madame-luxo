@@ -1,4 +1,4 @@
-﻿# robots.txt - Madame Luxo
+# robots.txt - Madame Luxo
 # https://www.madameluxorj.com.br
 
 User-agent: *
