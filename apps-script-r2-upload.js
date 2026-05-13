@@ -39,17 +39,22 @@ function doPost(e) {
  */
 function handleR2Upload(payload) {
   try {
-    const { filename, data, mimeType, r2Config } = payload;
-    
-    // Validações
-    if (!filename || !data || !r2Config) {
-      throw new Error('Parâmetros incompletos: filename, data e r2Config são obrigatórios');
+    const { filename, data, mimeType } = payload;
+
+    if (!filename || !data) {
+      throw new Error('Parâmetros incompletos: filename e data são obrigatórios');
     }
-    
-    const { accountId, accessKeyId, secretAccessKey, bucketName, publicUrl } = r2Config;
-    
+
+    // Credenciais ficam nas Script Properties (nunca no cliente).
+    const props = PropertiesService.getScriptProperties();
+    const accountId       = props.getProperty('R2_ACCOUNT_ID');
+    const accessKeyId     = props.getProperty('R2_ACCESS_KEY_ID');
+    const secretAccessKey = props.getProperty('R2_SECRET_ACCESS_KEY');
+    const bucketName      = props.getProperty('R2_BUCKET_NAME');
+    const publicUrl       = props.getProperty('R2_PUBLIC_URL');
+
     if (!accountId || !accessKeyId || !secretAccessKey || !bucketName) {
-      throw new Error('Configuração R2 incompleta');
+      throw new Error('Script Properties R2_* não configuradas no Apps Script');
     }
     
     // Decodifica Base64 para bytes

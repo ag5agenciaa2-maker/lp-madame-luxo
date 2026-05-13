@@ -1355,6 +1355,33 @@ body {
     margin-bottom: 4px;
 }
 
+/* Destaque para a seção de Status (primeira do form) */
+.form-section--status {
+    background: linear-gradient(135deg, rgba(232, 224, 0, 0.08) 0%, rgba(200, 169, 106, 0.05) 100%);
+    border: 1px solid rgba(200, 169, 106, 0.25);
+    border-left: 3px solid var(--admin-primary, #C8A96A);
+    border-radius: 10px;
+    padding: 18px 20px 16px;
+    margin-bottom: 18px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.form-section--status .form-section-title {
+    color: var(--admin-primary, #C8A96A);
+    font-size: 11px;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+}
+
+.form-section--status .form-section-title svg {
+    color: var(--admin-primary, #C8A96A);
+}
+
+.form-section--status .custom-select-btn {
+    font-weight: 600;
+}
+
 .form-section-title {
     font-size: 10px;
     font-weight: 700;

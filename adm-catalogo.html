@@ -157,6 +157,38 @@
                 <input type="hidden" id="prod-row-index">
                 <input type="hidden" id="prod-id">
 
+                <!-- SEÇÃO 0: STATUS (destaque) -->
+                <div class="form-section form-section--status">
+                    <div class="form-section-title">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <polyline points="9 12 11 14 15 10" />
+                        </svg>
+                        Status de Publicação
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group form-group-full">
+                            <label>Status *</label>
+                            <input type="hidden" id="prod-status" required>
+                            <div class="custom-select-wrap" id="wrap-status">
+                                <button type="button" class="custom-select-btn" id="btn-status">
+                                    <span id="label-status">Ativo</span>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <polyline points="6 9 12 15 18 9" />
+                                    </svg>
+                                </button>
+                                <div class="custom-select-dropdown" id="dropdown-status" hidden>
+                                    <div class="csd-list" id="list-status"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="form-divider">
+
                 <!-- SEÇÃO 1: IDENTIFICAÇÃO -->
                 <div class="form-section">
                     <div class="form-section-title">
@@ -380,53 +412,7 @@
                     </div>
                 </div>
 
-                <hr class="form-divider">
-
-                <!-- SEÇÃO 4: ESTOQUE E STATUS -->
-                <div class="form-section">
-                    <div class="form-section-title">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-                        </svg>
-                        Estoque & Publicação
-                    </div>
-                    <div class="form-grid-3">
-                        <div class="form-group">
-                            <label for="prod-estoque">Qtd. Estoque</label>
-                            <input type="text" id="prod-estoque" placeholder="Ex: 15">
-                        </div>
-                        <div class="form-group">
-                            <label>Status *</label>
-                            <input type="hidden" id="prod-status" required>
-                            <div class="custom-select-wrap" id="wrap-status">
-                                <button type="button" class="custom-select-btn" id="btn-status">
-                                    <span id="label-status">Ativo</span>
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2">
-                                        <polyline points="6 9 12 15 18 9" />
-                                    </svg>
-                                </button>
-                                <div class="custom-select-dropdown" id="dropdown-status" hidden>
-                                    <div class="csd-list" id="list-status"></div>
-                                    <div class="csd-add-row">
-                                        <input type="text" class="csd-add-input" id="add-input-status"
-                                            placeholder="Novo status...">
-                                        <button type="button" class="csd-add-btn" id="add-btn-status">+</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="prod-oferta">Oferta em Destaque?</label>
-                            <select id="prod-oferta">
-                                <option value="">Não</option>
-                                <option value="Sim">Sim</option>
-                            </select>
-                        </div>
-                    </div>
-                    <input type="hidden" id="prod-link">
-                </div>
+                <input type="hidden" id="prod-link">
 
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary" id="btn-cancelar">Cancelar</button>

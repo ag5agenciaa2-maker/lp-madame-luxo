@@ -2848,17 +2848,74 @@ ol {
             color: rgba(255,255,255,0.55);
         }
 
+        /* ── Filtros rápidos (chips premium) ── */
+        .cat-filters {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .cat-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(200, 169, 106, 0.25);
+            color: rgba(255, 255, 255, 0.85);
+            padding: 9px 18px;
+            border-radius: 100px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .cat-chip svg {
+            opacity: 0.7;
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+
+        .cat-chip:hover {
+            background: rgba(200, 169, 106, 0.12);
+            border-color: rgba(200, 169, 106, 0.6);
+            color: #F0D98A;
+            transform: translateY(-1px);
+        }
+
+        .cat-chip:hover svg {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .cat-chip.active {
+            background: linear-gradient(135deg, #8C6B2F 0%, #C8A96A 35%, #F0D98A 55%, #C8A96A 75%, #8C6B2F 100%);
+            border-color: transparent;
+            color: #1A1A1A;
+            font-weight: 600;
+            box-shadow: 0 4px 14px rgba(200, 169, 106, 0.35);
+        }
+
+        .cat-chip.active svg { opacity: 1; }
+
         /* ── Abas de Categoria ── */
+        /* Sem overflow-x: o excedente agora fica no dropdown "Mais ▾", não há mais scroll.
+           Posição relativa permite que o dropdown filho seja position:absolute em relação à barra. */
         .cat-tabs {
             display: flex;
-            flex-wrap: nowrap;
+            flex-wrap: wrap;
             gap: 6px;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
             padding-bottom: 2px;
             margin-bottom: 40px;
             justify-content: center;
+            position: relative;
         }
 
         .cat-tabs::-webkit-scrollbar { display: none; }
@@ -2886,9 +2943,385 @@ ol {
         }
 
         .cat-tab.active {
-            background: #C9A227;
-            border-color: #C9A227;
-            color: #000;
+            background: linear-gradient(135deg, #8C6B2F 0%, #C8A96A 35%, #F0D98A 55%, #C8A96A 75%, #8C6B2F 100%);
+            border-color: transparent;
+            color: #1A1A1A;
+            font-weight: 700;
+            box-shadow: 0 4px 14px rgba(200, 169, 106, 0.35);
+        }
+
+        /* Contador de produtos na aba (Vestidos · 12) */
+        .cat-tab-count {
+            display: inline-block;
+            margin-left: 6px;
+            font-size: 10px;
+            font-weight: 700;
+            opacity: 0.55;
+            letter-spacing: 0;
+        }
+
+        .cat-tab.active .cat-tab-count { opacity: 0.7; }
+        .cat-tab:hover .cat-tab-count { opacity: 0.85; }
+
+        /* ── Dropdown "Mais ▾" ── */
+        .cat-more-wrap {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+            z-index: 100;
+        }
+
+        /* Chip dourado mostrando a categoria selecionada (ao lado do "Ver Categorias") */
+        .cat-active-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px 8px 16px;
+            background: linear-gradient(135deg, #8C6B2F 0%, #C8A96A 35%, #F0D98A 55%, #C8A96A 75%, #8C6B2F 100%);
+            color: #1A1A1A;
+            border: none;
+            border-radius: 100px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(200, 169, 106, 0.35);
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            animation: catActiveChipIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .cat-active-chip:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(200, 169, 106, 0.45);
+        }
+
+        .cat-active-chip svg {
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 50%;
+            padding: 3px;
+            box-sizing: content-box;
+            transition: background 0.2s ease;
+        }
+
+        .cat-active-chip:hover svg {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        @keyframes catActiveChipIn {
+            from { opacity: 0; transform: scale(0.85); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+
+        .cat-more-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .cat-more-btn svg {
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-left: 2px;
+        }
+
+        .cat-more-btn.is-open svg {
+            transform: rotate(180deg);
+        }
+
+        .cat-more-btn.is-open {
+            border-color: #C8A96A;
+            color: #F0D98A;
+            background: rgba(200, 169, 106, 0.08);
+        }
+
+        .cat-more-dropdown {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            min-width: 240px;
+            max-width: 300px;
+            max-height: 380px;
+            overflow-y: auto;
+            background: rgba(20, 20, 20, 0.98);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(200, 169, 106, 0.3);
+            border-radius: 12px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(200, 169, 106, 0.15);
+            padding: 8px;
+            z-index: 1100;
+            animation: catMoreIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes catMoreIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .cat-more-dropdown::-webkit-scrollbar { width: 6px; }
+        .cat-more-dropdown::-webkit-scrollbar-track { background: transparent; }
+        .cat-more-dropdown::-webkit-scrollbar-thumb {
+            background: rgba(200, 169, 106, 0.25);
+            border-radius: 3px;
+        }
+
+        .cat-more-option {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            width: 100%;
+            padding: 11px 14px;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            color: rgba(255, 255, 255, 0.85);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.18s ease;
+        }
+
+        .cat-more-option:hover {
+            background: linear-gradient(135deg, rgba(200, 169, 106, 0.18) 0%, rgba(240, 217, 138, 0.10) 100%);
+            color: #F0D98A;
+            padding-left: 18px;
+        }
+
+        .cat-more-option-label {
+            flex: 1;
+            text-transform: none;
+        }
+
+        .cat-more-option-count {
+            font-size: 11px;
+            font-weight: 700;
+            color: rgba(200, 169, 106, 0.7);
+            background: rgba(200, 169, 106, 0.08);
+            padding: 2px 8px;
+            border-radius: 100px;
+            min-width: 26px;
+            text-align: center;
+        }
+
+        .cat-more-option:hover .cat-more-option-count {
+            background: rgba(200, 169, 106, 0.2);
+            color: #F0D98A;
+        }
+
+        /* Mobile: dropdown vira sheet ocupando boa parte da tela */
+        @media (max-width: 640px) {
+            .cat-more-dropdown {
+                position: fixed;
+                top: auto;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                max-width: none;
+                max-height: 75vh;
+                border-radius: 20px 20px 0 0;
+                padding: 16px 12px 24px;
+                box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.7), 0 -2px 10px rgba(200, 169, 106, 0.2);
+                animation: catMoreSheetIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+                z-index: 2000;
+            }
+
+            .cat-more-dropdown::before {
+                content: '';
+                display: block;
+                width: 36px;
+                height: 4px;
+                background: rgba(200, 169, 106, 0.4);
+                border-radius: 100px;
+                margin: 0 auto 16px;
+            }
+
+            .cat-more-option {
+                padding: 14px 16px;
+                font-size: 14px;
+            }
+        }
+
+        @keyframes catMoreSheetIn {
+            from { transform: translateY(100%); }
+            to   { transform: translateY(0); }
+        }
+
+        /* Backdrop dimmer quando dropdown "Mais" aberto em mobile (sem blur — só escurece) */
+        @media (max-width: 640px) {
+            body.cat-more-open::after {
+                content: '';
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.15);
+                z-index: 1999;
+                animation: catMoreBackdropIn 0.25s ease;
+            }
+
+            /* Esconde o WhatsApp flutuante enquanto o dropdown "Ver Categorias" está aberto */
+            body.cat-more-open .whatsapp-container {
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.2s ease;
+            }
+        }
+
+        @keyframes catMoreBackdropIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+
+        /* ── Toggle "Ver ofertas de [Categoria]" (discreto, centralizado) ── */
+        .cat-ofertas-toggle {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin: 0 auto 24px;
+            padding: 7px 14px;
+            background: rgba(200, 169, 106, 0.06);
+            border: 1px solid rgba(200, 169, 106, 0.2);
+            border-radius: 100px;
+            color: rgba(200, 169, 106, 0.85);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .cat-ofertas-toggle:hover {
+            background: rgba(200, 169, 106, 0.12);
+            border-color: rgba(200, 169, 106, 0.45);
+            color: #F0D98A;
+        }
+
+        .cat-ofertas-toggle.is-active {
+            background: linear-gradient(135deg, #8C6B2F 0%, #C8A96A 35%, #F0D98A 55%, #C8A96A 75%, #8C6B2F 100%);
+            border-color: transparent;
+            color: #1A1A1A;
+            box-shadow: 0 3px 10px rgba(200, 169, 106, 0.3);
+        }
+
+        .cat-ofertas-toggle svg { opacity: 0.7; }
+        .cat-ofertas-toggle.is-active svg { opacity: 1; }
+
+        .cat-ofertas-toggle-count {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 5px;
+            background: rgba(200, 169, 106, 0.15);
+            border-radius: 100px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .cat-ofertas-toggle.is-active .cat-ofertas-toggle-count {
+            background: rgba(0, 0, 0, 0.18);
+            color: #1A1A1A;
+        }
+
+        /* ── Paginação premium da aba "Todos" ── */
+        .cat-pagination {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 48px;
+            padding-top: 32px;
+            border-top: 1px solid rgba(200, 169, 106, 0.15);
+        }
+
+        .cat-pag-numbers {
+            display: inline-flex;
+            gap: 4px;
+        }
+
+        .cat-pag-num,
+        .cat-pag-arrow {
+            min-width: 38px;
+            height: 38px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(200, 169, 106, 0.25);
+            color: rgba(255, 255, 255, 0.85);
+            border-radius: 50%;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 0 10px;
+        }
+
+        .cat-pag-num:hover:not(.active),
+        .cat-pag-arrow:hover:not([disabled]) {
+            background: rgba(200, 169, 106, 0.15);
+            border-color: rgba(200, 169, 106, 0.6);
+            color: #F0D98A;
+            transform: translateY(-1px);
+        }
+
+        .cat-pag-num.active {
+            background: linear-gradient(135deg, #8C6B2F 0%, #C8A96A 35%, #F0D98A 55%, #C8A96A 75%, #8C6B2F 100%);
+            border-color: transparent;
+            color: #1A1A1A;
+            box-shadow: 0 4px 14px rgba(200, 169, 106, 0.4);
+            cursor: default;
+        }
+
+        .cat-pag-arrow[disabled] {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .cat-pag-ellipsis {
+            min-width: 38px;
+            height: 38px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(200, 169, 106, 0.4);
+            font-size: 18px;
+            letter-spacing: 2px;
+        }
+
+        .cat-pag-info {
+            margin-left: 16px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        @media (max-width: 640px) {
+            .cat-pag-info {
+                width: 100%;
+                margin-left: 0;
+                text-align: center;
+                margin-top: 12px;
+                order: 99;
+            }
+
+            .cat-pag-num,
+            .cat-pag-arrow {
+                min-width: 36px;
+                height: 36px;
+                font-size: 12px;
+            }
         }
 
         .cat-tab[data-cat="ofertas-destaque"] {
@@ -3633,9 +4066,9 @@ ol {
         .img-lightbox-arrow[hidden] { display: none !important; }
 
         /* ── Responsivo catálogo ── */
+        /* Sempre 4 colunas em telas médias/grandes pra paginação 4×2 ficar bonita. */
         @media (max-width: 1100px) {
             .cat-grid {
-                grid-template-columns: repeat(3, 1fr);
                 gap: 16px;
             }
         }
@@ -3728,4 +4161,547 @@ ol {
                 border-radius: 16px;
                 max-height: 96vh;
             }
+        }
+
+        /* ============================================
+           SACOLA — carrinho persistente
+           ============================================ */
+
+        /* Botão sacola no card (canto sup. direito) */
+        .cat-card-sacola-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(20, 20, 20, 0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(200, 169, 106, 0.4);
+            color: #F0D98A;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            z-index: 3;
+            opacity: 0;
+        }
+        .cat-card:hover .cat-card-sacola-btn,
+        .cat-card-sacola-btn:focus {
+            opacity: 1;
+        }
+        @media (max-width: 768px) {
+            .cat-card-sacola-btn { opacity: 1; }
+        }
+        .cat-card-sacola-btn:hover {
+            background: linear-gradient(135deg, #8C6B2F 0%, #C8A96A 35%, #F0D98A 55%, #C8A96A 75%, #8C6B2F 100%);
+            color: #1A1A1A;
+            border-color: transparent;
+            transform: scale(1.08);
+        }
+        .cat-card-sacola-btn.is-added {
+            background: linear-gradient(135deg, #8C6B2F, #F0D98A);
+            color: #1A1A1A;
+            border-color: transparent;
+        }
+
+        /* Botão "Adicionar à Sacola" no modal */
+        .pmodal-add-sacola {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 14px 20px;
+            background: transparent;
+            border: 1.5px solid #C8A96A;
+            color: #F0D98A;
+            border-radius: 100px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 10px;
+        }
+        .pmodal-add-sacola:hover {
+            background: rgba(200, 169, 106, 0.12);
+            color: #fff;
+        }
+
+        /* Ícone sacola na navbar (desktop) */
+        .nav-sacola {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            background: transparent;
+            border: 1px solid rgba(200, 169, 106, 0.3);
+            color: #C8A96A;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-right: 10px;
+        }
+        .nav-sacola:hover {
+            background: rgba(200, 169, 106, 0.12);
+            color: #F0D98A;
+            border-color: #C8A96A;
+        }
+        .nav-sacola-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 5px;
+            background: linear-gradient(135deg, #8C6B2F, #F0D98A);
+            color: #1A1A1A;
+            border-radius: 100px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        @media (max-width: 900px) {
+            .nav-sacola { display: none; }
+        }
+
+        /* Botão flutuante (mobile + desktop quando sacola tem itens) */
+        .sacola-fab {
+            position: fixed;
+            bottom: 28px;
+            left: 28px;
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #8C6B2F 0%, #C8A96A 35%, #F0D98A 55%, #C8A96A 75%, #8C6B2F 100%);
+            color: #1A1A1A;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 2px 10px rgba(200, 169, 106, 0.35);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .sacola-fab.is-visible { display: inline-flex; }
+        .sacola-fab:hover {
+            transform: translateY(-2px) scale(1.04);
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5), 0 4px 14px rgba(200, 169, 106, 0.5);
+        }
+        .sacola-fab-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            min-width: 22px;
+            height: 22px;
+            padding: 0 6px;
+            background: #1A1A1A;
+            color: #F0D98A;
+            border: 2px solid #F0D98A;
+            border-radius: 100px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        @media (max-width: 640px) {
+            .sacola-fab { bottom: 90px; left: 20px; width: 52px; height: 52px; }
+        }
+
+        /* Painel lateral (drawer da direita) */
+        .sacola-painel {
+            position: fixed;
+            inset: 0;
+            z-index: 3000;
+        }
+        .sacola-painel[hidden] { display: none !important; }
+        .sacola-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            opacity: 0;
+            animation: sacolaOverlayIn 0.25s ease forwards;
+        }
+        @keyframes sacolaOverlayIn { to { opacity: 1; } }
+
+        .sacola-drawer {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            max-width: 420px;
+            background: #0E0E0E;
+            border-left: 1px solid rgba(200, 169, 106, 0.2);
+            display: flex;
+            flex-direction: column;
+            transform: translateX(100%);
+            animation: sacolaDrawerIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            box-shadow: -20px 0 50px rgba(0, 0, 0, 0.5);
+        }
+        @keyframes sacolaDrawerIn { to { transform: translateX(0); } }
+
+        .sacola-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(200, 169, 106, 0.15);
+        }
+        .sacola-titulo {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 22px;
+            font-weight: 400;
+            letter-spacing: 0.08em;
+            color: #F0D98A;
+        }
+        .sacola-titulo-count {
+            font-size: 14px;
+            color: rgba(200, 169, 106, 0.7);
+            font-family: 'DM Sans', sans-serif;
+            letter-spacing: 0;
+        }
+        .sacola-close {
+            width: 36px;
+            height: 36px;
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-radius: 50%;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .sacola-close:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+
+        .sacola-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 24px;
+        }
+        .sacola-body::-webkit-scrollbar { width: 6px; }
+        .sacola-body::-webkit-scrollbar-thumb {
+            background: rgba(200, 169, 106, 0.3);
+            border-radius: 3px;
+        }
+
+        .sacola-item {
+            display: flex;
+            gap: 14px;
+            padding: 14px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .sacola-item:last-child { border-bottom: none; }
+        .sacola-item-img {
+            width: 72px;
+            height: 90px;
+            object-fit: cover;
+            border-radius: 8px;
+            flex-shrink: 0;
+            background: #1A1A1A;
+        }
+        .sacola-item-info {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .sacola-item-nome {
+            margin: 0;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            line-height: 1.3;
+        }
+        .sacola-item-meta {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.55);
+            letter-spacing: 0.04em;
+        }
+        .sacola-item-preco {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            color: #F0D98A;
+            margin-top: auto;
+        }
+        .sacola-item-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 4px;
+        }
+        .sacola-qtd-btn {
+            width: 24px;
+            height: 24px;
+            background: transparent;
+            border: 1px solid rgba(200, 169, 106, 0.3);
+            color: #C8A96A;
+            border-radius: 50%;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            line-height: 1;
+            transition: all 0.15s ease;
+        }
+        .sacola-qtd-btn:hover {
+            background: rgba(200, 169, 106, 0.15);
+            color: #F0D98A;
+        }
+        .sacola-qtd-valor {
+            min-width: 20px;
+            text-align: center;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+        }
+        .sacola-item-remove {
+            margin-left: auto;
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.4);
+            cursor: pointer;
+            padding: 4px;
+            transition: color 0.15s ease;
+        }
+        .sacola-item-remove:hover { color: #ff6b6b; }
+
+        .sacola-empty {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 24px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.5);
+        }
+        .sacola-empty[hidden] { display: none !important; }
+        .sacola-empty svg { color: rgba(200, 169, 106, 0.4); margin-bottom: 16px; }
+        .sacola-empty-title {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            color: #fff;
+            margin: 0 0 4px;
+        }
+        .sacola-empty-sub { margin: 0; font-size: 13px; }
+
+        .sacola-footer {
+            padding: 20px 24px 24px;
+            border-top: 1px solid rgba(200, 169, 106, 0.15);
+            background: rgba(0, 0, 0, 0.3);
+        }
+        .sacola-total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 14px;
+        }
+        .sacola-total-label {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 12px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        .sacola-total-valor {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: #F0D98A;
+        }
+        .sacola-finalizar {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 14px 20px;
+            background: #25D366;
+            color: #fff;
+            border: none;
+            border-radius: 100px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 10px;
+        }
+        .sacola-finalizar:hover {
+            background: #1FB654;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(37, 211, 102, 0.35);
+        }
+        .sacola-limpar {
+            display: block;
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.4);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 12px;
+            cursor: pointer;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+        .sacola-limpar:hover { color: #ff6b6b; }
+
+        /* Popover de tamanho */
+        .tam-popover {
+            position: fixed;
+            inset: 0;
+            z-index: 3500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .tam-popover[hidden] { display: none !important; }
+        .tam-popover-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.65);
+            animation: sacolaOverlayIn 0.25s ease forwards;
+            opacity: 0;
+        }
+        .tam-popover-box {
+            position: relative;
+            background: #0E0E0E;
+            border: 1px solid rgba(200, 169, 106, 0.3);
+            border-radius: 18px;
+            max-width: 380px;
+            width: 100%;
+            padding: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 4px 18px rgba(200, 169, 106, 0.2);
+            animation: tamPopoverIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes tamPopoverIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .tam-popover-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+        .tam-popover-header h3 {
+            margin: 0;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 22px;
+            font-weight: 400;
+            letter-spacing: 0.08em;
+            color: #F0D98A;
+        }
+        .tam-popover-close {
+            width: 32px;
+            height: 32px;
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .tam-popover-close:hover { color: #fff; background: rgba(255, 255, 255, 0.06); }
+        .tam-popover-produto {
+            margin: 0 0 18px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .tam-popover-opts {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .tam-opt {
+            min-width: 56px;
+            padding: 10px 16px;
+            background: transparent;
+            border: 1.5px solid rgba(200, 169, 106, 0.3);
+            color: #fff;
+            border-radius: 100px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            transition: all 0.18s ease;
+        }
+        .tam-opt:hover {
+            border-color: #C8A96A;
+            background: rgba(200, 169, 106, 0.1);
+        }
+        .tam-opt.is-selected {
+            background: linear-gradient(135deg, #8C6B2F 0%, #C8A96A 35%, #F0D98A 55%, #C8A96A 75%, #8C6B2F 100%);
+            border-color: transparent;
+            color: #1A1A1A;
+        }
+        .tam-popover-confirm {
+            width: 100%;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, #8C6B2F 0%, #C8A96A 35%, #F0D98A 55%, #C8A96A 75%, #8C6B2F 100%);
+            color: #1A1A1A;
+            border: none;
+            border-radius: 100px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .tam-popover-confirm:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .tam-popover-confirm:not(:disabled):hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(200, 169, 106, 0.4);
+        }
+
+        /* Esconde WhatsApp quando sacola tem itens OU usuário está no catálogo */
+        body.sacola-tem-itens .whatsapp-container,
+        body.no-catalogo .whatsapp-container {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        body.sacola-tem-itens .sacola-fab,
+        body.no-catalogo .sacola-fab {
+            display: inline-flex;
         }

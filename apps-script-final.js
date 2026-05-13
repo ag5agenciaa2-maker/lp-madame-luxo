@@ -24,10 +24,16 @@ function doPost(e) {
     catch(ex) { data = JSON.parse(e.parameter.payload || '{}'); }
 
     // ============================================
-    // NOVO: Upload para R2 (processa primeiro)
+    // NOVO: Upload / Delete R2 (processa primeiro)
     // ============================================
     if (data.action === 'upload_r2') {
       return handleR2Upload(data);
+    }
+    if (data.action === 'delete_r2') {
+      return handleR2Delete(data);
+    }
+    if (data.action === 'set_validation') {
+      return handleSetValidation(data);
     }
 
     // ============================================
@@ -113,6 +119,65 @@ function doGet(e) {
 }
 
 // ============================================
+// VALIDAÇÃO DE DADOS (DROPDOWN NA PLANILHA)
+// ============================================
+
+/**
+ * Atualiza a validação de dados (dropdown da célula) de uma coluna inteira da planilha.
+ * Recebe { column: 'C', values: ['Vestidos','Blusas',...] }.
+ * Aplica em C2:C1000 (mil linhas pré-validadas, pula o cabeçalho).
+ */
+function handleSetValidation(payload) {
+  try {
+    var columnLetter = (payload.column || '').toUpperCase();
+    var values = payload.values || [];
+
+    if (!/^[A-Z]$/.test(columnLetter)) {
+      throw new Error('Coluna inválida (esperado letra A-Z): ' + columnLetter);
+    }
+    if (!Array.isArray(values)) {
+      throw new Error('values deve ser um array');
+    }
+
+    // Deduplica, remove vazios, ordena
+    var unique = [];
+    var seen = {};
+    values.forEach(function(v) {
+      var s = (v == null ? '' : String(v)).trim();
+      if (s && !seen[s.toLowerCase()]) {
+        seen[s.toLowerCase()] = true;
+        unique.push(s);
+      }
+    });
+    unique.sort(function(a, b) { return a.localeCompare(b, 'pt-BR'); });
+
+    var ss = SpreadsheetApp.openById('13I0DBjImUK8R1rZe1Nt0FC-WzALALbkAencGH5HdsdA');
+    var sheet = ss.getSheets()[0];
+
+    var range = sheet.getRange(columnLetter + '2:' + columnLetter + '1000');
+
+    if (unique.length === 0) {
+      range.clearDataValidations();
+    } else {
+      var rule = SpreadsheetApp.newDataValidation()
+        .requireValueInList(unique, true) // true = mostra seta de dropdown
+        .setAllowInvalid(true)            // permite digitar valor fora da lista (mais flexível)
+        .build();
+      range.setDataValidation(rule);
+    }
+
+    return ContentService.createTextOutput(JSON.stringify({
+      success: true, column: columnLetter, count: unique.length
+    })).setMimeType(ContentService.MimeType.JSON);
+
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({
+      success: false, error: error.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// ============================================
 // NOVO: UPLOAD PARA CLOUDFLARE R2
 // ============================================
 
@@ -125,21 +190,21 @@ function handleR2Upload(payload) {
     var filename = payload.filename;
     var base64Data = payload.data;
     var mimeType = payload.mimeType;
-    var r2Config = payload.r2Config;
-    
-    // Validações
-    if (!filename || !base64Data || !r2Config) {
-      throw new Error('Parâmetros incompletos: filename, data e r2Config são obrigatórios');
+
+    if (!filename || !base64Data) {
+      throw new Error('Parâmetros incompletos: filename e data são obrigatórios');
     }
-    
-    var accountId = r2Config.accountId;
-    var accessKeyId = r2Config.accessKeyId;
-    var secretAccessKey = r2Config.secretAccessKey;
-    var bucketName = r2Config.bucketName;
-    var publicUrl = r2Config.publicUrl;
-    
+
+    // Credenciais vêm das Script Properties (Projeto → Configurações → Propriedades do script)
+    var props = PropertiesService.getScriptProperties();
+    var accountId       = props.getProperty('R2_ACCOUNT_ID');
+    var accessKeyId     = props.getProperty('R2_ACCESS_KEY_ID');
+    var secretAccessKey = props.getProperty('R2_SECRET_ACCESS_KEY');
+    var bucketName      = props.getProperty('R2_BUCKET_NAME');
+    var publicUrl       = props.getProperty('R2_PUBLIC_URL');
+
     if (!accountId || !accessKeyId || !secretAccessKey || !bucketName) {
-      throw new Error('Configuração R2 incompleta');
+      throw new Error('Script Properties R2_* não configuradas no Apps Script');
     }
     
     // Decodifica Base64 para bytes
@@ -158,14 +223,14 @@ function handleR2Upload(payload) {
     // Payload hash (UNSIGNED-PAYLOAD para PUT direto)
     var payloadHash = 'UNSIGNED-PAYLOAD';
     
-    // Headers
-    var headers = {
-      'Host': host,
+    // Headers que entram na assinatura AWS (Host é obrigatório aqui).
+    var headersToSign = {
+      'host': host,
       'x-amz-content-sha256': payloadHash,
       'x-amz-date': amzDate,
-      'Content-Type': mimeType
+      'content-type': mimeType
     };
-    
+
     // Gera assinatura AWS Signature V4
     var signature = generateAWSSignature(
       secretAccessKey,
@@ -174,19 +239,24 @@ function handleR2Upload(payload) {
       service,
       'PUT',
       '/' + bucketName + '/' + filename,
-      headers,
+      headersToSign,
       payloadHash
     );
-    
-    // Authorization header
+
     var credential = accessKeyId + '/' + dateStamp + '/' + region + '/' + service + '/aws4_request';
-    var signedHeaders = Object.keys(headers).map(function(k) { return k.toLowerCase(); }).sort().join(';');
-    headers['Authorization'] = 'AWS4-HMAC-SHA256 Credential=' + credential + ', SignedHeaders=' + signedHeaders + ', Signature=' + signature;
-    
-    // Faz o upload para R2
+    var signedHeaders = Object.keys(headersToSign).sort().join(';');
+
+    // Headers que o UrlFetchApp pode enviar (não inclui Host — o Apps Script preenche sozinho).
+    var requestHeaders = {
+      'x-amz-content-sha256': payloadHash,
+      'x-amz-date': amzDate,
+      'Authorization': 'AWS4-HMAC-SHA256 Credential=' + credential + ', SignedHeaders=' + signedHeaders + ', Signature=' + signature
+    };
+
     var options = {
-      method: 'PUT',
-      headers: headers,
+      method: 'put',
+      contentType: mimeType,
+      headers: requestHeaders,
       payload: blob.getBytes(),
       muteHttpExceptions: true
     };
@@ -210,6 +280,91 @@ function handleR2Upload(payload) {
     return ContentService.createTextOutput(JSON.stringify({
       success: false,
       error: error.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+/**
+ * Deleta um objeto do R2 a partir da URL pública (ou da chave/key direta).
+ * Aceita { url: 'https://pub-xxxx.r2.dev/produtos/123.webp' } ou { key: 'produtos/123.webp' }.
+ * Silenciosamente ignora URLs que não pertencem ao bucket configurado (segurança).
+ */
+function handleR2Delete(payload) {
+  try {
+    var props = PropertiesService.getScriptProperties();
+    var accountId       = props.getProperty('R2_ACCOUNT_ID');
+    var accessKeyId     = props.getProperty('R2_ACCESS_KEY_ID');
+    var secretAccessKey = props.getProperty('R2_SECRET_ACCESS_KEY');
+    var bucketName      = props.getProperty('R2_BUCKET_NAME');
+    var publicUrl       = props.getProperty('R2_PUBLIC_URL');
+
+    if (!accountId || !accessKeyId || !secretAccessKey || !bucketName) {
+      throw new Error('Script Properties R2_* não configuradas');
+    }
+
+    // Resolve a key (caminho dentro do bucket): aceita URL pública ou key direta.
+    var key = payload.key;
+    if (!key && payload.url) {
+      // Só aceita URLs do bucket configurado — evita ataque de deletar arquivo arbitrário.
+      if (publicUrl && payload.url.indexOf(publicUrl) === 0) {
+        key = payload.url.substring(publicUrl.length).replace(/^\//, '');
+      }
+    }
+
+    if (!key) {
+      // URL fora do bucket → não é erro, só ignora (ex.: imagem antiga de outro storage).
+      return ContentService.createTextOutput(JSON.stringify({
+        success: true, skipped: true, reason: 'URL fora do bucket configurado'
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    var date = new Date();
+    var dateStamp = Utilities.formatDate(date, 'GMT', 'yyyyMMdd');
+    var amzDate = Utilities.formatDate(date, 'GMT', "yyyyMMdd'T'HHmmss'Z'");
+    var region = 'auto';
+    var service = 's3';
+    var host = accountId + '.r2.cloudflarestorage.com';
+    var endpoint = 'https://' + host + '/' + bucketName + '/' + key;
+    var payloadHash = 'UNSIGNED-PAYLOAD';
+
+    var headersToSign = {
+      'host': host,
+      'x-amz-content-sha256': payloadHash,
+      'x-amz-date': amzDate
+    };
+
+    var signature = generateAWSSignature(
+      secretAccessKey, dateStamp, region, service,
+      'DELETE', '/' + bucketName + '/' + key,
+      headersToSign, payloadHash
+    );
+
+    var credential = accessKeyId + '/' + dateStamp + '/' + region + '/' + service + '/aws4_request';
+    var signedHeaders = Object.keys(headersToSign).sort().join(';');
+
+    var response = UrlFetchApp.fetch(endpoint, {
+      method: 'delete',
+      headers: {
+        'x-amz-content-sha256': payloadHash,
+        'x-amz-date': amzDate,
+        'Authorization': 'AWS4-HMAC-SHA256 Credential=' + credential + ', SignedHeaders=' + signedHeaders + ', Signature=' + signature
+      },
+      muteHttpExceptions: true
+    });
+
+    var code = response.getResponseCode();
+    // S3/R2 retorna 204 No Content em sucesso. 404 também tratamos como sucesso (já estava apagado).
+    if (code !== 204 && code !== 200 && code !== 404) {
+      throw new Error('R2 retornou ' + code + ': ' + response.getContentText());
+    }
+
+    return ContentService.createTextOutput(JSON.stringify({
+      success: true, deleted: key
+    })).setMimeType(ContentService.MimeType.JSON);
+
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({
+      success: false, error: error.toString()
     })).setMimeType(ContentService.MimeType.JSON);
   }
 }

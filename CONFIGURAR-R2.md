@@ -40,22 +40,25 @@ O painel admin agora tem upload de imagens direto para o Cloudflare R2:
    - **Access Key ID** (ex: `xxxxx`)
    - **Secret Access Key** (ex: `yyyyy`) — só aparece uma vez!
 
-### 4. Preencher as Credenciais no Código
+### 4. Preencher as Credenciais no Apps Script (Script Properties)
 
-Abra o arquivo `adm-catalogo.js` e localize a seção `CONFIG.R2` (linha ~35):
+> ⚠️ As credenciais **não ficam no frontend**. Elas são armazenadas no cofre
+> do Google Apps Script (Script Properties) e só o backend assina o upload.
 
-```javascript
-R2: {
-    ACCOUNT_ID: 'COLE_AQUI_SEU_ACCOUNT_ID',
-    ACCESS_KEY_ID: 'COLE_AQUI_SEU_ACCESS_KEY',
-    SECRET_ACCESS_KEY: 'COLE_AQUI_SEU_SECRET_KEY',
-    BUCKET_NAME: 'madame-luxo-produtos',
-    PUBLIC_URL: 'https://pub-xxx.r2.dev',  // URL que apareceu no passo 2
-    REGION: 'auto'
-}
-```
+1. Abra o projeto do Apps Script vinculado à planilha.
+2. Menu lateral → **⚙️ Configurações do projeto**.
+3. Role até **Propriedades do script** → **Editar propriedades do script**.
+4. Adicione (todas como texto):
 
-Substitua os valores pelos seus.
+| Propriedade | Valor |
+|---|---|
+| `R2_ACCOUNT_ID` | seu Account ID da Cloudflare |
+| `R2_ACCESS_KEY_ID` | Access Key do token criado no passo 3 |
+| `R2_SECRET_ACCESS_KEY` | Secret Key do token (só aparece uma vez!) |
+| `R2_BUCKET_NAME` | `madame-luxo-produtos` |
+| `R2_PUBLIC_URL` | URL pública do bucket (passo 2, ex.: `https://pub-xxx.r2.dev`) |
+
+5. **Salvar**. Não é necessário novo deploy — Script Properties são lidas em runtime.
 
 ### 5. Testar
 
@@ -88,12 +91,11 @@ madame-luxo-produtos/
 
 ## Segurança
 
-⚠️ **IMPORTANTE:** O `SECRET_ACCESS_KEY` dá acesso ao seu bucket. Nunca:
-- Compartilhe em repositórios públicos
-- Envie por email ou WhatsApp
-- Deixe visível no código se for repositório público
+⚠️ **IMPORTANTE:** O `R2_SECRET_ACCESS_KEY` dá acesso de escrita ao bucket.
 
-Para repositórios públicos (GitHub), use variáveis de ambiente ou remova as credenciais antes de fazer commit.
+- Mantém só nas **Script Properties** do Apps Script. Nunca no `adm-catalogo.js`, nem em commits, nem em e-mail/WhatsApp.
+- Se a chave já circulou em código versionado, **rotacione**: Cloudflare → R2 → API Tokens → revoga o token vazado → cria um novo → atualiza as Script Properties.
+- O frontend agora só conhece a URL do Apps Script (`APPS_SCRIPT_URL`). Quem assina o PUT no R2 (AWS SigV4) é o backend.
 
 ## Suporte
 

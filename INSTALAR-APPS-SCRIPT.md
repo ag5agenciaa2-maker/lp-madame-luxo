@@ -83,8 +83,8 @@ function doOptions(e) {
 }
 ```
 
-### Erro "Unauthorized"
-Verifique se as credenciais R2 estão corretas no painel admin (CONFIG.R2).
+### Erro "Unauthorized" / "Script Properties R2_* não configuradas"
+Confira as Script Properties no Apps Script (Configurações do projeto → Propriedades do script): `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL`. Veja `CONFIGURAR-R2.md` passo 4.
 
 ### Erro "Bucket not found"
 Verifique se o bucket `madame-luxo-produtos` existe e o token tem permissão.

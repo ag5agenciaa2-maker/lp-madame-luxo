@@ -5,6 +5,47 @@
  */
 
 // ============================================
+// SCROLL LOCK (preserva posição ao abrir modal)
+// ============================================
+const ScrollLock = (function () {
+    let _locks = 0;
+    let _scrollY = 0;
+    let _saved = null;
+
+    return {
+        lock() {
+            _locks++;
+            if (_locks > 1) return;
+            _scrollY = window.scrollY || window.pageYOffset;
+            _saved = {
+                position: document.body.style.position,
+                top: document.body.style.top,
+                left: document.body.style.left,
+                right: document.body.style.right,
+                width: document.body.style.width,
+                overflow: document.body.style.overflow
+            };
+            document.body.style.position = 'fixed';
+            document.body.style.top = `-${_scrollY}px`;
+            document.body.style.left = '0';
+            document.body.style.right = '0';
+            document.body.style.width = '100%';
+            document.body.style.overflow = 'hidden';
+        },
+        unlock() {
+            if (_locks === 0) return;
+            _locks--;
+            if (_locks > 0) return;
+            if (_saved) {
+                Object.assign(document.body.style, _saved);
+                _saved = null;
+            }
+            window.scrollTo(0, _scrollY);
+        }
+    };
+})();
+
+// ============================================
 // CONFIGURAÇÕES
 // ============================================
 const CONFIG = {
@@ -14,32 +55,24 @@ const CONFIG = {
     COLS: {
         ID: 0,
         NOME: 1,
-        STATUS: 2,
-        CATEGORIA: 3,
-        TIPO: 4,
-        COR: 5,
-        TAMANHOS: 6,
-        MATERIAL: 7,
-        PRECO_DE: 8,
-        PRECO_POR: 9,
-        DESCONTO: 10,
-        IMAGEM1: 11,
-        IMAGEM2: 12,
-        IMAGEM3: 13,
-        DESCRICAO: 14,
+        CATEGORIA: 2,
+        TIPO: 3,
+        COR: 4,
+        TAMANHOS: 5,
+        MATERIAL: 6,
+        DESCRICAO: 7,
+        IMAGEM1: 8,
+        IMAGEM2: 9,
+        IMAGEM3: 10,
+        LINK: 11,
+        PRECO_DE: 12,
+        PRECO_POR: 13,
+        DESCONTO: 14,
         ESTOQUE: 15,
-        OFERTA: 16,
-        LINK: 17
-    },
-    // CLOUDFLARE R2 - CONFIGURAÇÃO DE UPLOAD
-    R2: {
-        ACCOUNT_ID: 'e8dec03248c6ed3f1f5b6c3ca374dd0c',
-        ACCESS_KEY_ID: '9597e7e801605a68038627877e38be25',
-        SECRET_ACCESS_KEY: '1a71281a77f45c3e1c543b1367ec56cc58500ef959c7636d50f9f6d055ee7f10',
-        BUCKET_NAME: 'madame-luxo-produtos',
-        PUBLIC_URL: 'https://pub-c86c7f3fba99486db39ef1a2653e0377.r2.dev',
-        REGION: 'auto'
+        STATUS: 16
     }
+    // Credenciais R2 vivem no Apps Script (Script Properties).
+    // Upload passa por APPS_SCRIPT_URL com action=upload_r2.
 };
 
 // ============================================
@@ -291,8 +324,7 @@ function parseCSV(text) {
         product._precoPor = (values[13] || '').replace(/R\$\s*/g, '').trim();
         product._desconto = values[14] || '';
         product._estoque  = values[15] || '';
-        product._oferta   = values[16] || '';
-        product._status   = values[17] || 'Ativo';
+        product._status   = values[16] || 'Ativo';
         // _rowIndex em 1-based (linha real na planilha, já conta o header na linha 1)
         product._rowIndex = i + 1;
         
@@ -532,11 +564,13 @@ function openDetailModal(product) {
     `;
 
     document.body.appendChild(overlay);
+    ScrollLock.lock();
+    const fechar = () => { ScrollLock.unlock(); overlay.remove(); };
     requestAnimationFrame(() => { overlay.removeAttribute('hidden'); });
 
-    overlay.querySelector('#detail-close').addEventListener('click', () => overlay.remove());
-    overlay.querySelector('.detail-edit-btn').addEventListener('click', () => { overlay.remove(); openModal(product); });
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+    overlay.querySelector('#detail-close').addEventListener('click', fechar);
+    overlay.querySelector('.detail-edit-btn').addEventListener('click', () => { fechar(); openModal(product); });
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) fechar(); });
 
     // Troca imagem principal ao clicar na thumbnail
     overlay.querySelectorAll('.detail-thumb').forEach(thumb => {
@@ -616,9 +650,7 @@ function openModal(product = null) {
         document.getElementById('prod-descricao').value = product._descricao;
         document.getElementById('prod-material').value = product._material;
         document.getElementById('prod-cor').value = product._cor;
-        document.getElementById('prod-estoque').value = product._estoque;
         csdSetValue('status', product._status);
-        document.getElementById('prod-oferta').value = product._oferta;
         document.getElementById('prod-link').value = product._link;
         
         // Popula campos de imagem com upload
@@ -631,10 +663,12 @@ function openModal(product = null) {
     }
     
     modal.hidden = false;
+    ScrollLock.lock();
 }
 
 function closeModal() {
     document.getElementById('modal-produto').hidden = true;
+    ScrollLock.unlock();
 }
 
 function updateImagePreview() {
@@ -725,6 +759,9 @@ async function handleImageUpload(field, file) {
         return;
     }
 
+    // Captura a imagem atual do slot — se o upload novo der certo, deleta a antiga do R2.
+    const previousUrl = document.getElementById(`prod-${field}`).value;
+
     const area = document.getElementById(`area-${field}`);
     const progressEl = document.getElementById(`progress-${field}`);
     const progressBar = progressEl?.querySelector('.img-upload-progress-bar');
@@ -755,10 +792,15 @@ async function handleImageUpload(field, file) {
         // Atualiza o campo hidden e preview
         document.getElementById(`prod-${field}`).value = publicUrl;
         setImagePreview(field, publicUrl);
-        
+
         // Atualiza o input de URL
         const urlInput = document.getElementById(`url-${field}`);
         if (urlInput) urlInput.value = publicUrl;
+
+        // Limpa a imagem antiga do R2 (se havia uma e é diferente da nova).
+        if (previousUrl && previousUrl !== publicUrl) {
+            deleteR2File(previousUrl);
+        }
 
         showToast('Imagem enviada com sucesso!', 'success');
 
@@ -810,83 +852,65 @@ function convertToWebp(file) {
 }
 
 /**
- * Upload direto do navegador para Cloudflare R2 usando AWS Signature V4
+ * Upload de imagem via Apps Script (credenciais ficam no backend).
+ * Envia o arquivo em Base64 para a action `upload_r2`; o Apps Script
+ * assina a requisição AWS V4 com as Script Properties e devolve a URL pública.
  */
 async function uploadToR2Direct(filename, file) {
-    const { ACCOUNT_ID, ACCESS_KEY_ID, SECRET_ACCESS_KEY, BUCKET_NAME, PUBLIC_URL } = CONFIG.R2;
+    const base64 = await fileToBase64(file);
 
-    const host = `${ACCOUNT_ID}.r2.cloudflarestorage.com`;
-    const endpoint = `https://${host}/${BUCKET_NAME}/${filename}`;
-
-    const now = new Date();
-    const dateStamp = now.toISOString().slice(0, 10).replace(/-/g, '');
-    const amzDate = now.toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
-    const region = 'auto';
-    const service = 's3';
-
-    const payloadHash = 'UNSIGNED-PAYLOAD';
-
-    // Headers ordenados alfabeticamente
-    const headersToSign = {
-        'content-type': file.type,
-        'host': host,
-        'x-amz-content-sha256': payloadHash,
-        'x-amz-date': amzDate
-    };
-
-    const signedHeadersStr = Object.keys(headersToSign).sort().join(';');
-    const canonicalHeaders = Object.keys(headersToSign).sort()
-        .map(k => `${k}:${headersToSign[k]}\n`).join('');
-
-    const canonicalRequest = [
-        'PUT',
-        `/${BUCKET_NAME}/${filename}`,
-        '',
-        canonicalHeaders,
-        signedHeadersStr,
-        payloadHash
-    ].join('\n');
-
-    const credentialScope = `${dateStamp}/${region}/${service}/aws4_request`;
-    const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(canonicalRequest));
-    const hashHex = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-
-    const stringToSign = ['AWS4-HMAC-SHA256', amzDate, credentialScope, hashHex].join('\n');
-
-    // Gera chave de assinatura
-    const sign = async (key, msg) => {
-        const k = typeof key === 'string'
-            ? await crypto.subtle.importKey('raw', new TextEncoder().encode(key), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
-            : await crypto.subtle.importKey('raw', key, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-        return crypto.subtle.sign('HMAC', k, new TextEncoder().encode(msg));
-    };
-
-    const kDate    = await sign('AWS4' + SECRET_ACCESS_KEY, dateStamp);
-    const kRegion  = await sign(kDate, region);
-    const kService = await sign(kRegion, service);
-    const kSigning = await sign(kService, 'aws4_request');
-    const sigBuffer = await sign(kSigning, stringToSign);
-    const signature = Array.from(new Uint8Array(sigBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-
-    const authorization = `AWS4-HMAC-SHA256 Credential=${ACCESS_KEY_ID}/${credentialScope}, SignedHeaders=${signedHeadersStr}, Signature=${signature}`;
-
-    const response = await fetch(endpoint, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': file.type,
-            'x-amz-content-sha256': payloadHash,
-            'x-amz-date': amzDate,
-            'Authorization': authorization
-        },
-        body: file
+    const response = await fetch(CONFIG.APPS_SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+            action: 'upload_r2',
+            filename,
+            mimeType: file.type,
+            data: base64
+        })
     });
 
     if (!response.ok) {
-        const txt = await response.text();
-        throw new Error(`R2 retornou ${response.status}: ${txt}`);
+        throw new Error(`Apps Script retornou ${response.status}`);
     }
 
-    return `${PUBLIC_URL}/${filename}`;
+    const result = await response.json();
+    if (!result.success) {
+        throw new Error(result.error || 'Falha no upload');
+    }
+
+    return result.url;
+}
+
+/**
+ * Pede ao Apps Script para deletar uma imagem do R2 pela URL pública.
+ * Best-effort: nunca lança — falhar a limpeza não pode quebrar o fluxo principal.
+ * URLs vazias, externas ou inválidas são silenciosamente ignoradas.
+ */
+async function deleteR2File(url) {
+    if (!url || typeof url !== 'string') return;
+    if (!/^https?:\/\//i.test(url)) return;
+
+    try {
+        await fetch(CONFIG.APPS_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'delete_r2', url })
+        });
+    } catch (err) {
+        console.warn('Falha ao deletar imagem do R2 (ignorado):', url, err);
+    }
+}
+
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            const dataUrl = reader.result;
+            const commaIdx = dataUrl.indexOf(',');
+            resolve(commaIdx >= 0 ? dataUrl.slice(commaIdx + 1) : dataUrl);
+        };
+        reader.onerror = () => reject(new Error('Falha ao ler arquivo'));
+        reader.readAsDataURL(file);
+    });
 }
 
 /**
@@ -917,15 +941,22 @@ function setImagePreview(field, url) {
 /**
  * Remove a imagem do campo
  */
-function removeImage(field) {
+function removeImage(field, { deleteFromR2 = true } = {}) {
     const preview = document.getElementById(`preview-${field}`);
     const area = document.getElementById(`area-${field}`);
     const removeBtn = document.getElementById(`remove-${field}`);
     const placeholder = area?.querySelector('.img-upload-placeholder');
     const fileInput = document.getElementById(`file-${field}`);
     const urlInput = document.getElementById(`url-${field}`);
+    const hiddenField = document.getElementById(`prod-${field}`);
 
-    document.getElementById(`prod-${field}`).value = '';
+    // Apaga do R2 antes de zerar o campo (a menos que o caller peça pra não apagar —
+    // usado em resetImageFields/populateImageFields, que só limpam UI).
+    if (deleteFromR2 && hiddenField?.value) {
+        deleteR2File(hiddenField.value);
+    }
+
+    hiddenField.value = '';
     
     if (preview) {
         preview.src = '';
@@ -943,7 +974,7 @@ function removeImage(field) {
  */
 function resetImageFields() {
     ['imagem1', 'imagem2', 'imagem3'].forEach(field => {
-        removeImage(field);
+        removeImage(field, { deleteFromR2: false });
     });
 }
 
@@ -959,7 +990,7 @@ function populateImageFields(product) {
             const urlInput = document.getElementById(`url-${field}`);
             if (urlInput) urlInput.value = url;
         } else {
-            removeImage(field);
+            removeImage(field, { deleteFromR2: false });
         }
     });
 }
@@ -996,6 +1027,11 @@ async function handleSubmit(e) {
             return;
         }
 
+        // Estoque saiu do form — preserva o valor atual em edição, vazio em novo produto.
+        const currentProduct = isEdit
+            ? allProducts.find(p => p._rowIndex === parseInt(rowIndex))
+            : null;
+
         const productData = {
             id: document.getElementById('prod-id').value,
             nome: document.getElementById('prod-nome').value,
@@ -1011,9 +1047,8 @@ async function handleSubmit(e) {
             descricao: document.getElementById('prod-descricao').value,
             material: document.getElementById('prod-material').value,
             cor: document.getElementById('prod-cor').value,
-            estoque: document.getElementById('prod-estoque').value,
+            estoque: currentProduct?._estoque || '',
             status: document.getElementById('prod-status').value,
-            oferta: document.getElementById('prod-oferta').value,
             link: document.getElementById('prod-link').value
         };
         
@@ -1048,12 +1083,13 @@ async function handleSubmit(e) {
 }
 
 async function saveToGoogleSheets(data, isEdit, rowIndex) {
-    // Ordem real da planilha:
-    // 0:ID 1:Nome 2:Categoria 3:Tipo 4:Cor 5:Tamanhos 6:Material 7:Descrição
-    // 8:Imagem1 9:Imagem2 10:Imagem3 11:Link 12:PrecoDe 13:PrecoPor
-    // 14:Desconto (NÃO ENVIADO — fórmula da planilha) 15:Estoque 16:Oferta 17:Status
+    // Ordem real da planilha (17 colunas):
+    // A=0:ID  B=1:Nome  C=2:Categoria  D=3:Tipo  E=4:Cor  F=5:Tamanhos
+    // G=6:Material  H=7:Descrição  I=8:Imagem1  J=9:Imagem2  K=10:Imagem3
+    // L=11:Link  M=12:PrecoDe  N=13:PrecoPor  O=14:Desconto (fórmula, não enviar)
+    // P=15:Estoque  Q=16:Status
 
-    // Colunas A até N (sem Desconto na col O)
+    // Colunas A até N (antes do Desconto/coluna O)
     const valuesSemDesconto = [
         isEdit ? data.id : (allProducts.length + 1).toString(),
         data.nome,
@@ -1071,15 +1107,14 @@ async function saveToGoogleSheets(data, isEdit, rowIndex) {
         data.precoPor
     ];
 
-    // Colunas P até R (Estoque, Oferta, Status — pula col O Desconto)
+    // Colunas P e Q (depois do Desconto/coluna O)
     const valuesAposDesconto = [
         data.estoque,
-        data.oferta,
         data.status
     ];
 
-    // Para edição: envia dois blocos separados, pulando a coluna de desconto (col 15 = O)
-    // Para novo produto: envia tudo junto (desconto vazio, fórmula será criada manualmente)
+    // Edição: dois blocos separados, pulando a coluna O (Desconto, fórmula).
+    // Novo: tudo junto com Desconto vazio (Apps Script preenche a fórmula em O).
     const payload = isEdit
         ? { action: 'update_skip_desconto', row: parseInt(rowIndex), valuesSemDesconto, valuesAposDesconto }
         : { action: 'append', values: [...valuesSemDesconto, '', ...valuesAposDesconto] };
@@ -1155,7 +1190,7 @@ async function inactivateProduct(product) {
                 product._cor, product._tamanhos, product._material, product._descricao,
                 product._imagem1, product._imagem2, product._imagem3, product._link,
                 product._precoDe, product._precoPor, product._desconto,
-                product._estoque, product._oferta, novoStatus
+                product._estoque, novoStatus
             ]
         });
         showToast(`Produto ${novoStatus === 'Ativo' ? 'reativado' : 'inativado'}!`, 'success');
@@ -1201,9 +1236,11 @@ function populateFormSelects() {
 // ══════════════════════════════════════════════
 // Mapa: key do campo → chave em _configDados
 const CSD_KEYS = [
-    { key: 'categoria', listaKey: 'categorias', placeholder: 'Nova categoria...' },
-    { key: 'status',    listaKey: 'status',      placeholder: 'Novo status...'    },
-    { key: 'tipo',      listaKey: 'tipos',        placeholder: 'Novo tipo...'      },
+    // sheetColumn = letra da coluna na planilha; quando definido, csdAdicionar
+    // dispara set_validation para o Apps Script atualizar o dropdown da planilha.
+    { key: 'categoria', listaKey: 'categorias', placeholder: 'Nova categoria...', sheetColumn: 'C' },
+    { key: 'status',    listaKey: 'status',     placeholder: 'Novo status...'    },
+    { key: 'tipo',      listaKey: 'tipos',      placeholder: 'Novo tipo...',      sheetColumn: 'D' },
 ];
 
 const _csdState = {};  // valor selecionado por key
@@ -1275,6 +1312,37 @@ async function csdAdicionar(key) {
     input.value = '';
     populateFormSelects(); // atualiza filtros e dropdowns
     csdSelect(key, valor); // seleciona o novo automaticamente
+
+    // Propaga a lista para o dropdown da coluna inteira da planilha (best-effort).
+    syncValidationToSheet(key);
+}
+
+/**
+ * Atualiza a validação de dados (dropdown da célula) da coluna correspondente na planilha.
+ * Envia a lista completa de valores únicos vindos dos produtos + adicionados localmente.
+ * Best-effort: silencioso em erro, nunca bloqueia a UI.
+ */
+async function syncValidationToSheet(key) {
+    const cfg = CSD_KEYS.find(k => k.key === key);
+    if (!cfg?.sheetColumn) return;
+
+    const listaKey = cfg.listaKey;
+    const values = _configDados[listaKey] || [];
+    if (!values.length) return;
+
+    try {
+        await fetch(CONFIG.APPS_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'set_validation',
+                column: cfg.sheetColumn,
+                values
+            })
+        });
+        showToast(`"${values[values.length - 1]}" também adicionada à planilha.`, 'success');
+    } catch (err) {
+        console.warn('Falha ao sincronizar validação da planilha (ignorado):', err);
+    }
 }
 
 function initCustomSelects() {
@@ -1330,6 +1398,7 @@ const HIST_ICON = {
 
 function openHistorico() {
     document.getElementById('modal-historico').removeAttribute('hidden');
+    ScrollLock.lock();
     _histPagina  = 1;
     _histPeriodo = 'todos';
     document.querySelectorAll('.hist-data-btn').forEach(b => b.classList.toggle('active', b.dataset.periodo === 'todos'));
@@ -1339,6 +1408,7 @@ function openHistorico() {
 
 function closeHistorico() {
     document.getElementById('modal-historico').setAttribute('hidden', '');
+    ScrollLock.unlock();
 }
 
 async function loadHistorico() {
@@ -1573,6 +1643,12 @@ async function deleteProduct(product) {
 
     try {
         await enviarViaIframe({ action: 'delete_row', row: product._rowIndex });
+
+        // Limpa as imagens do produto no R2 (best-effort, não bloqueia).
+        [product._imagem1, product._imagem2, product._imagem3]
+            .filter(Boolean)
+            .forEach(deleteR2File);
+
         showToast(`Produto "${product._nome}" excluído.`, 'success');
         registrarHistorico('Excluído', product._nome, 'Produto removido da planilha');
         loadProducts();
