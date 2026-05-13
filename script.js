@@ -2014,7 +2014,9 @@ window.openWhatsApp = (message = '') => {
 
                     pop.hidden = false;
                     pop.setAttribute('aria-hidden', 'false');
-                    window.ScrollLock.lock();
+                    // Lock leve: só esconde o overflow do body. Não usa position:fixed,
+                    // que em mobile causa "salto" visual de scroll ao abrir/fechar o popover.
+                    document.body.style.overflow = 'hidden';
                 }
 
                 function fecharPopover() {
@@ -2022,7 +2024,7 @@ window.openWhatsApp = (message = '') => {
                     if (!pop || pop.hidden) return;
                     pop.hidden = true;
                     pop.setAttribute('aria-hidden', 'true');
-                    window.ScrollLock.unlock();
+                    document.body.style.overflow = '';
                     _produtoTemp = null;
                     _tamanhoTemp = null;
                     _aposConfirmar = null;
