@@ -101,12 +101,20 @@
                     <line x1="21" y1="21" x2="16.65" y2="16.65" />
                 </svg>
             </div>
-            <select id="filter-categoria" class="filter-select">
-                <option value="">Todas as Categorias</option>
-            </select>
-            <select id="filter-status" class="filter-select">
-                <option value="">Todos os Status</option>
-            </select>
+            <div class="filter-multi" id="filter-multi-categoria" data-key="categoria">
+                <button type="button" class="filter-multi-btn" id="filter-multi-categoria-btn" aria-haspopup="listbox" aria-expanded="false">
+                    <span class="filter-multi-label">Todas as Categorias</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="filter-multi-dropdown" id="filter-multi-categoria-dropdown" role="listbox" hidden></div>
+            </div>
+            <div class="filter-multi" id="filter-multi-status" data-key="status">
+                <button type="button" class="filter-multi-btn" id="filter-multi-status-btn" aria-haspopup="listbox" aria-expanded="false">
+                    <span class="filter-multi-label">Todos os Status</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="filter-multi-dropdown" id="filter-multi-status-dropdown" role="listbox" hidden></div>
+            </div>
             <div class="view-toggle">
                 <button class="btn-view active" id="btn-view-grid" title="Visualização em grade">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

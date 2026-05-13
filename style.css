@@ -4269,8 +4269,20 @@ ol {
             align-items: center;
             justify-content: center;
         }
+        /* Mobile: compactado pra caber no header com logo e hamburger. */
         @media (max-width: 900px) {
-            .nav-sacola { display: none; }
+            .nav-sacola {
+                padding: 8px 10px;
+                margin-right: 6px;
+                box-shadow: none;
+            }
+            .nav-sacola-label { display: none; }
+            .nav-sacola-badge {
+                top: -4px;
+                right: -4px;
+                min-width: 18px;
+                height: 18px;
+            }
         }
 
         /* Botão flutuante (mobile + desktop quando sacola tem itens) */
@@ -4293,15 +4305,12 @@ ol {
             z-index: 1000;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-        .sacola-fab.is-visible { display: inline-flex; }
-        /* Desktop usa só o ícone da navbar; FAB esquerdo só em mobile/tablet. */
-        @media (min-width: 901px) {
-            .sacola-fab,
-            .sacola-fab.is-visible,
-            body.sacola-tem-itens .sacola-fab,
-            body.no-catalogo .sacola-fab {
-                display: none !important;
-            }
+        /* FAB esquerdo desativado — sacola agora vive 100% na navbar (desktop e mobile). */
+        .sacola-fab,
+        .sacola-fab.is-visible,
+        body.sacola-tem-itens .sacola-fab,
+        body.no-catalogo .sacola-fab {
+            display: none !important;
         }
         .sacola-fab:hover {
             transform: translateY(-2px) scale(1.04);

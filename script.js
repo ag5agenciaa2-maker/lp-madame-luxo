@@ -1152,7 +1152,7 @@ window.openWhatsApp = (message = '') => {
                 const imagem3 = produto['imagem 3 (url)'] || produto['imagem3'];
                 const descricao = produto['descricao *'] || produto['descricao'];
                 const material = produto['material / tecido'] || produto['material'];
-                const cor = produto['cor principal *'] || produto['cor'];
+                const cor = produto['cor disponivel*'] || produto['cor disponivel'] || produto['cor'];
                 const estoque = produto['qtd. estoque'] || produto['estoque'];
                 const linkProduto = produto['link do produto (url)'];
 
@@ -1204,13 +1204,22 @@ window.openWhatsApp = (message = '') => {
                 document.getElementById('pmodal-texto-dinamico').innerText = descricao || '';
                 document.getElementById('pmodal-tipo-dinamico').innerText = tipo || 'Não informado';
                 document.getElementById('pmodal-mat-dinamico').innerText = material || 'Não informado';
-                document.getElementById('pmodal-cor-dinamico').innerText = cor || 'Não informado';
                 document.getElementById('pmodal-tam-dinamico').innerText = tamanhos || 'Não informado';
                 document.getElementById('pmodal-est-dinamico').innerText = estoque || 'Não informado';
+
+                // Cor: se houver múltiplas, vira pills clicáveis. Reset a cada produto.
+                window.__corSelecionada = null;
+                renderCoresPills(cor);
 
                 // Badge esgotado dentro do modal
                 var badgeEsgotado = document.getElementById('pmodal-badge-esgotado');
                 if (badgeEsgotado) badgeEsgotado.style.display = esgotadoProd ? '' : 'none';
+
+                // Esgotado: esconde botões "Adicionar à Sacola" e sacola flutuante (deixa só "Avisar quando disponível").
+                const addSacolaBtn = document.getElementById('pmodal-add-sacola');
+                const sacolaFabModal = document.getElementById('pmodal-sacola-fab');
+                if (addSacolaBtn) addSacolaBtn.style.display = esgotadoProd ? 'none' : '';
+                if (sacolaFabModal) sacolaFabModal.style.display = esgotadoProd ? 'none' : '';
 
                 // Preço riscado quando esgotado
                 const porElem = document.getElementById('pmodal-por-dinamico');

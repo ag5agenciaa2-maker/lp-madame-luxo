@@ -123,8 +123,8 @@ document.addEventListener('DOMContentLoaded', () => {
 function initEventListeners() {
     // Filtros
     document.getElementById('filter-search').addEventListener('input', debounce(filterProducts, 300));
-    document.getElementById('filter-categoria').addEventListener('change', filterProducts);
-    document.getElementById('filter-status').addEventListener('change', filterProducts);
+    initMultiFilter('categoria', 'Todas as Categorias');
+    initMultiFilter('status', 'Todos os Status');
 
     // View toggle
     document.getElementById('btn-view-grid').addEventListener('click', () => setView('grid'));
@@ -427,6 +427,12 @@ function renderTable() {
             ? `<span class="prod-faixa prod-faixa--esgotado">Esgotado</span>`
             : '';
 
+        // Tag mini ao lado do nome no modo lista (só pros 3 status visuais).
+        const tagInlineHtml =
+            statusKey === 'últimas unidades' ? `<span class="prod-tag-inline prod-tag-inline--ultimas">Últimas</span>` :
+            statusKey === 'oferta especial' ? `<span class="prod-tag-inline prod-tag-inline--oferta">Oferta</span>` :
+            imgEsgotado ? `<span class="prod-tag-inline prod-tag-inline--esgotado">Esgotado</span>` : '';
+
         const acoesBtns = `
             <button class="btn-acao btn-edit" title="Editar">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -448,10 +454,12 @@ function renderTable() {
                          alt="${escapeHtml(product._nome)}"
                          class="${imgEsgotado ? 'prod-list-img prod-card-img--esgotado' : 'prod-list-img'}"
                          onerror="this.src='assets/madame-luxo-hero-colecao-verde-menta.webp'">
-                    ${faixaHtml}
                 </div>
                 <div class="prod-list-info">
-                    <div class="prod-card-nome">${escapeHtml(product._nome)}</div>
+                    <div class="prod-card-nome">
+                        <span class="prod-card-nome-text">${escapeHtml(product._nome)}</span>
+                        ${tagInlineHtml}
+                    </div>
                     <div class="prod-card-tipo">${escapeHtml(product._tipo)}</div>
                 </div>
                 <div class="prod-list-cat">
@@ -478,7 +486,7 @@ function renderTable() {
                 </div>
                 <div class="prod-card-body">
                     <div class="prod-card-nome">${escapeHtml(product._nome)}</div>
-                    <div class="prod-card-tipo">${escapeHtml(product._tipo)}</div>
+                    <div class="prod-card-tipo">${escapeHtml(product._categoria)}</div>
                     <div class="prod-card-precos">
                         ${product._precoDe ? `<span class="prod-preco-de">R$ ${product._precoDe}</span>` : ''}
                         <span class="prod-preco-por">R$ ${product._precoPor || '-'}</span>
@@ -584,23 +592,26 @@ function openDetailModal(product) {
     if (firstThumb) firstThumb.classList.add('active');
 }
 
+// Estado dos filtros multi-select (arrays de valores selecionados).
+const _multiFilters = { categoria: [], status: [] };
+
 function filterProducts() {
     const search = document.getElementById('filter-search').value.toLowerCase().trim();
-    const categoria = document.getElementById('filter-categoria').value;
-    const status = document.getElementById('filter-status').value;
-    
+    const categorias = _multiFilters.categoria; // array de catKeys
+    const statuses = _multiFilters.status;       // array de status (lowercase)
+
     filteredProducts = allProducts.filter(product => {
-        const matchSearch = !search || 
+        const matchSearch = !search ||
             product._nome.toLowerCase().includes(search) ||
             product._categoria.toLowerCase().includes(search) ||
             product._tipo.toLowerCase().includes(search);
-        
-        const matchCategoria = !categoria || 
-            getCatKey(product._categoria) === categoria;
-        
-        const matchStatus = !status || 
-            product._status.toLowerCase() === status;
-        
+
+        const matchCategoria = categorias.length === 0 ||
+            categorias.includes(getCatKey(product._categoria));
+
+        const matchStatus = statuses.length === 0 ||
+            statuses.includes(product._status.toLowerCase());
+
         return matchSearch && matchCategoria && matchStatus;
     });
     
@@ -1214,21 +1225,110 @@ let _configDados = {
 function populateFormSelects() {
     // Re-renderiza dropdowns (atualiza lista sem fechar se estiver aberto)
     CSD_KEYS.forEach(({ key }) => csdRender(key));
+    // Atualiza listas dos filtros multi quando o catálogo muda.
+    renderMultiFilter('categoria');
+    renderMultiFilter('status');
+}
 
-    const filtroCat = document.getElementById('filter-categoria');
-    const filtroStatus = document.getElementById('filter-status');
-    if (filtroCat) {
-        filtroCat.innerHTML = '<option value="">Todas as Categorias</option>' +
-            (_configDados.categorias || []).map(c => {
-                const val = c.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,'-');
-                return `<option value="${val}">${escapeHtml(c)}</option>`;
-            }).join('');
+// ── Filtros multi-select (categoria + status) ──
+function multiFilterOptions(key) {
+    if (key === 'categoria') {
+        return (_configDados.categorias || []).map(c => ({
+            label: c,
+            value: c.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, '-')
+        }));
     }
-    if (filtroStatus) {
-        filtroStatus.innerHTML = '<option value="">Todos os Status</option>' +
-            (_configDados.status || []).map(s =>
-                `<option value="${s.toLowerCase()}">${escapeHtml(s)}</option>`).join('');
+    return (_configDados.status || []).map(s => ({ label: s, value: s.toLowerCase() }));
+}
+
+function multiFilterPlaceholders(key) {
+    return key === 'categoria' ? 'Todas as Categorias' : 'Todos os Status';
+}
+
+function renderMultiFilter(key) {
+    const dd = document.getElementById(`filter-multi-${key}-dropdown`);
+    if (!dd) return;
+    const opts = multiFilterOptions(key);
+    const sel = _multiFilters[key];
+    dd.innerHTML = opts.map(o => `
+        <label class="filter-multi-opt">
+            <input type="checkbox" value="${o.value}" ${sel.includes(o.value) ? 'checked' : ''}>
+            <span>${escapeHtml(o.label)}</span>
+        </label>
+    `).join('') + (sel.length > 0 ? `
+        <button type="button" class="filter-multi-clear" data-key="${key}">Limpar seleção</button>
+    ` : '');
+
+    dd.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.addEventListener('change', () => {
+            if (cb.checked) {
+                if (!_multiFilters[key].includes(cb.value)) _multiFilters[key].push(cb.value);
+            } else {
+                _multiFilters[key] = _multiFilters[key].filter(v => v !== cb.value);
+            }
+            updateMultiFilterLabel(key);
+            renderMultiFilter(key); // re-renderiza pra mostrar/esconder "Limpar"
+            filterProducts();
+        });
+    });
+    dd.querySelector('.filter-multi-clear')?.addEventListener('click', () => {
+        _multiFilters[key] = [];
+        updateMultiFilterLabel(key);
+        renderMultiFilter(key);
+        filterProducts();
+    });
+}
+
+function updateMultiFilterLabel(key) {
+    const labelEl = document.querySelector(`#filter-multi-${key}-btn .filter-multi-label`);
+    if (!labelEl) return;
+    const sel = _multiFilters[key];
+    if (sel.length === 0) {
+        labelEl.textContent = multiFilterPlaceholders(key);
+        labelEl.classList.remove('has-selection');
+    } else if (sel.length === 1) {
+        const opt = multiFilterOptions(key).find(o => o.value === sel[0]);
+        labelEl.textContent = opt ? opt.label : sel[0];
+        labelEl.classList.add('has-selection');
+    } else {
+        labelEl.textContent = `${sel.length} selecionado${sel.length > 1 ? 's' : ''}`;
+        labelEl.classList.add('has-selection');
     }
+}
+
+function initMultiFilter(key, placeholder) {
+    const wrap = document.getElementById(`filter-multi-${key}`);
+    const btn = document.getElementById(`filter-multi-${key}-btn`);
+    const dd = document.getElementById(`filter-multi-${key}-dropdown`);
+    if (!wrap || !btn || !dd) return;
+
+    btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const isOpen = !dd.hasAttribute('hidden');
+        // Fecha outros multi-filters abertos.
+        document.querySelectorAll('.filter-multi-dropdown').forEach(d => {
+            if (d !== dd) d.setAttribute('hidden', '');
+        });
+        if (isOpen) {
+            dd.setAttribute('hidden', '');
+            btn.setAttribute('aria-expanded', 'false');
+            wrap.classList.remove('is-open');
+        } else {
+            dd.removeAttribute('hidden');
+            btn.setAttribute('aria-expanded', 'true');
+            wrap.classList.add('is-open');
+        }
+    });
+    document.addEventListener('click', e => {
+        if (!wrap.contains(e.target)) {
+            dd.setAttribute('hidden', '');
+            btn.setAttribute('aria-expanded', 'false');
+            wrap.classList.remove('is-open');
+        }
+    });
+
+    updateMultiFilterLabel(key);
+    renderMultiFilter(key);
 }
 
 // ══════════════════════════════════════════════
