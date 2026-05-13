@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR" class="no-js">
 
 <head>
@@ -321,7 +321,8 @@
 
             <ul class="nav-menu" id="navMenu" role="menubar">
                 <li role="none"><a href="#inicio" class="nav-link" role="menuitem">Início</a></li>
-                <li role="none"><a href="#coleção" class="nav-link" role="menuitem">Coleção</a></li>
+                <li role="none"><a href="#coleção" class="nav-link" role="menuitem">Coleções</a></li>
+                <li role="none"><a href="#catalogo" class="nav-link" role="menuitem">Catálogo</a></li>
                 <li role="none"><a href="#sobre" class="nav-link" role="menuitem">Sobre</a></li>
                 <li role="none"><a href="#contato" class="nav-link" role="menuitem">Contato</a></li>
             </ul>
@@ -654,7 +655,8 @@
 
             <!-- Abas -->
             <div class="cat-tabs" id="catTabs" role="tablist" aria-label="Categorias">
-                <button class="cat-tab active" data-cat="vestidos" role="tab" aria-selected="true">Vestidos</button>
+                <button class="cat-tab active" data-cat="ofertas-destaque" role="tab" aria-selected="true">Ofertas em Destaque</button>
+                <button class="cat-tab" data-cat="vestidos" role="tab" aria-selected="false">Vestidos</button>
                 <button class="cat-tab" data-cat="macacoes" role="tab" aria-selected="false">Macacões</button>
                 <button class="cat-tab" data-cat="conjuntos" role="tab" aria-selected="false">Conjuntos</button>
                 <button class="cat-tab" data-cat="saias" role="tab" aria-selected="false">Saias</button>
@@ -667,8 +669,60 @@
                 <button class="cat-tab" data-cat="nova-colecao" role="tab" aria-selected="false">Nova Coleção</button>
             </div>
 
+            <!-- ── OFERTAS EM DESTAQUE ── -->
+            <div class="cat-panel active" id="panel-ofertas-destaque" role="tabpanel">
+                <div class="cat-grid">
+                    <!-- Cards estáticos de oferta em destaque -->
+                    <article class="cat-card" data-modal="modal-p1">
+                        <div class="cat-card-img-wrap">
+                            <img src="https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=600"
+                                alt="Vestido Midi Floral Manga Longa" class="cat-card-img" loading="lazy">
+                            <span class="cat-faixa cat-faixa--ultimas">Últimas Unidades</span>
+                            <span class="cat-badge">−18%</span>
+                        </div>
+                        <div class="cat-card-info">
+                            <span class="cat-card-tipo">Vestido Midi · Viscose · Terracota</span>
+                            <h3 class="cat-card-nome">Vestido Midi Floral Manga Longa</h3>
+                            <div class="cat-card-precos"><span class="cat-preco-de">R$ 219,90</span><span
+                                    class="cat-preco-por">R$ 179,90</span></div>
+                            <span class="cat-card-tamanhos">P · M · G · GG</span>
+                        </div>
+                    </article>
+                    <article class="cat-card" data-modal="modal-p2">
+                        <div class="cat-card-img-wrap">
+                            <img src="https://images.unsplash.com/photo-1585487000160-6ebcfceb0d03?w=600"
+                                alt="Vestido Longo Ombro a Ombro Listra" class="cat-card-img" loading="lazy">
+                            <span class="cat-faixa cat-faixa--oferta">Oferta Especial</span>
+                            <span class="cat-badge">−23%</span>
+                        </div>
+                        <div class="cat-card-info">
+                            <span class="cat-card-tipo">Vestido Longo · Malha · Azul Marinho</span>
+                            <h3 class="cat-card-nome">Vestido Longo Ombro a Ombro Listra</h3>
+                            <div class="cat-card-precos"><span class="cat-preco-de">R$ 259,90</span><span
+                                    class="cat-preco-por">R$ 199,90</span></div>
+                            <span class="cat-card-tamanhos">PP · P · M · G</span>
+                        </div>
+                    </article>
+                    <article class="cat-card" data-modal="modal-p3">
+                        <div class="cat-card-img-wrap">
+                            <img src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600"
+                                alt="Vestido Curto Babado Festa" class="cat-card-img" loading="lazy">
+                            <span class="cat-faixa cat-faixa--ultimas">Últimas Unidades</span>
+                            <span class="cat-badge">−21%</span>
+                        </div>
+                        <div class="cat-card-info">
+                            <span class="cat-card-tipo">Vestido Curto · Chiffon · Rosa Blush</span>
+                            <h3 class="cat-card-nome">Vestido Curto Babado Festa</h3>
+                            <div class="cat-card-precos"><span class="cat-preco-de">R$ 189,90</span><span
+                                    class="cat-preco-por">R$ 149,90</span></div>
+                            <span class="cat-card-tamanhos">P · M · G</span>
+                        </div>
+                    </article>
+                </div>
+            </div>
+
             <!-- ── VESTIDOS ── -->
-            <div class="cat-panel active" id="panel-vestidos" role="tabpanel">
+            <div class="cat-panel" id="panel-vestidos" role="tabpanel" hidden>
                 <div class="cat-grid">
                     <article class="cat-card" data-modal="modal-p1">
                         <div class="cat-card-img-wrap">
@@ -3181,7 +3235,8 @@
                     <nav aria-label="Links do rodapé">
                         <ul class="footer-nav">
                             <li><a href="#inicio">Início</a></li>
-                            <li><a href="#coleção">Coleção</a></li>
+                            <li><a href="#coleção">Coleções</a></li>
+                            <li><a href="#catalogo">Catálogo</a></li>
                             <li><a href="#sobre">Sobre</a></li>
                             <li><a href="#faq">FAQ</a></li>
                             <li><a href="#contato">Contato</a></li>
@@ -3315,7 +3370,8 @@
         <nav class="drawer-nav">
             <ul class="drawer-menu">
                 <li><a href="#inicio" class="drawer-link">Início</a></li>
-                <li><a href="#coleção" class="drawer-link">Coleção</a></li>
+                <li><a href="#coleção" class="drawer-link">Coleções</a></li>
+                <li><a href="#catalogo" class="drawer-link">Catálogo</a></li>
                 <li><a href="#sobre" class="drawer-link">Sobre</a></li>
                 <li><a href="#contato" class="drawer-link">Contato</a></li>
             </ul>

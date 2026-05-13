@@ -913,8 +913,8 @@ window.openWhatsApp = (message = '') => {
                 const nome = produto['nome da peca / conjunto *'] || produto['nome'];
                 const categoria = produto['categoria *'] || produto['categoria'];
                 const tipo = produto['tipo de produto *'] || produto['tipo'];
-                const precoDe = produto['preco de (r$)'] || produto['precode'];
-                const precoPor = produto['preco por (r$) *'] || produto['precopor'];
+                const precoDe = formatarPreco(produto['preco de (r$)'] || produto['precode']);
+                const precoPor = formatarPreco(produto['preco por (r$) *'] || produto['precopor']);
                 const desconto = produto['desconto %'] || produto['desconto'];
                 const tamanhos = produto['tamanhos disponiveis *'] || produto['tamanhos'];
                 const imagem1 = produto['🖼️ imagem destaque (url)'] || produto['imagem1'];
@@ -1026,6 +1026,38 @@ window.openWhatsApp = (message = '') => {
                 document.body.style.overflow = '';
             };
 
+            function formatarPreco(valor) {
+                if (!valor || valor === '') return '';
+                // Remove aspas e espaços
+                let limpo = String(valor).replace(/^"|"$/g, '').trim();
+                // Se já tem R$ e vírgula decimal brasileira (ex: R$ 350,00), retorna como está
+                if (/R\$\s*\d{1,3}(\.\d{3})*,\d{2}/.test(limpo)) {
+                    return limpo;
+                }
+                // Se tem vírgula como separador de milhar e ponto decimal (ex: R$ 370,000.00 ou 370,000)
+                if (/\d,\d{3}/.test(limpo)) {
+                    limpo = limpo.replace(/,(\d{3})/g, '$1');
+                }
+                // Se tem ponto como separador de milhar (ex: R$ 1.234,56)
+                if (/\d\.(\d{3})/.test(limpo) && /,\d{2}/.test(limpo)) {
+                    limpo = limpo.replace(/\.(\d{3})/g, '$1');
+                }
+                // Se é número puro com ponto decimal (ex: 199.90)
+                if (/^\d+\.\d{2}$/.test(limpo)) {
+                    const num = parseFloat(limpo);
+                    return 'R$ ' + num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                }
+                // Se é número puro sem decimal (ex: 200)
+                if (/^\d+$/.test(limpo)) {
+                    return 'R$ ' + parseInt(limpo).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                }
+                // Se já tem R$, retorna formatado
+                if (limpo.includes('R$')) {
+                    return limpo;
+                }
+                return 'R$ ' + limpo;
+            }
+
             function renderizarCatalogo(produtos) {
                 document.querySelectorAll('.cat-panel').forEach(panel => {
                     const grid = panel.querySelector('.cat-grid');
@@ -1038,12 +1070,11 @@ window.openWhatsApp = (message = '') => {
                     const nome = prod['nome da peca / conjunto *'] || prod['nome'];
                     const categoria = prod['categoria *'] || prod['categoria'];
                     const tipo = prod['tipo de produto *'] || prod['tipo'];
-                    const precoDe = prod['preco de (r$)'] || prod['precode'];
-                    const precoPor = prod['preco por (r$) *'] || prod['precopor'];
+                    const precoDe = formatarPreco(prod['preco de (r$)'] || prod['precode']);
+                    const precoPor = formatarPreco(prod['preco por (r$) *'] || prod['precopor']);
                     const desconto = prod['desconto %'] || prod['desconto'];
                     const tamanhos = prod['tamanhos disponiveis *'] || prod['tamanhos'];
                     const imagem1 = prod['🖼️ imagem destaque (url)'] || prod['imagem1'];
-                    const ofertaDestaque = prod['🔥 oferta em destaque?'] || prod['novo'];
 
                     if (!categoria) return;
 
@@ -1070,6 +1101,7 @@ window.openWhatsApp = (message = '') => {
                     const card = document.createElement('article');
                     const status = (prod['status *'] || prod['status'] || '').toLowerCase().trim();
                     const esgotado = status === 'esgotado';
+                    const isOfertaDestaque = status === 'últimas unidades' || status === 'ultimas unidades' || status === 'oferta especial';
 
                     card.className = 'cat-card' + (esgotado ? ' cat-card--esgotado' : '');
                     card.dataset.dinamico = 'true';
@@ -1084,8 +1116,6 @@ window.openWhatsApp = (message = '') => {
                     } else if (desconto) {
                         const descTexto = desconto.includes('%') ? desconto : desconto + '%';
                         badgeHtml = `<span class="cat-badge">${descTexto}</span>`;
-                    } else if (ofertaDestaque && (ofertaDestaque.toLowerCase() === 'sim' || ofertaDestaque.toLowerCase() === 's')) {
-                        badgeHtml = `<span class="cat-badge-novo">Destaque</span>`;
                     }
 
                     card.innerHTML = `
@@ -1106,6 +1136,19 @@ window.openWhatsApp = (message = '') => {
 
                     card.addEventListener('click', () => { abrirModalDinamico(prod); });
                     grid.appendChild(card);
+
+                    // ── Se produto é oferta especial ou últimas unidades, também adiciona na aba Ofertas em Destaque ──
+                    if (isOfertaDestaque) {
+                        const panelDestaque = document.getElementById('panel-ofertas-destaque');
+                        if (panelDestaque) {
+                            const gridDestaque = panelDestaque.querySelector('.cat-grid');
+                            if (gridDestaque) {
+                                const cardDestaque = card.cloneNode(true);
+                                cardDestaque.addEventListener('click', () => { abrirModalDinamico(prod); });
+                                gridDestaque.appendChild(cardDestaque);
+                            }
+                        }
+                    }
                 });
 
                 initPagination();

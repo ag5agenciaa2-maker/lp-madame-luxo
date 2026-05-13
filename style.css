@@ -2891,6 +2891,24 @@ ol {
             color: #000;
         }
 
+        .cat-tab[data-cat="ofertas-destaque"] {
+            border-color: rgba(200, 169, 106, 0.5);
+            color: #C8A96A;
+        }
+
+        .cat-tab[data-cat="ofertas-destaque"]:hover {
+            border-color: #C8A96A;
+            background: rgba(200, 169, 106, 0.1);
+            color: #F0D98A;
+        }
+
+        .cat-tab[data-cat="ofertas-destaque"].active {
+            background: linear-gradient(135deg, #8C6B2F 0%, #C8A96A 35%, #F0D98A 55%, #C8A96A 75%, #8C6B2F 100%);
+            border-color: transparent;
+            color: #000;
+            font-weight: 700;
+        }
+
         /* ── Painel ── */
         .cat-panel {
             display: none;
