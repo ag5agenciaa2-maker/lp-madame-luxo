@@ -1953,6 +1953,8 @@ window.openWhatsApp = (message = '') => {
                     totalEl.textContent = window.Sacola.formatBRL(window.Sacola.total());
                 }
 
+                let _sacolaPushedHistory = false;
+
                 function abrirPainel() {
                     const p = document.getElementById('sacolaPainel');
                     if (!p) return;
@@ -1960,15 +1962,37 @@ window.openWhatsApp = (message = '') => {
                     p.hidden = false;
                     p.setAttribute('aria-hidden', 'false');
                     document.body.style.overflow = 'hidden';
+                    // Empilha estado para que o botão "voltar" do celular feche a sacola
+                    // em vez de sair do site.
+                    if (!_sacolaPushedHistory) {
+                        history.pushState({ sacola: true }, '');
+                        _sacolaPushedHistory = true;
+                    }
                 }
 
-                function fecharPainel() {
+                function fecharPainel(opts) {
                     const p = document.getElementById('sacolaPainel');
                     if (!p || p.hidden) return;
                     p.hidden = true;
                     p.setAttribute('aria-hidden', 'true');
                     document.body.style.overflow = '';
+                    // Quando o usuário fecha pelo X/overlay, desempilha o estado que adicionamos.
+                    // Quando o fechamento veio do popstate (back), o estado já saiu — não desempilhar.
+                    if (_sacolaPushedHistory && !(opts && opts.fromPopState)) {
+                        _sacolaPushedHistory = false;
+                        history.back();
+                    } else {
+                        _sacolaPushedHistory = false;
+                    }
                 }
+
+                // Intercepta o botão voltar do celular: se a sacola está aberta, fecha-a.
+                window.addEventListener('popstate', () => {
+                    const p = document.getElementById('sacolaPainel');
+                    if (p && !p.hidden) {
+                        fecharPainel({ fromPopState: true });
+                    }
+                });
 
                 // Lista de tamanhos disponíveis a partir do campo "tamanhos" do produto.
                 function parseTamanhos(produto) {

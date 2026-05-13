@@ -1,11 +1,11 @@
-# robots.txt - Madame Luxo
-# https://www.madameluxo.ag5agencia.site
+﻿# robots.txt - Madame Luxo
+# https://www.madameluxorj.com.br
 
 User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://www.madameluxo.ag5agencia.site/sitemap.xml
+Sitemap: https://www.madameluxorj.com.br/sitemap.xml
 
 # AI Bots (GEO - Generative Engine Optimization)
 User-agent: ChatGPT-User

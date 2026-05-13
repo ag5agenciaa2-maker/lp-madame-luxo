@@ -1,25 +1,25 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
         http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
 
-  <!-- Página Principal -->
+  <!-- PÃ¡gina Principal -->
   <url>
-    <loc>https://www.madameluxo.ag5agencia.site/</loc>
+    <loc>https://www.madameluxorj.com.br/</loc>
     <lastmod>2026-04-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <image:image>
-      <image:loc>https://www.madameluxo.ag5agencia.site/assets/madame-luxo-hero-colecao-verde-menta.webp</image:loc>
-      <image:title>Coleção Madame Luxo – Moda Feminina e Plus Size</image:title>
+      <image:loc>https://www.madameluxorj.com.br/assets/madame-luxo-hero-colecao-verde-menta.webp</image:loc>
+      <image:title>ColeÃ§Ã£o Madame Luxo â€“ Moda Feminina e Plus Size</image:title>
     </image:image>
     <image:image>
-      <image:loc>https://www.madameluxo.ag5agencia.site/assets/fachada-loja-madame-luxo-vitrine.webp</image:loc>
-      <image:title>Fachada da Loja Madame Luxo – Santa Cruz, RJ</image:title>
+      <image:loc>https://www.madameluxorj.com.br/assets/fachada-loja-madame-luxo-vitrine.webp</image:loc>
+      <image:title>Fachada da Loja Madame Luxo â€“ Santa Cruz, RJ</image:title>
     </image:image>
     <image:image>
-      <image:loc>https://www.madameluxo.ag5agencia.site/assets/interior-loja-boutique-madame-luxo.webp</image:loc>
+      <image:loc>https://www.madameluxorj.com.br/assets/interior-loja-boutique-madame-luxo.webp</image:loc>
       <image:title>Interior da Boutique Madame Luxo</image:title>
     </image:image>
   </url>
