@@ -2502,10 +2502,36 @@
     <div class="pmodal-overlay" id="modal-dinamico" role="dialog" aria-modal="true" aria-label="Detalhes do produto" hidden>
         <div class="pmodal-box">
             <button class="pmodal-close" aria-label="Fechar" onclick="fecharModalDinamico()">✕</button>
+            <button type="button" class="pmodal-sacola-fab" id="pmodal-sacola-fab" aria-label="Ver sacola">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                    <line x1="3" y1="6" x2="21" y2="6"/>
+                    <path d="M16 10a4 4 0 0 1-8 0"/>
+                </svg>
+                <span class="pmodal-sacola-fab-badge" id="pmodal-sacola-fab-badge" hidden>0</span>
+            </button>
             <div class="pmodal-inner">
                 <div class="pmodal-galeria">
+                    <!-- Imagem principal (desktop) -->
                     <img id="pimg-dinamico" src="" alt="" class="pmodal-img-main">
+                    <!-- Thumbnails (desktop) -->
                     <div class="pmodal-thumbs" id="pmodal-thumbs-dinamico"></div>
+
+                    <!-- Carrossel mobile (substitui main img + thumbs em telas pequenas) -->
+                    <div class="pmodal-carousel" id="pmodal-carousel-dinamico" aria-roledescription="carousel">
+                        <div class="pmodal-carousel-track" id="pmodal-carousel-track"></div>
+                        <button type="button" class="pmodal-carousel-arrow pmodal-carousel-arrow--prev" id="pmodal-carousel-prev" aria-label="Imagem anterior">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                                <polyline points="15 18 9 12 15 6"/>
+                            </svg>
+                        </button>
+                        <button type="button" class="pmodal-carousel-arrow pmodal-carousel-arrow--next" id="pmodal-carousel-next" aria-label="Próxima imagem">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                                <polyline points="9 18 15 12 9 6"/>
+                            </svg>
+                        </button>
+                        <div class="pmodal-carousel-dots" id="pmodal-carousel-dots" aria-hidden="true"></div>
+                    </div>
                 </div>
                 <div class="pmodal-detalhes">
                     <span class="pmodal-cat" id="pmodal-cat-dinamico"></span>

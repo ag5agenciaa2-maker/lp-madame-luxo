@@ -3360,10 +3360,10 @@ ol {
 
         /* ── Card ── */
         .cat-card {
+            position: relative;
             background: #111;
             border-radius: 16px;
             overflow: hidden;
-            cursor: pointer;
             cursor: pointer;
             transition: transform 0.3s cubic-bezier(0.19, 1, 0.22, 1),
                 box-shadow 0.3s cubic-bezier(0.19, 1, 0.22, 1);
@@ -4167,41 +4167,36 @@ ol {
            SACOLA — carrinho persistente
            ============================================ */
 
-        /* Botão sacola no card (canto sup. direito) */
+        /* Botão sacola no card (canto inferior direito, minimalista) */
         .cat-card-sacola-btn {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            width: 36px;
-            height: 36px;
+            bottom: 8px;
+            right: 8px;
+            width: 30px;
+            height: 30px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            background: rgba(20, 20, 20, 0.7);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border: 1px solid rgba(200, 169, 106, 0.4);
-            color: #F0D98A;
+            background: rgba(20, 20, 20, 0.55);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            border: 1px solid rgba(200, 169, 106, 0.25);
+            color: rgba(240, 217, 138, 0.85);
             border-radius: 50%;
             cursor: pointer;
             transition: all 0.2s ease;
             z-index: 3;
-            opacity: 0;
-        }
-        .cat-card:hover .cat-card-sacola-btn,
-        .cat-card-sacola-btn:focus {
-            opacity: 1;
-        }
-        @media (max-width: 768px) {
-            .cat-card-sacola-btn { opacity: 1; }
+            opacity: 0.75;
         }
         .cat-card-sacola-btn:hover {
+            opacity: 1;
             background: linear-gradient(135deg, #8C6B2F 0%, #C8A96A 35%, #F0D98A 55%, #C8A96A 75%, #8C6B2F 100%);
             color: #1A1A1A;
             border-color: transparent;
             transform: scale(1.08);
         }
         .cat-card-sacola-btn.is-added {
+            opacity: 1;
             background: linear-gradient(135deg, #8C6B2F, #F0D98A);
             color: #1A1A1A;
             border-color: transparent;
@@ -4333,9 +4328,9 @@ ol {
             inset: 0;
             background: rgba(0, 0, 0, 0.55);
             opacity: 0;
-            animation: sacolaOverlayIn 0.25s ease forwards;
+            transition: opacity 0.25s ease;
         }
-        @keyframes sacolaOverlayIn { to { opacity: 1; } }
+        .sacola-painel.is-open .sacola-overlay { opacity: 1; }
 
         .sacola-drawer {
             position: absolute;
@@ -4349,10 +4344,10 @@ ol {
             display: flex;
             flex-direction: column;
             transform: translateX(100%);
-            animation: sacolaDrawerIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             box-shadow: -20px 0 50px rgba(0, 0, 0, 0.5);
         }
-        @keyframes sacolaDrawerIn { to { transform: translateX(0); } }
+        .sacola-painel.is-open .sacola-drawer { transform: translateX(0); }
 
         .sacola-header {
             display: flex;
@@ -4705,4 +4700,245 @@ ol {
         body.sacola-tem-itens .sacola-fab,
         body.no-catalogo .sacola-fab {
             display: inline-flex;
+        }
+
+        /* ============================================
+           CARROSSEL MOBILE — Modal de Produto
+           ============================================ */
+        /* Por padrão (desktop) o carrossel não aparece; thumbnails+main ficam ativos. */
+        .pmodal-carousel { display: none; }
+
+        @media (max-width: 768px) {
+            /* Mobile: esconde galeria desktop e ativa carrossel arrastável 9:16. */
+            .pmodal-galeria .pmodal-img-main,
+            .pmodal-galeria .pmodal-thumbs { display: none !important; }
+
+            .pmodal-carousel {
+                display: block;
+                position: relative;
+                width: 100%;
+                aspect-ratio: 9 / 16;
+                background: #0E0E0E;
+                overflow: hidden;
+                border-radius: 12px;
+                user-select: none;
+                -webkit-user-select: none;
+                touch-action: pan-y;
+            }
+
+            .pmodal-carousel-track {
+                display: flex;
+                width: 100%;
+                height: 100%;
+                transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+                will-change: transform;
+            }
+            .pmodal-carousel-track.is-dragging {
+                transition: none;
+            }
+
+            .pmodal-carousel-slide {
+                flex: 0 0 100%;
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #0E0E0E;
+            }
+
+            .pmodal-carousel-slide img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                pointer-events: none; /* permite arrastar via track sem capturar drag-image */
+            }
+
+            .pmodal-carousel-arrow {
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 40px;
+                height: 40px;
+                background: rgba(0, 0, 0, 0.55);
+                backdrop-filter: blur(6px);
+                -webkit-backdrop-filter: blur(6px);
+                border: 1px solid rgba(200, 169, 106, 0.35);
+                color: #F0D98A;
+                border-radius: 50%;
+                cursor: pointer;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 5;
+                transition: all 0.2s ease;
+            }
+            .pmodal-carousel-arrow:hover,
+            .pmodal-carousel-arrow:active {
+                background: rgba(0, 0, 0, 0.8);
+                color: #fff;
+            }
+            .pmodal-carousel-arrow[disabled] {
+                opacity: 0.3;
+                cursor: not-allowed;
+                pointer-events: none;
+            }
+            .pmodal-carousel-arrow--prev { left: 12px; }
+            .pmodal-carousel-arrow--next { right: 12px; }
+
+            .pmodal-carousel-dots {
+                position: absolute;
+                bottom: 14px;
+                left: 50%;
+                transform: translateX(-50%);
+                display: inline-flex;
+                gap: 6px;
+                z-index: 4;
+            }
+            .pmodal-carousel-dot {
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.35);
+                border: none;
+                cursor: pointer;
+                padding: 0;
+                transition: all 0.25s ease;
+            }
+            .pmodal-carousel-dot.is-active {
+                background: #F0D98A;
+                width: 22px;
+                border-radius: 100px;
+            }
+
+            /* Esconde setas se só houver 1 slide */
+            .pmodal-carousel.has-one .pmodal-carousel-arrow,
+            .pmodal-carousel.has-one .pmodal-carousel-dots {
+                display: none;
+            }
+
+            /* Layout: Carrossel ocupa 100% no topo, texto rola embaixo */
+            .pmodal-inner {
+                grid-template-columns: 1fr !important;
+                grid-template-rows: auto auto;
+            }
+            .pmodal-galeria {
+                width: 100%;
+            }
+            /* Garante que nome/preço aparecem na primeira dobra (sem scroll inicial) */
+            .pmodal-detalhes {
+                padding-top: 16px;
+            }
+            .pmodal-cat,
+            .pmodal-nome,
+            .pmodal-precos {
+                margin-bottom: 12px;
+            }
+            .pmodal-nome {
+                font-size: 1.5rem;
+                line-height: 1.15;
+            }
+        }
+
+        /* ============================================
+           Modal Produto: fullscreen em mobile + botão sacola flutuante
+           ============================================ */
+
+        /* Botão sacola flutuante (visível em todas as resoluções, dentro do modal) */
+        .pmodal-sacola-fab {
+            position: absolute;
+            top: 16px;
+            right: 64px; /* fica ao lado do close */
+            z-index: 11;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid rgba(200, 169, 106, 0.4);
+            background: rgba(20, 20, 20, 0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            color: #F0D98A;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .pmodal-sacola-fab:hover {
+            background: linear-gradient(135deg, #8C6B2F 0%, #C8A96A 35%, #F0D98A 55%, #C8A96A 75%, #8C6B2F 100%);
+            color: #1A1A1A;
+            border-color: transparent;
+            transform: scale(1.05);
+        }
+        .pmodal-sacola-fab.is-added {
+            background: linear-gradient(135deg, #8C6B2F, #F0D98A);
+            color: #1A1A1A;
+            border-color: transparent;
+            animation: pmodalSacolaPulse 0.5s ease;
+        }
+        @keyframes pmodalSacolaPulse {
+            0%   { transform: scale(1); }
+            50%  { transform: scale(1.18); }
+            100% { transform: scale(1); }
+        }
+        .pmodal-sacola-fab-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 5px;
+            background: #1A1A1A;
+            color: #F0D98A;
+            border: 1.5px solid #F0D98A;
+            border-radius: 100px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Mobile: modal vira página inteira */
+        @media (max-width: 768px) {
+            .pmodal-overlay {
+                padding: 0 !important;
+                align-items: stretch !important;
+                justify-content: stretch !important;
+            }
+            .pmodal-box {
+                width: 100% !important;
+                max-width: 100% !important;
+                height: 100vh !important;
+                max-height: 100vh !important;
+                border-radius: 0 !important;
+                margin: 0 !important;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .pmodal-close {
+                position: fixed;
+                top: 14px;
+                right: 14px;
+                background: rgba(0, 0, 0, 0.6);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                border-color: rgba(255, 255, 255, 0.2);
+                color: #fff;
+            }
+            .pmodal-sacola-fab {
+                position: fixed;
+                top: 14px;
+                right: 62px;
+                background: rgba(0, 0, 0, 0.6);
+            }
+            /* Carrossel sem cantos arredondados em fullscreen */
+            .pmodal-carousel {
+                border-radius: 0;
+            }
+            /* Detalhes ganham padding interno em fullscreen */
+            .pmodal-detalhes {
+                padding: 18px 18px 32px;
+            }
         }

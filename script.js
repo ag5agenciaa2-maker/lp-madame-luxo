@@ -5,6 +5,31 @@
  */
 
 // ============================================
+// LOCK LEVE — só esconde overflow, suporta empilhamento (sem position:fixed)
+// ============================================
+window.BodyScroll = (function () {
+    let _locks = 0;
+    let _saved = '';
+    return {
+        lock() {
+            _locks++;
+            if (_locks === 1) {
+                _saved = document.body.style.overflow;
+                document.body.style.overflow = 'hidden';
+            }
+        },
+        unlock() {
+            if (_locks === 0) return;
+            _locks--;
+            if (_locks === 0) {
+                document.body.style.overflow = _saved;
+            }
+        },
+        reset() { _locks = 0; document.body.style.overflow = _saved; }
+    };
+})();
+
+// ============================================
 // SCROLL LOCK GLOBAL (modais, dropdowns, menus)
 // ============================================
 // Trava o scroll do body preservando a posição atual.
@@ -248,7 +273,7 @@ class NavbarController {
         const openMenu = () => {
             drawer.classList.add('is-open');
             overlay.classList.add('is-active');
-            document.body.style.overflow = 'hidden';
+            window.BodyScroll.lock();
             drawer.setAttribute('aria-hidden', 'false');
             overlay.setAttribute('aria-hidden', 'false');
         };
@@ -256,7 +281,7 @@ class NavbarController {
         const closeMenu = () => {
             drawer.classList.remove('is-open');
             overlay.classList.remove('is-active');
-            document.body.style.overflow = '';
+            window.BodyScroll.unlock();
             drawer.setAttribute('aria-hidden', 'true');
             overlay.setAttribute('aria-hidden', 'true');
         };
@@ -892,7 +917,7 @@ window.openWhatsApp = (message = '') => {
                         overlay.classList.add('ml-open');
                     });
                 });
-                document.body.style.overflow = 'hidden';
+                window.BodyScroll.lock();
                 history.pushState({ modal: id }, '');
             }
 
@@ -917,7 +942,7 @@ window.openWhatsApp = (message = '') => {
                     o.classList.remove('ml-open');
                     setTimeout(function () { o.setAttribute('hidden', ''); }, 350);
                 });
-                document.body.style.overflow = '';
+                window.BodyScroll.unlock();
                 setTimeout(function () { _fechandoModal = false; }, 400);
             }
             document.querySelectorAll('.pmodal-close').forEach(function (btn) {
@@ -1014,6 +1039,99 @@ window.openWhatsApp = (message = '') => {
                 return data;
             }
 
+            // ── Carrossel mobile do modal de produto: drag (touch+mouse) + setas + dots ──
+            function montarCarrosselMobile(imagens, alt) {
+                const carousel = document.getElementById('pmodal-carousel-dinamico');
+                const track = document.getElementById('pmodal-carousel-track');
+                const dotsEl = document.getElementById('pmodal-carousel-dots');
+                const prevBtn = document.getElementById('pmodal-carousel-prev');
+                const nextBtn = document.getElementById('pmodal-carousel-next');
+                if (!carousel || !track) return;
+
+                track.innerHTML = '';
+                dotsEl.innerHTML = '';
+
+                if (!imagens.length) {
+                    carousel.classList.add('has-one');
+                    return;
+                }
+
+                imagens.forEach((src) => {
+                    const slide = document.createElement('div');
+                    slide.className = 'pmodal-carousel-slide';
+                    const img = document.createElement('img');
+                    img.src = src;
+                    img.alt = alt || '';
+                    img.loading = 'lazy';
+                    slide.appendChild(img);
+                    track.appendChild(slide);
+                });
+
+                imagens.forEach((_, i) => {
+                    const dot = document.createElement('button');
+                    dot.type = 'button';
+                    dot.className = 'pmodal-carousel-dot' + (i === 0 ? ' is-active' : '');
+                    dot.setAttribute('aria-label', `Ir para imagem ${i + 1}`);
+                    dot.addEventListener('click', () => goTo(i));
+                    dotsEl.appendChild(dot);
+                });
+
+                carousel.classList.toggle('has-one', imagens.length === 1);
+
+                let idx = 0;
+                const total = imagens.length;
+
+                function goTo(i) {
+                    idx = Math.max(0, Math.min(total - 1, i));
+                    track.style.transform = `translateX(${-idx * 100}%)`;
+                    dotsEl.querySelectorAll('.pmodal-carousel-dot').forEach((d, j) => {
+                        d.classList.toggle('is-active', j === idx);
+                    });
+                    prevBtn.disabled = idx === 0;
+                    nextBtn.disabled = idx === total - 1;
+                }
+
+                prevBtn.onclick = () => goTo(idx - 1);
+                nextBtn.onclick = () => goTo(idx + 1);
+                goTo(0);
+
+                // Drag por arrastar (touch e mouse)
+                let dragStartX = null;
+                let dragCurrentX = 0;
+                let dragWidth = 0;
+
+                function onPointerDown(e) {
+                    dragStartX = (e.touches ? e.touches[0].clientX : e.clientX);
+                    dragWidth = carousel.getBoundingClientRect().width;
+                    track.classList.add('is-dragging');
+                }
+                function onPointerMove(e) {
+                    if (dragStartX === null) return;
+                    const x = (e.touches ? e.touches[0].clientX : e.clientX);
+                    dragCurrentX = x - dragStartX;
+                    track.style.transform = `translateX(calc(${-idx * 100}% + ${dragCurrentX}px))`;
+                }
+                function onPointerUp() {
+                    if (dragStartX === null) return;
+                    track.classList.remove('is-dragging');
+                    const threshold = dragWidth * 0.2; // 20% pra trocar
+                    if (dragCurrentX > threshold && idx > 0) goTo(idx - 1);
+                    else if (dragCurrentX < -threshold && idx < total - 1) goTo(idx + 1);
+                    else goTo(idx); // volta pro slide atual
+                    dragStartX = null;
+                    dragCurrentX = 0;
+                }
+
+                // Remove listeners antigos antes de religar (modal pode reabrir várias vezes).
+                track.ontouchstart = onPointerDown;
+                track.ontouchmove = onPointerMove;
+                track.ontouchend = onPointerUp;
+                track.onmousedown = (e) => { e.preventDefault(); onPointerDown(e); };
+                track.onmousemove = (e) => { if (dragStartX !== null) onPointerMove(e); };
+                track.onmouseup = onPointerUp;
+                track.onmouseleave = () => { if (dragStartX !== null) onPointerUp(); };
+            }
+
             function abrirModalDinamico(produto) {
                 const modal = document.getElementById('modal-dinamico');
                 if (!modal) return;
@@ -1054,6 +1172,9 @@ window.openWhatsApp = (message = '') => {
                     thumb.onclick = function () { window.mlTrocarImg('pimg-dinamico', this); };
                     thumbsContainer.appendChild(thumb);
                 });
+
+                // ── Carrossel mobile (substitui imagem main + thumbs em telas <=768px) ──
+                montarCarrosselMobile(imagens, nome);
 
                 // Breadcrumb mostra só a categoria; tipo agora vai na grid de specs.
                 document.getElementById('pmodal-cat-dinamico').innerText = categoria;
@@ -1743,14 +1864,6 @@ window.openWhatsApp = (message = '') => {
                     <div class="cat-card-img-wrap">
                         <img src="${imagem1}" alt="${nome}" class="cat-card-img" loading="lazy">
                         ${badgeHtml}
-                        ${esgotado ? '' : `
-                        <button class="cat-card-sacola-btn" type="button" aria-label="Adicionar ${nome} à sacola">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-                                <line x1="3" y1="6" x2="21" y2="6"/>
-                                <path d="M16 10a4 4 0 0 1-8 0"/>
-                            </svg>
-                        </button>`}
                     </div>
                     <div class="cat-card-info">
                         <h3 class="cat-card-nome">${nome}</h3>
@@ -1760,6 +1873,14 @@ window.openWhatsApp = (message = '') => {
                         </div>
                         <span class="cat-card-tamanhos">${tamanhos || ''}</span>
                     </div>
+                    ${esgotado ? '' : `
+                    <button class="cat-card-sacola-btn" type="button" aria-label="Adicionar ${nome} à sacola">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                            <line x1="3" y1="6" x2="21" y2="6"/>
+                            <path d="M16 10a4 4 0 0 1-8 0"/>
+                        </svg>
+                    </button>`}
                 `;
 
                     // Click no card → abre modal. Click no botão sacola → abre popover de tamanho.
@@ -1876,6 +1997,8 @@ window.openWhatsApp = (message = '') => {
                     const fab = document.getElementById('sacolaFab');
                     const fabBadge = document.getElementById('sacolaBadge');
                     const navBadge = document.getElementById('navSacolaBadge');
+                    const modalFab = document.getElementById('pmodal-sacola-fab');
+                    const modalFabBadge = document.getElementById('pmodal-sacola-fab-badge');
                     if (fabBadge) {
                         fabBadge.textContent = c;
                         fabBadge.hidden = c === 0;
@@ -1884,9 +2007,22 @@ window.openWhatsApp = (message = '') => {
                         navBadge.textContent = c;
                         navBadge.hidden = c === 0;
                     }
+                    if (modalFabBadge) {
+                        modalFabBadge.textContent = c;
+                        modalFabBadge.hidden = c === 0;
+                    }
                     document.body.classList.toggle('sacola-tem-itens', c > 0);
                     // FAB sempre visível quando sacola tem item.
                     if (fab) fab.classList.toggle('is-visible', c > 0);
+
+                    // Anima o botão sacola do modal quando algo é adicionado (visível na hora).
+                    if (modalFab && c > 0) {
+                        modalFab.classList.remove('is-added');
+                        // Re-disparar animação no próximo frame
+                        void modalFab.offsetWidth;
+                        modalFab.classList.add('is-added');
+                        setTimeout(() => modalFab.classList.remove('is-added'), 600);
+                    }
 
                     // Marca botão de sacola dos cards do produto atualmente na sacola.
                     document.querySelectorAll('.cat-card-sacola-btn').forEach(b => b.classList.remove('is-added'));
@@ -1954,12 +2090,17 @@ window.openWhatsApp = (message = '') => {
                 }
 
                 let _sacolaPushedHistory = false;
+                let _sacolaFechando = false;
 
                 function abrirPainel() {
                     const p = document.getElementById('sacolaPainel');
                     if (!p) return;
                     renderPainel();
                     p.hidden = false;
+                    // Próximo frame ativa a transição (entra deslizando da direita).
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => p.classList.add('is-open'));
+                    });
                     p.setAttribute('aria-hidden', 'false');
                     document.body.style.overflow = 'hidden';
                     // Empilha estado para que o botão "voltar" do celular feche a sacola
@@ -1972,10 +2113,16 @@ window.openWhatsApp = (message = '') => {
 
                 function fecharPainel(opts) {
                     const p = document.getElementById('sacolaPainel');
-                    if (!p || p.hidden) return;
-                    p.hidden = true;
+                    if (!p || p.hidden || _sacolaFechando) return;
+                    _sacolaFechando = true;
+                    // Inicia animação de saída (drawer desliza para fora + overlay fade out).
+                    p.classList.remove('is-open');
                     p.setAttribute('aria-hidden', 'true');
-                    document.body.style.overflow = '';
+                    setTimeout(() => {
+                        p.hidden = true;
+                        document.body.style.overflow = '';
+                        _sacolaFechando = false;
+                    }, 300); // bate com o transition do CSS
                     // Quando o usuário fecha pelo X/overlay, desempilha o estado que adicionamos.
                     // Quando o fechamento veio do popstate (back), o estado já saiu — não desempilhar.
                     if (_sacolaPushedHistory && !(opts && opts.fromPopState)) {
@@ -2098,6 +2245,12 @@ window.openWhatsApp = (message = '') => {
                         if (window.__produtoDinamicoAtual) {
                             abrirPopoverTamanho(window.__produtoDinamicoAtual, false);
                         }
+                    });
+
+                    // Botão sacola flutuante minimalista (top-right do modal de produto).
+                    // Abre o painel da sacola por cima do modal de produto.
+                    document.getElementById('pmodal-sacola-fab')?.addEventListener('click', () => {
+                        abrirPainel();
                     });
 
                     // Botão "Comprar pelo WhatsApp" dentro do modal — também pergunta tamanho antes.
