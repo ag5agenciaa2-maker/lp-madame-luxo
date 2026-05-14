@@ -76,9 +76,11 @@ const CONFIG = {
         PRECO_POR: 20,
         DESCONTO: 21,
         FORMA_PAGAMENTO: 22,
-        STATUS: 23
+        STATUS: 23,
+        DATA_CRIACAO: 24
     }
-    // Total: 24 colunas (A..X). Imagem em coluna I..R (10 slots).
+    // Total: 25 colunas (A..Y). Imagem em coluna I..R (10 slots).
+    // Y = "Data Criação" — preenchida automaticamente pelo Apps Script ao criar produto.
     // Credenciais R2 vivem no Apps Script (Script Properties).
     // Upload passa por APPS_SCRIPT_URL com action=upload_r2.
 };
@@ -135,6 +137,7 @@ function initEventListeners() {
     document.getElementById('filter-search').addEventListener('input', debounce(filterProducts, 300));
     initMultiFilter('categoria', 'Todas as Categorias');
     initMultiFilter('status', 'Todos os Status');
+    initSortDropdown();
 
     // View toggle
     document.getElementById('btn-view-grid').addEventListener('click', () => setView('grid'));
@@ -166,6 +169,10 @@ function initEventListeners() {
     document.getElementById('modal-close').addEventListener('click', closeModal);
     document.getElementById('btn-cancelar').addEventListener('click', closeModal);
     document.getElementById('form-produto').addEventListener('submit', handleSubmit);
+
+    // Mask de preço BRL nos inputs de preço (centavos: digita "6000" → mostra "60,00").
+    aplicarMaskPreco(document.getElementById('prod-preco-de'));
+    aplicarMaskPreco(document.getElementById('prod-preco-por'));
 
     // Fechar modal ao clicar fora
     document.getElementById('modal-produto').addEventListener('click', (e) => {
@@ -266,7 +273,7 @@ async function loadProducts() {
         
         const csvText = await response.text();
         allProducts = parseCSV(csvText);
-        filteredProducts = [...allProducts];
+        filteredProducts = applySorting(allProducts);
 
         // Extrai valores únicos da planilha para popular os seletores.
         // Categoria/Tipo aceitam múltiplos valores separados por vírgula na mesma célula
@@ -291,7 +298,18 @@ async function loadProducts() {
 
         updateStats();
         renderTable();
-        
+
+        // Garante o dropdown nativo da planilha nas colunas Categoria (C) e Tipo (D)
+        // uma vez por sessão — útil se a validação tiver sido limpa por algum erro.
+        // Versão da chave força re-sync se mudarmos o algoritmo do server-side.
+        const SYNC_KEY = 'ml_dropdown_sync_v2';
+        if (!sessionStorage.getItem(SYNC_KEY)) {
+            sessionStorage.setItem(SYNC_KEY, '1');
+            // best-effort: silencioso em falha + sem toast
+            syncValidationToSheet('categoria', true);
+            syncValidationToSheet('tipo', true);
+        }
+
         showToast(`${allProducts.length} produtos carregados`, 'success');
     } catch (error) {
         console.error('Erro:', error);
@@ -302,44 +320,77 @@ async function loadProducts() {
     }
 }
 
+// Parser CSV robusto: respeita aspas e permite quebras de linha e virgulas
+// DENTRO de aspas (descricoes multi-linha do Sheets). "" vira aspa literal.
+function parseCSVAllRows(text) {
+    const rows = [];
+    let row = [];
+    let cur = "";
+    let inQuotes = false;
+    const NL = String.fromCharCode(10);
+    const CR = String.fromCharCode(13);
+    for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        if (inQuotes) {
+            if (c === '"') {
+                if (text[i + 1] === '"') { cur += '"'; i++; }
+                else inQuotes = false;
+            } else {
+                cur += c;
+            }
+        } else {
+            if (c === '"') inQuotes = true;
+            else if (c === ',') { row.push(cur); cur = ""; }
+            else if (c === NL) { row.push(cur); cur = ""; rows.push(row); row = []; }
+            else if (c === CR) { /* ignora CR */ }
+            else cur += c;
+        }
+    }
+    if (cur.length > 0 || row.length > 0) { row.push(cur); rows.push(row); }
+    return rows;
+}
+
 function parseCSV(text) {
-    const lines = text.split('\n').filter(l => l.trim());
-    if (lines.length < 2) return [];
-    
-    // Encontra a linha de headers
+    const allRows = parseCSVAllRows(text);
+    if (allRows.length < 2) return [];
+
+    // Encontra a linha de headers (procura "categoria" + "id"/"nome").
     let headerIndex = 0;
-    for (let i = 0; i < Math.min(lines.length, 5); i++) {
-        const lower = lines[i].toLowerCase();
-        if (lower.includes('categoria') || lower.includes('nome')) {
+    for (let i = 0; i < Math.min(allRows.length, 5); i++) {
+        const joined = allRows[i].join(' ').toLowerCase();
+        if (joined.includes('categoria') && (joined.includes('id') || joined.includes('nome'))) {
             headerIndex = i;
             break;
         }
     }
-    
-    const headers = parseCSVLine(lines[headerIndex]).map(h => 
-        h.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+
+    const headers = allRows[headerIndex].map(h =>
+        String(h || '').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
     );
-    
+
     const products = [];
-    
-    for (let i = headerIndex + 1; i < lines.length; i++) {
-        const values = parseCSVLine(lines[i]);
-        if (values.length < headers.length) continue;
-        
+
+    for (let i = headerIndex + 1; i < allRows.length; i++) {
+        const values = allRows[i];
+        // Pula linhas totalmente vazias.
+        if (!values.some(c => String(c || '').trim() !== '')) continue;
+        // Aceita linhas com pelo menos 8 colunas (até a descricao) — protege contra
+        // produtos com colunas de cauda vazias mas dados validos no inicio.
+        if (values.length < Math.min(headers.length, 8)) continue;
+
         const product = {};
         headers.forEach((h, idx) => {
             product[h] = values[idx] || '';
         });
-        
-        // Mapeamento direto pela posição das colunas (ordem real da planilha — 24 colunas):
+
+        // Mapeamento direto pela posicao (planilha tem 25 colunas A..Y).
         // 0:ID 1:Nome 2:Categoria 3:Tipo 4:Cor 5:Tamanhos 6:Material 7:Descrição
         // 8..17:Imagem 1..10  18:Link  19:PrecoDe  20:PrecoPor  21:Desconto
-        // 22:Forma de pagamento  23:Status
+        // 22:Forma de pagamento  23:Status  24:DataCriacao
         product._id       = values[0] || '';
         product._nome     = values[1] || '';
         product._categoria= values[2] || '';
         // Lista normalizada: cada categoria/tipo da célula vira um item do array.
-        // A planilha guarda múltiplos valores separados por vírgula (ex.: "Shorts, Bermudas").
         product._categorias = csdSplit(product._categoria);
         product._tipo     = values[3] || '';
         product._tipos    = csdSplit(product._tipo);
@@ -357,26 +408,28 @@ function parseCSV(text) {
         product._imagem8  = values[15] || '';
         product._imagem9  = values[16] || '';
         product._imagem10 = values[17] || '';
-        // Array com todas as imagens não-vazias (em ordem) — útil pra carrossel/galeria.
         product._imagens  = [
             product._imagem1, product._imagem2, product._imagem3, product._imagem4, product._imagem5,
             product._imagem6, product._imagem7, product._imagem8, product._imagem9, product._imagem10
         ].filter(u => u && u.trim());
         product._link     = values[18] || '';
-        // Remove "R$ " caso a planilha guarde com prefixo
         product._precoDe  = (values[19] || '').replace(/R\$\s*/g, '').trim();
         product._precoPor = (values[20] || '').replace(/R\$\s*/g, '').trim();
         product._desconto = values[21] || '';
         product._formaPagamento = values[22] || '';
         product._status   = values[23] || 'Ativo';
-        // Estoque: removido do form, não é mais lido (planilha não tem mais essa coluna).
+        product._dataCriacao = values[24] || '';
+        product._dataCriacaoTs = parseDataBR(product._dataCriacao);
         product._estoque  = '';
-        // _rowIndex em 1-based (linha real na planilha, já conta o header na linha 1)
+        // _rowIndex em 1-based: linha real na planilha. O parser agora respeita
+        // \n dentro de aspas, entao o indice i ja corresponde a linha real.
+        // Header esta em linha real (i=headerIndex+offset=2). Como saltamos linhas
+        // vazias e nao sabemos o offset exato pre-header, usamos i+1 (linha CSV 1-based).
         product._rowIndex = i + 1;
-        
+
         products.push(product);
     }
-    
+
     return products;
 }
 
@@ -623,7 +676,7 @@ function openDetailModal(product, opts = {}) {
     const imagensReais = (product._imagens || []).filter(Boolean);
     const semImg = imagensReais.length === 0;
     const imagens = semImg ? [FALLBACK] : imagensReais;
-    const tamanhos = (product._tamanhos || '').split(/[\/|·,]/).map(s => s.trim()).filter(Boolean);
+    const tamanhos = (product._tamanhos || '').split(/[,;|·•/.]|\s[-–—/]\s/).map(s => s.trim()).filter(Boolean);
     const cores = (product._cor || '').split(/[,;|·•/]|\s-\s|\s\/\s/).map(s => s.trim()).filter(Boolean);
 
     let existing = document.getElementById('detail-modal');
@@ -686,7 +739,7 @@ function openDetailModal(product, opts = {}) {
                         <div class="pmodal-precos">
                             ${product._precoDe ? `<span class="pmodal-de">R$ ${escapeHtml(product._precoDe)}</span>` : ''}
                             <span class="pmodal-por">R$ ${escapeHtml(product._precoPor || '-')}</span>
-                            ${product._desconto ? `<span class="pmodal-desc">${escapeHtml(product._desconto)}</span>` : ''}
+                            ${descontoEhValido(product._desconto) ? `<span class="pmodal-desc">${escapeHtml(product._desconto)}</span>` : ''}
                         </div>
 
                         ${product._formaPagamento ? `
@@ -695,7 +748,7 @@ function openDetailModal(product, opts = {}) {
                             <span>${escapeHtml(product._formaPagamento)}</span>
                         </div>` : ''}
 
-                        ${product._descricao ? `<p class="pmodal-texto">${escapeHtml(product._descricao)}</p>` : ''}
+                        ${product._descricao ? `<div class="pmodal-texto">${sanitizeRichHTML(product._descricao)}</div>` : ''}
 
                         <div class="pmodal-specs">
                             <div class="pmodal-spec"><span class="pspec-l">Tipo</span><span class="pspec-v">${
@@ -760,23 +813,47 @@ function openDetailModal(product, opts = {}) {
                                     <div class="dm-form-field">
                                         <span class="dm-form-label">Categoria *</span>
                                         <input type="hidden" data-key="categoria">
-                                        <div class="dm-chips-field" data-chips="categoria"></div>
+                                        <div class="custom-select-wrap" data-dm-csd="categoria">
+                                            <button type="button" class="custom-select-btn dm-csd-btn">
+                                                <span class="dm-csd-label">Selecione...</span>
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                                            </button>
+                                            <div class="custom-select-dropdown dm-csd-dropdown" hidden>
+                                                <div class="csd-list dm-csd-list"></div>
+                                                <div class="csd-add-row">
+                                                    <input type="text" class="csd-add-input dm-csd-add-input" placeholder="Nova categoria...">
+                                                    <button type="button" class="csd-add-btn dm-csd-add-btn">+</button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="dm-form-field">
                                         <span class="dm-form-label">Tipo</span>
                                         <input type="hidden" data-key="tipo">
-                                        <div class="dm-chips-field" data-chips="tipo"></div>
+                                        <div class="custom-select-wrap" data-dm-csd="tipo">
+                                            <button type="button" class="custom-select-btn dm-csd-btn">
+                                                <span class="dm-csd-label">Selecione...</span>
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                                            </button>
+                                            <div class="custom-select-dropdown dm-csd-dropdown" hidden>
+                                                <div class="csd-list dm-csd-list"></div>
+                                                <div class="csd-add-row">
+                                                    <input type="text" class="csd-add-input dm-csd-add-input" placeholder="Novo tipo...">
+                                                    <button type="button" class="csd-add-btn dm-csd-add-btn">+</button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
                                 <div class="dm-form-row">
                                     <label class="dm-form-field">
                                         <span class="dm-form-label">Preço DE (R$)</span>
-                                        <input type="text" class="dm-input" data-key="precoDe" value="${escapeAttr(product._precoDe)}" placeholder="219,90">
+                                        <input type="text" class="dm-input" data-key="precoDe" value="${escapeAttr(normalizarPrecoParaInput(product._precoDe))}" placeholder="219,90">
                                     </label>
                                     <label class="dm-form-field">
                                         <span class="dm-form-label">Preço POR (R$) *</span>
-                                        <input type="text" class="dm-input" data-key="precoPor" value="${escapeAttr(product._precoPor)}" placeholder="179,90">
+                                        <input type="text" class="dm-input" data-key="precoPor" value="${escapeAttr(normalizarPrecoParaInput(product._precoPor))}" placeholder="179,90">
                                     </label>
                                 </div>
 
@@ -803,10 +880,32 @@ function openDetailModal(product, opts = {}) {
 
                             <!-- COLUNA DIREITA: descrição + galeria de fotos + ações -->
                             <div class="dm-edit-col dm-edit-col--right">
-                                <label class="dm-form-field">
-                                    <span class="dm-form-label">Descrição *</span>
-                                    <textarea class="dm-input dm-textarea dm-textarea--mid" data-key="descricao" placeholder="Descrição do produto...">${escapeHtml(product._descricao || '')}</textarea>
-                                </label>
+                                <div class="dm-form-field">
+                                    <span class="dm-form-label">
+                                        Descrição *
+                                        <span class="dm-rt-counter" id="dm-rt-counter">0/500</span>
+                                    </span>
+                                    <div class="dm-rich-editor" data-rt-wrap>
+                                        <div class="dm-rt-toolbar" role="toolbar" aria-label="Formatação">
+                                            <button type="button" class="dm-rt-btn" data-rt-cmd="bold" title="Negrito (Ctrl+B)" aria-label="Negrito"><b>B</b></button>
+                                            <button type="button" class="dm-rt-btn dm-rt-italic" data-rt-cmd="italic" title="Itálico (Ctrl+I)" aria-label="Itálico"><i>I</i></button>
+                                            <button type="button" class="dm-rt-btn" data-rt-cmd="underline" title="Sublinhado (Ctrl+U)" aria-label="Sublinhado"><u>U</u></button>
+                                            <span class="dm-rt-sep"></span>
+                                            <button type="button" class="dm-rt-btn" data-rt-cmd="insertUnorderedList" title="Lista com marcadores" aria-label="Lista com marcadores">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1" fill="currentColor"/><circle cx="4" cy="12" r="1" fill="currentColor"/><circle cx="4" cy="18" r="1" fill="currentColor"/></svg>
+                                            </button>
+                                            <button type="button" class="dm-rt-btn" data-rt-cmd="insertOrderedList" title="Lista numerada" aria-label="Lista numerada">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/><text x="3" y="9" font-size="7" fill="currentColor" stroke="none">1</text><text x="3" y="15" font-size="7" fill="currentColor" stroke="none">2</text><text x="3" y="21" font-size="7" fill="currentColor" stroke="none">3</text></svg>
+                                            </button>
+                                            <span class="dm-rt-sep"></span>
+                                            <button type="button" class="dm-rt-btn" data-rt-cmd="removeFormat" title="Limpar formatação" aria-label="Limpar formatação">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M5 4l14 16"/></svg>
+                                            </button>
+                                        </div>
+                                        <div class="dm-rt-content" contenteditable="true" data-rt-content data-placeholder="Descrição do produto..."></div>
+                                        <input type="hidden" data-key="descricao">
+                                    </div>
+                                </div>
 
                                 <!-- Galeria editável (dropzone premium + cards reordenáveis) -->
                                 <div class="dm-form-field">
@@ -985,7 +1084,9 @@ function montarQuickStatus(overlay, product) {
                     product._imagem1 || '', product._imagem2 || '', product._imagem3 || '',
                     product._imagem4 || '', product._imagem5 || '', product._imagem6 || '',
                     product._imagem7 || '', product._imagem8 || '', product._imagem9 || '', product._imagem10 || '',
-                    product._link, product._precoDe, product._precoPor, product._desconto,
+                    product._link,
+                    precoParaNumero(product._precoDe), precoParaNumero(product._precoPor),
+                    product._desconto,
                     product._formaPagamento || '', novoStatus
                 ]
             });
@@ -1036,9 +1137,16 @@ function entrarModoEdicao(overlay, product) {
     };
     fillSelect('status', _configDados.status, product._status);
 
-    // Popula campos multi-select inline (chips + busca) para categoria e tipo.
-    montarDmChips(overlay, 'categoria', _configDados.categorias, product._categorias || csdSplit(product._categoria), 'Buscar ou adicionar categoria...');
-    montarDmChips(overlay, 'tipo',      _configDados.tipos,      product._tipos      || csdSplit(product._tipo),      'Buscar ou adicionar tipo...');
+    // Multi-select estilo "Novo Produto" (custom dropdown com busca + adicionar + excluir).
+    montarDmCustomSelect(overlay, 'categoria', product._categorias || csdSplit(product._categoria));
+    montarDmCustomSelect(overlay, 'tipo',      product._tipos      || csdSplit(product._tipo));
+
+    // Mask de preço BRL nos inputs precoDe/precoPor do modal inline.
+    aplicarMaskPreco(editMode.querySelector('[data-key="precoDe"]'));
+    aplicarMaskPreco(editMode.querySelector('[data-key="precoPor"]'));
+
+    // Editor rich-text da descrição (negrito/itálico/sublinhado/listas + 500 chars).
+    montarRichEditor(editMode, product._descricao || '');
 
     // Popula galeria editável com as imagens atuais.
     _dmEditCards = (product._imagens || []).filter(Boolean).map(url => ({
@@ -1048,132 +1156,216 @@ function entrarModoEdicao(overlay, product) {
     _dmEditLigarDropzone(overlay);
 }
 
-// Cria um campo inline de chips (multi-select) dentro do modo de edição.
-// `lista` é a fonte de opções, `selecionados` o estado inicial. Atualiza
-// o input hidden `[data-key="${key}"]` com os valores separados por ", ".
-function montarDmChips(overlay, key, lista, selecionados, placeholder) {
-    const wrap = overlay.querySelector(`.dm-chips-field[data-chips="${key}"]`);
+// Replica o componente custom-select (usado no form "Novo Produto") dentro do
+// modo de edição inline do modal de detalhes. Visual idêntico: botão fechado
+// "Selecione...", dropdown com barra de busca no topo, lista de opções com
+// check na selecionada, lixeira no hover, "+ Adicionar 'termo'" e linha
+// "Nova categoria..." no rodapé. Estado é local — usa o input hidden
+// `[data-key="${key}"]` para integrar com salvarEdicaoInline.
+function montarDmCustomSelect(overlay, key, selecionados) {
+    const wrap   = overlay.querySelector(`[data-dm-csd="${key}"]`);
     const hidden = overlay.querySelector(`[data-key="${key}"]`);
     if (!wrap || !hidden) return;
 
-    // Estado local — não usa _csdState pra não conflitar com o form principal.
+    const btn        = wrap.querySelector('.dm-csd-btn');
+    const labelEl    = wrap.querySelector('.dm-csd-label');
+    const dropdown   = wrap.querySelector('.dm-csd-dropdown');
+    const listEl     = wrap.querySelector('.dm-csd-list');
+    const addInput   = wrap.querySelector('.dm-csd-add-input');
+    const addBtn     = wrap.querySelector('.dm-csd-add-btn');
+
+    const listaKey = csdListaKey(key);
+    const cfg      = csdConfig(key);
+    const norm     = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+    // Estado local independente do _csdState global do form principal.
     const state = {
-        sel: Array.isArray(selecionados) ? selecionados.slice() : csdSplit(selecionados),
-        opts: Array.isArray(lista) ? lista.slice() : [],
+        sel:   Array.isArray(selecionados) ? selecionados.slice() : csdSplit(selecionados),
         termo: ''
     };
 
-    const norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    function syncHidden() { hidden.value = state.sel.join(', '); }
 
-    function syncHidden() {
-        hidden.value = state.sel.join(', ');
+    function updateLabel() {
+        const txt = state.sel.join(', ');
+        labelEl.textContent = txt || 'Selecione...';
+        labelEl.style.opacity = txt ? '1' : '0.5';
+    }
+
+    function abrir() {
+        // Fecha os outros dropdowns dm-csd abertos (mas não interfere com o form principal).
+        overlay.querySelectorAll('.dm-csd-dropdown').forEach(d => { if (d !== dropdown) d.setAttribute('hidden', ''); });
+        // Garante que a barra de busca esteja presente.
+        ensureSearchRow();
+        dropdown.removeAttribute('hidden');
+        btn.classList.add('is-open');
+        const inp = dropdown.querySelector('.csd-search-input');
+        if (inp) setTimeout(() => inp.focus(), 0);
+    }
+    function fechar() {
+        dropdown.setAttribute('hidden', '');
+        btn.classList.remove('is-open');
+        if (state.termo) {
+            state.termo = '';
+            const inp = dropdown.querySelector('.csd-search-input');
+            if (inp) inp.value = '';
+            render();
+        }
+    }
+
+    function ensureSearchRow() {
+        if (dropdown.querySelector('.csd-search-row')) return;
+        const sr = document.createElement('div');
+        sr.className = 'csd-search-row';
+        sr.innerHTML = `
+            <svg class="csd-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" class="csd-search-input" placeholder="Buscar..." autocomplete="off">
+            <button type="button" class="csd-search-clear" hidden aria-label="Limpar busca">×</button>
+        `;
+        dropdown.insertBefore(sr, dropdown.firstChild);
+        const inp = sr.querySelector('.csd-search-input');
+        const clr = sr.querySelector('.csd-search-clear');
+        inp.addEventListener('input', () => {
+            state.termo = inp.value;
+            clr.hidden = !inp.value;
+            render();
+            const novo = dropdown.querySelector('.csd-search-input');
+            if (novo) { novo.focus(); novo.setSelectionRange(novo.value.length, novo.value.length); }
+        });
+        inp.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.preventDefault(); fechar(); } });
+        sr.addEventListener('click', e => e.stopPropagation());
+        clr.addEventListener('click', (e) => {
+            e.preventDefault(); e.stopPropagation();
+            inp.value = '';
+            state.termo = '';
+            clr.hidden = true;
+            render();
+            inp.focus();
+        });
     }
 
     function render() {
-        const pillsHtml = state.sel.map(v =>
-            `<span class="csd-pill csd-pill--inline">${escapeHtml(v)}<button type="button" class="csd-pill-x" data-remove="${escapeAttr(v)}" aria-label="Remover ${escapeAttr(v)}">×</button></span>`
-        ).join('');
-
+        const itens = _configDados[listaKey] || [];
         const filtrados = state.termo
-            ? state.opts.filter(o => norm(o).includes(norm(state.termo)))
-            : state.opts;
-        const podeCriar = state.termo && !state.opts.some(o => norm(o) === norm(state.termo));
+            ? itens.filter(it => norm(it).includes(norm(state.termo)))
+            : itens;
+        const podeCriarComBusca = !!cfg.sheetColumn && state.termo && !itens.some(it => norm(it) === norm(state.termo));
 
-        let listHtml = filtrados.slice(0, 80).map(o => {
-            const isSel = state.sel.some(v => norm(v) === norm(o));
-            return `<button type="button" class="dm-chip-opt${isSel ? ' is-selected' : ''}" data-value="${escapeAttr(o)}">
-                <span class="dm-chip-opt-check">${isSel ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><polyline points="20 6 9 17 4 12"/></svg>' : ''}</span>
-                <span>${escapeHtml(o)}</span>
-            </button>`;
-        }).join('');
-        if (podeCriar) {
-            listHtml += `<button type="button" class="dm-chip-opt dm-chip-opt--create" data-create="${escapeAttr(state.termo)}">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Adicionar “${escapeHtml(state.termo)}”
-            </button>`;
+        if (!filtrados.length && !podeCriarComBusca) {
+            listEl.innerHTML = `<div class="csd-empty">${state.termo ? `Nenhum resultado para "${escapeHtml(state.termo)}"` : 'Nenhuma opção. Adicione abaixo.'}</div>`;
+            return;
         }
-        if (!listHtml) listHtml = `<div class="dm-chip-empty">Nenhum resultado</div>`;
 
-        wrap.innerHTML = `
-            <div class="dm-chip-pills">${pillsHtml || `<span class="dm-chip-placeholder">Nenhum selecionado</span>`}</div>
-            <div class="dm-chip-search">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <input type="text" class="dm-chip-input" placeholder="${escapeAttr(placeholder || 'Buscar...')}" value="${escapeAttr(state.termo)}">
-            </div>
-            <div class="dm-chip-list">${listHtml}</div>
-        `;
+        let html = filtrados.map(item => {
+            const isSel = state.sel.some(v => norm(v) === norm(item));
+            const trash = cfg.sheetColumn
+                ? `<button type="button" class="csd-option-del" data-delete="${escapeAttr(item)}" title="Excluir esta opção" aria-label="Excluir ${escapeAttr(item)}">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    </button>`
+                : '';
+            return `<div class="csd-option${isSel ? ' is-selected' : ''}" data-value="${escapeAttr(item)}" role="option" aria-selected="${isSel}">
+                <span class="csd-option-label">${escapeHtml(item)}</span>
+                <span class="csd-option-btns">
+                    ${trash}
+                    ${isSel ? '<svg class="csd-option-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+                </span>
+            </div>`;
+        }).join('');
 
-        // Liga listeners.
-        wrap.querySelectorAll('.csd-pill-x').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                state.sel = state.sel.filter(v => norm(v) !== norm(btn.dataset.remove));
-                syncHidden();
-                render();
-            });
-        });
+        if (podeCriarComBusca) {
+            html += `<div class="csd-option csd-option--create" data-create="${escapeAttr(state.termo)}">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <span class="csd-option-label">Adicionar “${escapeHtml(state.termo)}”</span>
+            </div>`;
+        }
 
-        const inp = wrap.querySelector('.dm-chip-input');
-        inp.addEventListener('input', () => {
-            state.termo = inp.value;
-            render();
-            // Mantém foco e cursor no input.
-            const novo = wrap.querySelector('.dm-chip-input');
-            if (novo) { novo.focus(); novo.setSelectionRange(novo.value.length, novo.value.length); }
-        });
-        inp.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                const t = state.termo.trim();
-                if (!t) return;
-                const ja = state.opts.find(o => norm(o) === norm(t));
-                if (ja) {
-                    if (!state.sel.some(v => norm(v) === norm(ja))) state.sel.push(ja);
-                } else {
-                    state.opts.push(t);
-                    state.sel.push(t);
-                    // Adiciona globalmente também pra outros lugares verem o novo item.
-                    const listaKey = csdListaKey(key);
-                    if (_configDados[listaKey] && !_configDados[listaKey].some(o => norm(o) === norm(t))) {
-                        _configDados[listaKey].push(t);
-                        populateFormSelects();
-                        syncValidationToSheet(key);
-                    }
-                }
-                state.termo = '';
-                syncHidden();
-                render();
-            }
-        });
+        listEl.innerHTML = html;
 
-        wrap.querySelectorAll('.dm-chip-opt').forEach(opt => {
+        listEl.querySelectorAll('.csd-option').forEach(opt => {
             opt.addEventListener('click', (e) => {
-                e.preventDefault();
-                if (opt.classList.contains('dm-chip-opt--create')) {
-                    const t = opt.dataset.create;
-                    state.opts.push(t);
-                    state.sel.push(t);
-                    const listaKey = csdListaKey(key);
-                    if (_configDados[listaKey] && !_configDados[listaKey].some(o => norm(o) === norm(t))) {
-                        _configDados[listaKey].push(t);
-                        populateFormSelects();
-                        syncValidationToSheet(key);
-                    }
-                    state.termo = '';
-                } else {
-                    const v = opt.dataset.value;
-                    const idx = state.sel.findIndex(s => norm(s) === norm(v));
-                    if (idx === -1) state.sel.push(v);
-                    else state.sel.splice(idx, 1);
+                e.stopPropagation();
+                if (e.target.closest('.csd-option-del')) {
+                    e.preventDefault();
+                    const v = e.target.closest('.csd-option-del').dataset.delete;
+                    // Reusa o fluxo global de exclusão (afeta planilha + produtos).
+                    csdExcluirOpcao(key, v).then(() => {
+                        // Tira do estado local também.
+                        state.sel = state.sel.filter(s => norm(s) !== norm(v));
+                        syncHidden();
+                        updateLabel();
+                        render();
+                    });
+                    return;
                 }
+                if (opt.classList.contains('csd-option--create')) {
+                    adicionar(opt.dataset.create);
+                    return;
+                }
+                // Toggle
+                const v = opt.dataset.value;
+                const idx = state.sel.findIndex(s => norm(s) === norm(v));
+                if (idx === -1) state.sel.push(v);
+                else state.sel.splice(idx, 1);
                 syncHidden();
+                updateLabel();
                 render();
             });
         });
     }
 
+    function adicionar(brutoForcado) {
+        const bruto = (brutoForcado || addInput?.value || '').trim();
+        if (!bruto) { addInput?.focus(); return; }
+
+        const itens = csdSplit(bruto);
+        if (!_configDados[listaKey]) _configDados[listaKey] = [];
+        const adicionados = [];
+        itens.forEach(v => {
+            const existe = _configDados[listaKey].find(i => norm(i) === norm(v));
+            if (existe) {
+                if (!state.sel.some(s => norm(s) === norm(existe))) state.sel.push(existe);
+            } else {
+                _configDados[listaKey].push(v);
+                state.sel.push(v);
+                adicionados.push(v);
+            }
+        });
+
+        if (addInput) addInput.value = '';
+        state.termo = '';
+        const srch = dropdown.querySelector('.csd-search-input');
+        if (srch) srch.value = '';
+        const clr = dropdown.querySelector('.csd-search-clear');
+        if (clr) clr.hidden = true;
+
+        syncHidden();
+        updateLabel();
+        populateFormSelects(); // mantém o form principal alinhado
+        render();
+
+        if (adicionados.length) syncValidationToSheet(key);
+    }
+
+    // ── Liga eventos ──
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (dropdown.hasAttribute('hidden')) abrir();
+        else fechar();
+    });
+    if (addBtn) addBtn.addEventListener('click', (e) => { e.preventDefault(); adicionar(); });
+    if (addInput) addInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter')  { e.preventDefault(); e.stopPropagation(); adicionar(); }
+        if (e.key === 'Escape') fechar();
+    });
+
+    // Fecha ao clicar fora.
+    const docClick = (e) => { if (!wrap.contains(e.target)) fechar(); };
+    document.addEventListener('click', docClick);
+    // Limpa listener quando o modal for fechado.
+    overlay.addEventListener('mldispose', () => document.removeEventListener('click', docClick), { once: true });
+
     syncHidden();
+    updateLabel();
     render();
 }
 
@@ -1342,6 +1534,17 @@ async function salvarEdicaoInline(overlay, product, fecharFn) {
         btnSave.innerHTML = labelOriginal;
         return;
     }
+    // Limite de 500 caracteres só vale pra descrições que ULTRAPASSARAM o original.
+    // Produtos antigos com descrição já grande são permitidos (o editor só bloqueia
+    // novas inserções, não obriga o usuário a recortar).
+    const descAtual = contarCaracteresRichHTML(dados.descricao);
+    const descOriginal = contarCaracteresRichHTML(product._descricao || '');
+    if (descAtual > MAX_DESC && descAtual > descOriginal) {
+        showToast(`Descrição passou de ${MAX_DESC} caracteres.`, 'error');
+        btnSave.disabled = false;
+        btnSave.innerHTML = labelOriginal;
+        return;
+    }
 
     // URLs das imagens em ordem da galeria editada (slot 1..10).
     const urls = _dmEditCards.map(c => c.url || '').filter(Boolean);
@@ -1360,8 +1563,9 @@ async function salvarEdicaoInline(overlay, product, fecharFn) {
             slot(0), slot(1), slot(2), slot(3), slot(4),
             slot(5), slot(6), slot(7), slot(8), slot(9),
             product._link || '',  // link preservado, não mais editável
-            dados.precoDe,
-            dados.precoPor
+            // Preços como número primitivo pra não bagunçar o formato BR da célula.
+            precoParaNumero(dados.precoDe),
+            precoParaNumero(dados.precoPor)
         ];
         const valuesAposDesconto = [
             dados.formaPagamento,
@@ -1385,7 +1589,178 @@ async function salvarEdicaoInline(overlay, product, fecharFn) {
     }
 }
 
+// Retorna true se o desconto é um valor positivo válido (ignora #ERROR!, #DIV/0!, 0%, vazio).
+function descontoEhValido(valor) {
+    if (!valor) return false;
+    const str = String(valor).trim();
+    if (!str || str.startsWith('#')) return false;
+    const num = parseFloat(str.replace('%', '').replace(',', '.').trim());
+    return isFinite(num) && num > 0;
+}
+
 // Helper para escapar valores em atributo HTML.
+/**
+ * Sanitiza HTML pra manter só tags básicas de formatação seguras.
+ * Permitido: b, strong, i, em, u, ul, ol, li, br, p, div. Tudo mais vira texto.
+ * Aceita também texto puro com \n (converte em <br>).
+ */
+function sanitizeRichHTML(html) {
+    if (!html) return '';
+    const str = String(html);
+    // Texto puro (sem tags HTML) → escapa e converte \n em <br>.
+    if (!/<\w+/.test(str)) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML.replace(/\r?\n/g, '<br>');
+    }
+    const ALLOWED = new Set(['B','STRONG','I','EM','U','UL','OL','LI','BR','P','DIV']);
+    const tmp = document.createElement('div');
+    tmp.innerHTML = str;
+    // Limpa tags não permitidas e todos os atributos. Mantém P/DIV/UL/OL/LI
+    // como elementos de bloco pra preservar quebras e estrutura de lista.
+    function clean(node) {
+        const children = Array.from(node.childNodes);
+        for (const child of children) {
+            if (child.nodeType === 1) {
+                if (!ALLOWED.has(child.tagName)) {
+                    // Não permitido: substitui pelo texto interno.
+                    node.replaceChild(document.createTextNode(child.textContent || ''), child);
+                    continue;
+                }
+                // Remove TODOS os atributos (style, class, on*).
+                for (const attr of Array.from(child.attributes)) {
+                    child.removeAttribute(attr.name);
+                }
+                clean(child);
+            } else if (child.nodeType === 8) {
+                node.removeChild(child);
+            }
+        }
+    }
+    clean(tmp);
+    return tmp.innerHTML;
+}
+
+/**
+ * Conta caracteres visíveis (texto puro) de um HTML.
+ */
+function contarCaracteresRichHTML(html) {
+    if (!html) return 0;
+    const tmp = document.createElement('div');
+    tmp.innerHTML = String(html);
+    return (tmp.textContent || tmp.innerText || '').length;
+}
+
+/**
+ * Monta o editor rich-text dentro do dm-edit-mode. Pega o conteúdo inicial,
+ * liga toolbar/atalhos/contador e sincroniza com o input hidden a cada mudança.
+ */
+const MAX_DESC = 500;
+function montarRichEditor(scope, conteudoInicial) {
+    const wrap = scope.querySelector('[data-rt-wrap]');
+    if (!wrap) return;
+    const editor = wrap.querySelector('[data-rt-content]');
+    const hidden = wrap.querySelector('[data-key="descricao"]');
+    const counter = scope.querySelector('#dm-rt-counter');
+    const toolbar = wrap.querySelector('.dm-rt-toolbar');
+    if (!editor || !hidden) return;
+
+    // Conteúdo inicial: aceita HTML simples ou texto puro (legacy). Converte \n em <br>.
+    const inicialEhHTML = /<(b|strong|i|em|u|ul|ol|li|br|p|div)\b/i.test(conteudoInicial || '');
+    if (inicialEhHTML) {
+        editor.innerHTML = sanitizeRichHTML(conteudoInicial);
+    } else {
+        // Texto puro: escapa e troca quebras de linha por <br>.
+        const tmp = document.createElement('div');
+        tmp.textContent = conteudoInicial || '';
+        editor.innerHTML = tmp.innerHTML.replace(/\r?\n/g, '<br>');
+    }
+
+    // Força <br> em vez de <div>/<p> quando o usuário aperta Enter (mais limpo
+    // e preserva quebras corretamente no HTML salvo).
+    try { document.execCommand('defaultParagraphSeparator', false, 'br'); } catch (_) {}
+
+    function atualizarContador() {
+        const n = contarCaracteresRichHTML(editor.innerHTML);
+        if (counter) {
+            counter.textContent = `${n}/${MAX_DESC}`;
+            counter.classList.toggle('is-over', n > MAX_DESC);
+        }
+        return n;
+    }
+
+    function sync() {
+        const html = sanitizeRichHTML(editor.innerHTML).trim();
+        hidden.value = html;
+        atualizarContador();
+    }
+
+    // Aplica limite: se exceder, reverte. Mas se o conteúdo INICIAL já vinha
+    // maior que MAX_DESC (produto antigo), permite até diminuir — só bloqueia
+    // novas inserções que façam o total crescer.
+    let lastValidHTML = editor.innerHTML;
+    let lastValidCount = contarCaracteresRichHTML(editor.innerHTML);
+    function aplicarLimite() {
+        const n = contarCaracteresRichHTML(editor.innerHTML);
+        // Bloqueia se passar do limite E está crescendo em relação ao último estado.
+        if (n > MAX_DESC && n > lastValidCount) {
+            editor.innerHTML = lastValidHTML;
+            const range = document.createRange();
+            range.selectNodeContents(editor);
+            range.collapse(false);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+        } else {
+            lastValidHTML = editor.innerHTML;
+            lastValidCount = n;
+        }
+    }
+
+    editor.addEventListener('input', () => {
+        aplicarLimite();
+        sync();
+    });
+    editor.addEventListener('blur', sync);
+    editor.addEventListener('paste', (e) => {
+        // Cola só texto puro pra não trazer estilos/imagens externas.
+        e.preventDefault();
+        const text = (e.clipboardData || window.clipboardData).getData('text/plain') || '';
+        document.execCommand('insertText', false, text);
+    });
+
+    // Toolbar
+    toolbar.querySelectorAll('.dm-rt-btn').forEach(btn => {
+        btn.addEventListener('mousedown', (e) => e.preventDefault()); // mantém foco
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const cmd = btn.dataset.rtCmd;
+            if (!cmd) return;
+            editor.focus();
+            document.execCommand(cmd, false, null);
+            aplicarLimite();
+            sync();
+            atualizarEstadoToolbar();
+        });
+    });
+
+    function atualizarEstadoToolbar() {
+        toolbar.querySelectorAll('.dm-rt-btn[data-rt-cmd]').forEach(btn => {
+            const cmd = btn.dataset.rtCmd;
+            let ativo = false;
+            try { ativo = document.queryCommandState(cmd); } catch (_) {}
+            btn.classList.toggle('is-active', !!ativo);
+        });
+    }
+    editor.addEventListener('keyup', atualizarEstadoToolbar);
+    editor.addEventListener('mouseup', atualizarEstadoToolbar);
+
+    // Inicializa
+    sync();
+    atualizarEstadoToolbar();
+    lastValidHTML = editor.innerHTML;
+}
+
 function escapeAttr(s) {
     return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 }
@@ -1455,6 +1830,38 @@ function montarCarrosselDetailMobile(overlay, imagens) {
 // Estado dos filtros multi-select (arrays de valores selecionados).
 const _multiFilters = { categoria: [], status: [] };
 
+// Ordenação atual do grid/lista. Persistida em localStorage por preferência do usuário.
+let _sortBy = localStorage.getItem('ml_sort') || 'recent';
+
+function applySorting(arr) {
+    const list = arr.slice();
+    const idNum = (p) => parseInt(p._id, 10) || 0;
+    switch (_sortBy) {
+        case 'recent':
+            // Prioridade 1: data de criação (timestamp) desc. Prioridade 2: ID desc (proxy).
+            list.sort((a, b) => {
+                const da = a._dataCriacaoTs || 0, db = b._dataCriacaoTs || 0;
+                if (da !== db) return db - da;
+                return idNum(b) - idNum(a);
+            });
+            break;
+        case 'oldest':
+            list.sort((a, b) => {
+                const da = a._dataCriacaoTs || 0, db = b._dataCriacaoTs || 0;
+                if (da !== db) return da - db;
+                return idNum(a) - idNum(b);
+            });
+            break;
+        case 'name-asc':
+            list.sort((a, b) => (a._nome || '').localeCompare(b._nome || '', 'pt-BR', { sensitivity: 'base' }));
+            break;
+        case 'name-desc':
+            list.sort((a, b) => (b._nome || '').localeCompare(a._nome || '', 'pt-BR', { sensitivity: 'base' }));
+            break;
+    }
+    return list;
+}
+
 function filterProducts() {
     const search = document.getElementById('filter-search').value.toLowerCase().trim();
     const categorias = _multiFilters.categoria; // array de catKeys
@@ -1478,7 +1885,10 @@ function filterProducts() {
 
         return matchSearch && matchCategoria && matchStatus;
     });
-    
+
+    // Aplica ordenação escolhida na barra de filtros.
+    filteredProducts = applySorting(filteredProducts);
+
     currentPage = 1;
     renderTable();
 }
@@ -1518,8 +1928,8 @@ function openModal(product = null) {
         document.getElementById('prod-nome').value = product._nome;
         csdSetValue('categoria', product._categoria);
         csdSetValue('tipo', product._tipo);
-        document.getElementById('prod-preco-de').value = product._precoDe;
-        document.getElementById('prod-preco-por').value = product._precoPor;
+        document.getElementById('prod-preco-de').value = normalizarPrecoParaInput(product._precoDe);
+        document.getElementById('prod-preco-por').value = normalizarPrecoParaInput(product._precoPor);
         document.getElementById('prod-desconto').value = product._desconto;
         document.getElementById('prod-tamanhos').value = product._tamanhos;
         document.getElementById('prod-descricao').value = product._descricao;
@@ -2201,13 +2611,14 @@ async function handleSubmit(e) {
 }
 
 async function saveToGoogleSheets(data, isEdit, rowIndex) {
-    // Ordem real da planilha (24 colunas):
+    // Ordem real da planilha (25 colunas):
     // A=0:ID  B=1:Nome  C=2:Categoria  D=3:Tipo  E=4:Cor  F=5:Tamanhos
     // G=6:Material  H=7:Descrição
     // I=8..R=17 → Imagem 1..10
     // S=18:Link  T=19:PrecoDe  U=20:PrecoPor
     // V=21:Desconto (fórmula — não enviar)
     // W=22:FormaPagamento  X=23:Status
+    // Y=24:Data Criação (preenchida automaticamente pelo Apps Script no append; preservada no update)
 
     // Colunas A até U (antes do Desconto/V).
     const imagens = data.imagens || [];
@@ -2224,8 +2635,10 @@ async function saveToGoogleSheets(data, isEdit, rowIndex) {
         slot(0), slot(1), slot(2), slot(3), slot(4),
         slot(5), slot(6), slot(7), slot(8), slot(9),
         data.link,
-        data.precoDe,
-        data.precoPor
+        // Preços vão como NÚMERO primitivo (não string) — assim o Sheets aplica
+        // o formato R$ #.##0,00 corretamente independente do locale.
+        precoParaNumero(data.precoDe),
+        precoParaNumero(data.precoPor)
     ];
 
     // Colunas W e X (depois do Desconto/V)
@@ -2313,7 +2726,9 @@ async function inactivateProduct(product) {
                 product._imagem1 || '', product._imagem2 || '', product._imagem3 || '',
                 product._imagem4 || '', product._imagem5 || '', product._imagem6 || '',
                 product._imagem7 || '', product._imagem8 || '', product._imagem9 || '', product._imagem10 || '',
-                product._link, product._precoDe, product._precoPor, product._desconto,
+                product._link,
+                precoParaNumero(product._precoDe), precoParaNumero(product._precoPor),
+                product._desconto,
                 product._formaPagamento || '', novoStatus
             ]
         });
@@ -2331,7 +2746,9 @@ async function inactivateProduct(product) {
 let _configDados = {
     categorias: ['Vestidos','Macacões','Conjuntos','Saias','Bodys','Blusas','Plus Size','Shorts','Acessórios','Macaquinhos','Nova Coleção'],
     status: ['Ativo','Inativo','Esgotado','Últimas Unidades','Oferta Especial'],
-    tipos: [], cores: [], materiais: []
+    // Tipos padrão pra começar — usuário pode adicionar/excluir via dropdown do admin.
+    tipos: ['Vestido Curto','Vestido Midi','Vestido Longo','Vestido Social','Macacão Curto','Macacão Longo','Macaquinho','Conjunto 2 peças','Conjunto 3 peças','Saia Mini','Saia Midi','Saia Longa','Body','Blusa Cropped','Blusa Social','T-Shirt','Regata','Short Jeans','Short Esportivo','Bermuda','Bolsa','Cinto','Lenço'],
+    cores: [], materiais: []
 };
 
 // Preenche filtros da barra principal e re-renderiza dropdowns abertos
@@ -2461,6 +2878,79 @@ function updateMultiFilterLabel(key) {
         badge.hidden = false;
         badge.textContent = sel.length;
     }
+}
+
+// Dropdown de ordenação (barra de filtros). Persiste a escolha em localStorage.
+function initSortDropdown() {
+    const wrap = document.getElementById('filter-sort');
+    const btn = document.getElementById('filter-sort-btn');
+    const dd = document.getElementById('filter-sort-dropdown');
+    const labelEl = document.getElementById('filter-sort-label');
+    if (!wrap || !btn || !dd || !labelEl) return;
+
+    const labels = {
+        'recent':    'Mais recente',
+        'oldest':    'Mais antigo',
+        'name-asc':  'Nome A → Z',
+        'name-desc': 'Nome Z → A'
+    };
+
+    function aplicarLabel() {
+        labelEl.textContent = labels[_sortBy] || labels.recent;
+        // Marca opção selecionada visualmente.
+        dd.querySelectorAll('.filter-sort-opt').forEach(opt => {
+            opt.classList.toggle('is-selected', opt.dataset.sort === _sortBy);
+        });
+    }
+
+    aplicarLabel();
+
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = !dd.hasAttribute('hidden');
+        // Fecha outros multi-filters abertos.
+        document.querySelectorAll('.filter-multi-dropdown').forEach(d => {
+            if (d !== dd) d.setAttribute('hidden', '');
+        });
+        if (isOpen) {
+            dd.setAttribute('hidden', '');
+            btn.setAttribute('aria-expanded', 'false');
+            wrap.classList.remove('is-open');
+        } else {
+            dd.removeAttribute('hidden');
+            btn.setAttribute('aria-expanded', 'true');
+            wrap.classList.add('is-open');
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!wrap.contains(e.target)) {
+            dd.setAttribute('hidden', '');
+            btn.setAttribute('aria-expanded', 'false');
+            wrap.classList.remove('is-open');
+        }
+    });
+
+    dd.querySelectorAll('.filter-sort-opt').forEach(opt => {
+        opt.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const novo = opt.dataset.sort;
+            if (!novo || novo === _sortBy) {
+                dd.setAttribute('hidden', '');
+                return;
+            }
+            _sortBy = novo;
+            localStorage.setItem('ml_sort', _sortBy);
+            aplicarLabel();
+            dd.setAttribute('hidden', '');
+            btn.setAttribute('aria-expanded', 'false');
+            wrap.classList.remove('is-open');
+            // Reordena os produtos atuais e re-renderiza.
+            filteredProducts = applySorting(filteredProducts);
+            currentPage = 1;
+            renderTable();
+        });
+    });
 }
 
 function initMultiFilter(key, placeholder) {
@@ -2688,6 +3178,17 @@ function csdRender(key) {
 // Exclui uma opção (categoria/tipo) da lista local, do dropdown da planilha e
 // remove ela de todos os produtos que a usam. Cada produto afetado dispara um
 // `action: 'update'` no Apps Script.
+/**
+ * Exclui uma opção de Categoria ou Tipo do dropdown.
+ *
+ * Comportamento seguro: por padrão remove APENAS da lista de opções (dropdown).
+ * Os produtos que usam essa opção continuam intactos. Se houver produtos
+ * usando, o admin pergunta se também quer remover dos produtos (server-side,
+ * preservando os outros valores CSV de cada célula).
+ *
+ * Esse fluxo evita o bug anterior onde excluir uma opção da lista zerava
+ * células de produtos.
+ */
 async function csdExcluirOpcao(key, valor) {
     const cfg = csdConfig(key);
     const listaKey = csdListaKey(key);
@@ -2698,10 +3199,10 @@ async function csdExcluirOpcao(key, valor) {
     const existe = lista.find(v => norm(v) === norm(valor));
     if (!existe) return;
 
-    // Conta produtos afetados (qualquer um cujo array de categorias/tipos contenha o valor).
+    // Conta produtos afetados pelo cache local.
     const campoArr = key === 'categoria' ? '_categorias' : '_tipos';
     const campoStr = key === 'categoria' ? '_categoria' : '_tipo';
-    const afetados = allProducts.filter(p => {
+    const afetadosCache = allProducts.filter(p => {
         const arr = p[campoArr] && p[campoArr].length
             ? p[campoArr]
             : csdSplit(p[campoStr]);
@@ -2709,48 +3210,59 @@ async function csdExcluirOpcao(key, valor) {
     });
 
     const label = key === 'categoria' ? 'categoria' : 'tipo';
-    const msg = afetados.length === 0
-        ? `Excluir ${label} "${existe}"? Essa opção sumirá do dropdown.`
-        : `Excluir ${label} "${existe}"?\n\n${afetados.length} produto(s) usam essa ${label} e serão atualizados (a ${label} será removida da célula deles). Esta ação não pode ser desfeita.`;
+
+    // Confirmação direta: excluir = sumir da lista E dos produtos que usam.
+    // Os outros valores CSV de cada célula são preservados.
+    const msg = afetadosCache.length === 0
+        ? `Excluir ${label} "${existe}" permanentemente?`
+        : `Excluir ${label} "${existe}" permanentemente?\n\n` +
+          `Será removida da lista de opções e também de ${afetadosCache.length} produto(s) que a usam ` +
+          `(outras categorias/tipos do produto são preservados).\n\nEsta ação não pode ser desfeita.`;
     if (!confirm(msg)) return;
 
-    showToast(afetados.length ? `Removendo "${existe}" de ${afetados.length} produto(s)...` : `Excluindo "${existe}"...`, 'info');
+    // Sempre remove dos produtos quando há produtos afetados.
+    const alsoRemoveFromProducts = afetadosCache.length > 0;
+    showToast(`Excluindo "${existe}"...`, 'info');
 
-    // 1) Atualiza cada produto afetado (remove o item do array e regrava a célula).
-    let erros = 0;
-    for (const p of afetados) {
-        const novoArr = (p[campoArr] && p[campoArr].length ? p[campoArr] : csdSplit(p[campoStr]))
-            .filter(v => norm(v) !== norm(existe));
-        const novoStr = novoArr.join(', ');
-        const novoCategoria = key === 'categoria' ? novoStr : p._categoria;
-        const novoTipo      = key === 'tipo'      ? novoStr : p._tipo;
+    // 1) Se o usuário escolheu remover dos produtos, chama o action server-side
+    //    `bulk_remove_option` que lê estado real da planilha e remove só o valor
+    //    especificado de cada célula CSV (preservando os outros valores).
+    let updated = 0;
+    if (alsoRemoveFromProducts && cfg.sheetColumn) {
         try {
-            await enviarViaIframe({
-                action: 'update',
-                row: p._rowIndex,
-                values: [
-                    p._id, p._nome, novoCategoria, novoTipo,
-                    p._cor, p._tamanhos, p._material, p._descricao,
-                    p._imagem1 || '', p._imagem2 || '', p._imagem3 || '',
-                    p._imagem4 || '', p._imagem5 || '', p._imagem6 || '',
-                    p._imagem7 || '', p._imagem8 || '', p._imagem9 || '', p._imagem10 || '',
-                    p._link, p._precoDe, p._precoPor, p._desconto,
-                    p._formaPagamento || '', p._status
-                ]
+            const resp = await fetch(CONFIG.APPS_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'bulk_remove_option',
+                    column: cfg.sheetColumn,
+                    option: existe
+                })
             });
-            // Atualiza o cache local pra o filtro/grid refletirem imediatamente.
-            p[campoStr] = novoStr;
-            p[campoArr] = novoArr;
+            const text = await resp.text();
+            try {
+                const json = JSON.parse(text);
+                if (json && typeof json.updated === 'number') updated = json.updated;
+                if (json && json.success === false) throw new Error(json.error || 'Falha no servidor');
+            } catch (_) { /* resposta não-JSON do Apps Script ainda é sucesso */ }
         } catch (err) {
-            console.error(`Erro ao atualizar produto ${p._nome}:`, err);
-            erros++;
+            showToast(`Erro ao remover dos produtos: ${err.message}. Lista mantida.`, 'error');
+            return;
         }
+
+        // Atualiza cache local dos produtos (otimista).
+        allProducts.forEach(p => {
+            const arr = (p[campoArr] && p[campoArr].length ? p[campoArr] : csdSplit(p[campoStr]))
+                .filter(v => norm(v) !== norm(existe));
+            const str = arr.join(', ');
+            p[campoStr] = str;
+            p[campoArr] = arr;
+        });
     }
 
     // 2) Remove o item da lista local.
     _configDados[listaKey] = lista.filter(v => norm(v) !== norm(existe));
 
-    // 3) Remove o item da seleção atual (se estiver selecionado no form).
+    // 3) Remove o item da seleção atual (se estiver selecionado no form principal).
     if (csdIsMulti(key)) {
         _csdState[key] = csdSelecionados(key).filter(v => norm(v) !== norm(existe));
     } else if (norm(_csdState[key] || '') === norm(existe)) {
@@ -2758,37 +3270,23 @@ async function csdExcluirOpcao(key, valor) {
     }
     csdSyncCampo(key);
 
-    // 4) Sincroniza a validação da coluna da planilha (atualiza o dropdown da célula).
+    // 4) Sincroniza o dropdown nativo da planilha com a nova lista (sem o item excluído).
     if (cfg.sheetColumn) {
-        // syncValidationToSheet usa a lista atual de _configDados — já está limpa.
-        try {
-            await fetch(CONFIG.APPS_SCRIPT_URL, {
-                method: 'POST',
-                body: JSON.stringify({
-                    action: 'set_validation',
-                    column: cfg.sheetColumn,
-                    values: _configDados[listaKey]
-                })
-            });
-        } catch (err) {
-            console.warn('Falha ao sincronizar validação:', err);
-        }
+        syncValidationToSheet(key, true); // silent
     }
 
-    // 5) Re-renderiza UI: dropdown, filtros, grid, stats.
+    // 5) Re-renderiza UI.
     populateFormSelects();
     csdRender(key);
     updateStats();
     renderTable();
 
-    if (erros > 0) {
-        showToast(`"${existe}" excluída. ${erros} produto(s) falharam — recarregue para verificar.`, 'error');
-    } else if (afetados.length > 0) {
-        showToast(`"${existe}" removida de ${afetados.length} produto(s).`, 'success');
-        registrarHistorico('Excluído', `${label}: ${existe}`, `Removida de ${afetados.length} produto(s)`);
+    if (updated > 0) {
+        showToast(`"${existe}" excluída da lista e de ${updated} produto(s).`, 'success');
+        registrarHistorico('Excluído', `${label}: ${existe}`, `Excluída da lista e de ${updated} produto(s)`);
     } else {
-        showToast(`"${existe}" excluída.`, 'success');
-        registrarHistorico('Excluído', `${label}: ${existe}`, `Opção excluída da lista`);
+        showToast(`"${existe}" excluída da lista.`, 'success');
+        registrarHistorico('Excluído', `${label}: ${existe}`, `Excluída da lista`);
     }
 }
 
@@ -2904,7 +3402,8 @@ async function csdAdicionar(key, valorForcado) {
  * Envia a lista completa de valores únicos vindos dos produtos + adicionados localmente.
  * Best-effort: silencioso em erro, nunca bloqueia a UI.
  */
-async function syncValidationToSheet(key) {
+// silent=true pula o toast (útil pra chamadas em background na inicialização).
+async function syncValidationToSheet(key, silent) {
     const cfg = CSD_KEYS.find(k => k.key === key);
     if (!cfg?.sheetColumn) return;
 
@@ -2921,7 +3420,9 @@ async function syncValidationToSheet(key) {
                 values
             })
         });
-        showToast(`"${values[values.length - 1]}" também adicionada à planilha.`, 'success');
+        if (!silent) {
+            showToast(`"${values[values.length - 1]}" também adicionada à planilha.`, 'success');
+        }
     } catch (err) {
         console.warn('Falha ao sincronizar validação da planilha (ignorado):', err);
     }
@@ -3317,6 +3818,164 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+/**
+ * Aplica máscara de preço BRL em um input. Funciona em modo "centavos":
+ * só números são considerados; o sistema preenche da direita pra esquerda
+ * formatando como "1.234,56". Digita "6000" → mostra "60,00".
+ *
+ * Idempotente: chamar duas vezes no mesmo input não duplica listener.
+ */
+function aplicarMaskPreco(input) {
+    if (!input || input.dataset.maskPreco === '1') return;
+    input.dataset.maskPreco = '1';
+    input.setAttribute('inputmode', 'numeric');
+    input.setAttribute('autocomplete', 'off');
+
+    function formatar(centavos) {
+        // centavos é um inteiro (ex.: 6000 = R$ 60,00).
+        const n = Math.max(0, parseInt(centavos, 10) || 0);
+        const reais = Math.floor(n / 100);
+        const cents = n % 100;
+        const reaisStr = reais.toLocaleString('pt-BR'); // 1.234
+        return `${reaisStr},${String(cents).padStart(2, '0')}`;
+    }
+
+    function aplicar(valor) {
+        // Extrai só os dígitos (ignora R$, pontos, vírgulas, etc.).
+        const digitos = String(valor || '').replace(/\D+/g, '');
+        if (!digitos) return '';
+        return formatar(digitos);
+    }
+
+    input.addEventListener('input', () => {
+        const novo = aplicar(input.value);
+        if (novo !== input.value) {
+            input.value = novo;
+            // Mantém o cursor no fim — comportamento natural pra mask de centavos.
+            requestAnimationFrame(() => {
+                input.setSelectionRange(input.value.length, input.value.length);
+            });
+        }
+    });
+
+    input.addEventListener('blur', () => {
+        if (input.value && !input.value.includes(',')) {
+            input.value = aplicar(input.value);
+        }
+    });
+
+    input.addEventListener('focus', () => {
+        // Posiciona cursor no fim quando ganha foco.
+        requestAnimationFrame(() => {
+            input.setSelectionRange(input.value.length, input.value.length);
+        });
+    });
+}
+
+/**
+ * Converte o valor formatado de preço BR ("10,00" / "1.234,56") em número JS (10 / 1234.56).
+ * Esse é o formato que vai pra planilha — número primitivo é interpretado
+ * corretamente pelo Sheets em qualquer locale.
+ *
+ * Retorna '' (string vazia) quando o input está vazio, pra preservar células vazias.
+ */
+function precoParaNumero(valor) {
+    if (valor == null || valor === '') return '';
+    const str = String(valor).replace(/R\$/g, '').trim();
+    if (!str) return '';
+    // Remove separador de milhar (.) e usa vírgula como decimal.
+    const norm = str.replace(/\./g, '').replace(',', '.');
+    const n = parseFloat(norm);
+    if (!isFinite(n)) return '';
+    // Retorna número com 2 casas decimais (evita 10.0000000001 por float).
+    return Math.round(n * 100) / 100;
+}
+
+/**
+ * Normaliza qualquer valor de preço em uma string formatada "X.XXX,XX" pronta
+ * pra exibir num input com máscara. Aceita "60", "60,00", "R$ 60,00", "60.00",
+ * "100,1000" (Sheets en-US export), "100.000" (BR com milhar), etc.
+ *
+ * Estratégia: extrai a parte DECIMAL pela última vírgula/ponto seguido de 1-2 dígitos
+ * (típico de moeda); o resto é parte inteira. Resto descarta separadores.
+ */
+function normalizarPrecoParaInput(valor) {
+    if (valor == null || valor === '') return '';
+    const str = String(valor).replace(/R\$/g, '').replace(/\s+/g, '').trim();
+    if (!str) return '';
+
+    // Caso BR completo: "1.234,56" ou "60,00" (vírgula com exatamente 2 decimais).
+    if (/^[\d\.]+,\d{2}$/.test(str)) return str;
+
+    // Caso valor com ponto decimal e 1-2 casas: "60.5", "60.50", "1234.5"
+    if (/^\d+(\.\d{1,2})?$/.test(str)) {
+        const n = parseFloat(str);
+        if (isFinite(n)) {
+            return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+    }
+
+    // Caso vírgula simples com 1 decimal: "60,5"
+    if (/^\d+,\d{1}$/.test(str)) {
+        const n = parseFloat(str.replace(',', '.'));
+        return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // Caso especial: Sheets exporta números inteiros em locale en-US com vírgula
+    // como separador de milhar. Como esse catálogo só vende roupas (preços ≤ alguns
+    // milhares de reais), interpretamos "100,000" como R$ 100,00 — não cem mil.
+    //   "100,000"  → R$ 100,00 (inteiro com 3 zeros decimais do Sheets)
+    //   "1,234"    → R$ 1,23 (forma 3-decimais truncada)
+    //   "100,1000" → R$ 100,10 (vírgula como milhar + decimal extra)
+    //   "100,10"   → já tratado acima
+    if (/^\d+,\d{3,}$/.test(str)) {
+        const semVirgulas = str.replace(/,/g, '');
+        const n = parseFloat(semVirgulas);
+        if (isFinite(n)) {
+            const partes = str.split(',');
+            const ultima = partes[partes.length - 1];
+            // Divide pelo fator 10^len(parte-após-vírgula) pra recuperar o valor real.
+            const fator = Math.pow(10, ultima.length);
+            const resultado = n / fator;
+            return resultado.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+    }
+    // Caso "1,234,567" (múltiplas vírgulas como separador de milhar puro)
+    if (/^\d{1,3}(,\d{3})+$/.test(str)) {
+        const n = parseFloat(str.replace(/,/g, ''));
+        if (isFinite(n)) {
+            return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+    }
+
+    // Último fallback: pega só dígitos e trata como CENTAVOS (formato do input mask).
+    const digitos = str.replace(/\D+/g, '');
+    const centavos = parseInt(digitos, 10) || 0;
+    const reais = Math.floor(centavos / 100);
+    const cents = centavos % 100;
+    return `${reais.toLocaleString('pt-BR')},${String(cents).padStart(2, '0')}`;
+}
+
+/**
+ * Converte string de data BR ("dd/MM/yyyy HH:mm" ou "dd/MM/yyyy") em timestamp.
+ * Aceita também formato ISO. Retorna 0 quando vazio/inválido.
+ */
+function parseDataBR(s) {
+    if (!s) return 0;
+    const str = String(s).trim();
+    if (!str) return 0;
+    // dd/MM/yyyy [HH:mm[:ss]]
+    const m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$/);
+    if (m) {
+        const d = +m[1], mo = +m[2] - 1, y = +m[3];
+        const h = +(m[4] || 0), mi = +(m[5] || 0), se = +(m[6] || 0);
+        return new Date(y, mo, d, h, mi, se).getTime();
+    }
+    // Fallback ISO ou outros formatos parseáveis pelo Date.
+    const t = Date.parse(str);
+    return isNaN(t) ? 0 : t;
 }
 
 function debounce(func, wait) {

@@ -1000,53 +1000,64 @@ window.openWhatsApp = (message = '') => {
 
             // ── LÓGICA DINÂMICA DA PLANILHA ──
 
-            function parseCSV(text) {
-                const lines = text.split('\n');
-                if (lines.length < 2) return [];
+            // Parser CSV robusto: respeita aspas e permite quebras de linha e
+            // virgulas DENTRO de aspas. O Sheets exporta descricoes multi-linha entre
+            // aspas duplas; "" vira aspa literal escapada.
+            function parseCSVRows(text) {
+                const rows = [];
+                let row = [];
+                let cur = "";
+                let inQuotes = false;
+                const NL = String.fromCharCode(10);
+                const CR = String.fromCharCode(13);
+                for (let i = 0; i < text.length; i++) {
+                    const c = text[i];
+                    if (inQuotes) {
+                        if (c === '"') {
+                            if (text[i + 1] === '"') { cur += '"'; i++; }
+                            else inQuotes = false;
+                        } else {
+                            cur += c;
+                        }
+                    } else {
+                        if (c === '"') inQuotes = true;
+                        else if (c === ',') { row.push(cur); cur = ""; }
+                        else if (c === NL) { row.push(cur); cur = ""; rows.push(row); row = []; }
+                        else if (c === CR) { /* ignora CR */ }
+                        else cur += c;
+                    }
+                }
+                if (cur.length > 0 || row.length > 0) { row.push(cur); rows.push(row); }
+                return rows;
+            }
 
-                // Encontra a linha de headers (a primeira que contém "categoria" e "id" ou "nome")
+            function parseCSV(text) {
+                const allRows = parseCSVRows(text);
+                if (allRows.length < 2) return [];
+
                 let headerIndex = 0;
-                for (let i = 0; i < lines.length; i++) {
-                    const lineLower = lines[i].toLowerCase();
-                    if (lineLower.includes('categoria') && (lineLower.includes('id') || lineLower.includes('nome'))) {
+                for (let i = 0; i < allRows.length; i++) {
+                    const joined = allRows[i].join(' ').toLowerCase();
+                    if (joined.includes('categoria') && (joined.includes('id') || joined.includes('nome'))) {
                         headerIndex = i;
                         break;
                     }
                 }
 
-                // Limpa aspas, espaços, passa para lowercase e remove acentos dos headers
-                const headers = lines[headerIndex].split(',').map(h =>
-                    h.replace(/^"|"$/g, '').trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                const headers = allRows[headerIndex].map(h =>
+                    String(h || '').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
                 );
                 const data = [];
 
-                for (let i = headerIndex + 1; i < lines.length; i++) {
-                    if (!lines[i].trim()) continue;
+                for (let i = headerIndex + 1; i < allRows.length; i++) {
+                    const row = allRows[i];
+                    if (!row.some(c => String(c || '').trim() !== '')) continue;
 
-                    const regex = /(?:,|\n|^)("(?:(?:"")*[^"]*)*"|[^",\n]*|(?:\n|$))/g;
-                    const row = [];
-                    let match;
-
-                    while ((match = regex.exec(lines[i])) !== null) {
-                        let val = match[1];
-                        if (val && val.startsWith(',')) val = val.substring(1);
-                        val = val ? val.replace(/^"|"$/g, '').replace(/""/g, '"').trim() : '';
-                        row.push(val);
-                    }
-
-                    if (row.length >= headers.length) {
+                    if (row.length >= Math.min(headers.length, 8)) {
                         const obj = {};
                         headers.forEach((header, index) => {
                             obj[header] = row[index] || '';
                         });
-                        // Fallbacks posicionais — protegem contra headers duplicados
-                        // ou renomeados na planilha (ex.: se a coluna D for renomeada
-                        // pra "Categoria *" por engano, o `obj['categoria *']` viria
-                        // sobrescrito pela coluna D. Os fallbacks abaixo garantem que
-                        // categoria/tipo sempre apontem para a coluna certa).
-                        // Ordem real da planilha (24 colunas): 0:ID 1:Nome 2:Categoria 3:Tipo
-                        // 4:Cor 5:Tamanhos 6:Material 7:Descrição 8..17:Imagem1..10
-                        // 18:Link 19:PrecoDe 20:PrecoPor 21:Desconto 22:Forma 23:Status
                         obj['__id']        = row[0] || '';
                         obj['__nome']      = row[1] || '';
                         obj['__categoria'] = row[2] || '';
@@ -1190,9 +1201,16 @@ window.openWhatsApp = (message = '') => {
 
             // Helper local para parsear tamanhos do raw da planilha (a função "parseTamanhos"
             // dentro do SacolaUI espera o objeto produto inteiro e fica fora de escopo aqui).
+            // Aceita separadores comuns entre tamanhos: vírgula, ponto-e-vírgula, pipe,
+            // barra, ponto, bullet (·•) e traço (- – —) com espaços ao redor.
+            // NÃO usa espaço sozinho como separador — preserva tamanhos compostos como
+            // "Único" ou "Tam Único" intactos (mesma lógica de Cor).
             function parseTamanhosFromRaw(raw) {
                 if (!raw) return [];
-                return String(raw).split(/[\/|·,]/).map(s => s.trim()).filter(Boolean);
+                return String(raw)
+                    .split(/[,;|·•/.]|\s[-–—/]\s/)
+                    .map(s => s.trim())
+                    .filter(Boolean);
             }
 
             // Renderiza a célula "Tamanhos" do modal: texto se 1, pills clicáveis se múltiplos.
@@ -1335,8 +1353,9 @@ window.openWhatsApp = (message = '') => {
                 }
                 document.getElementById('pmodal-nome-dinamico').innerText = nome;
 
+                // Oculta o "Preço DE" se vier vazio ou zerado (R$ 0,00).
                 const precoDeElem = document.getElementById('pmodal-de-dinamico');
-                if (precoDe) {
+                if (precoDe && precoEhPositivo(precoDe)) {
                     precoDeElem.innerText = precoDe;
                     precoDeElem.style.display = '';
                 } else {
@@ -1345,9 +1364,11 @@ window.openWhatsApp = (message = '') => {
 
                 document.getElementById('pmodal-por-dinamico').innerText = precoPor;
 
+                // Sanitiza desconto: ignora #ERROR!, #DIV/0!, #N/A, "0%", e valores inválidos.
                 const descBadge = document.getElementById('pmodal-desc-dinamico');
-                if (desconto) {
-                    descBadge.innerText = desconto.includes('%') ? desconto : desconto + '%';
+                const descLimpo = sanitizarDesconto(desconto);
+                if (descLimpo) {
+                    descBadge.innerText = descLimpo;
                     descBadge.style.display = '';
                 } else {
                     descBadge.style.display = 'none';
@@ -1368,7 +1389,9 @@ window.openWhatsApp = (message = '') => {
                 const statusProd = (produto['__status'] || produto['status *'] || produto['status'] || '').toLowerCase().trim();
                 const esgotadoProd = statusProd === 'esgotado';
 
-                document.getElementById('pmodal-texto-dinamico').innerText = descricao || '';
+                // Descrição pode conter HTML simples (b/i/u/ul/ol/li/br) do editor admin.
+                // Sanitiza pra permitir só essas tags e renderiza como HTML.
+                document.getElementById('pmodal-texto-dinamico').innerHTML = sanitizarRichHTML(descricao || '');
                 // Tipo aceita múltiplos valores separados por vírgula. Diferente de
                 // cor/tamanho (que são selecionáveis), tipo é só informativo —
                 // mostramos como texto inline separado por "·" pra ficar minimalista.
@@ -1442,6 +1465,69 @@ window.openWhatsApp = (message = '') => {
                 }
                 window.BodyScroll.unlock();
             };
+
+            // Sanitiza HTML da descrição mantendo tags básicas seguras
+            // (b/strong/i/em/u/ul/ol/li/br/p/div). Remove scripts, styles, atributos
+            // e qualquer tag não permitida (tudo vira texto). Aceita também texto puro
+            // com \n (converte em <br>). Mantém P/DIV como blocos pra preservar quebras
+            // e UL/OL/LI como listas pra renderizar bullets/números.
+            function sanitizarRichHTML(html) {
+                if (!html) return '';
+                const str = String(html);
+                if (!/<\w+/.test(str)) {
+                    const tmp = document.createElement('div');
+                    tmp.textContent = str;
+                    return tmp.innerHTML.replace(/\r?\n/g, '<br>');
+                }
+                const ALLOWED = new Set(['B','STRONG','I','EM','U','UL','OL','LI','BR','P','DIV']);
+                const tmp = document.createElement('div');
+                tmp.innerHTML = str;
+                function clean(node) {
+                    const children = Array.from(node.childNodes);
+                    for (const child of children) {
+                        if (child.nodeType === 1) {
+                            if (!ALLOWED.has(child.tagName)) {
+                                node.replaceChild(document.createTextNode(child.textContent || ''), child);
+                                continue;
+                            }
+                            for (const attr of Array.from(child.attributes)) child.removeAttribute(attr.name);
+                            clean(child);
+                        } else if (child.nodeType === 8) {
+                            node.removeChild(child);
+                        }
+                    }
+                }
+                clean(tmp);
+                return tmp.innerHTML;
+            }
+
+            // Retorna true se o preço formatado representa um valor > 0.
+            // Aceita "R$ 0,00", "0,00", "0", "" e variações como vazios.
+            function precoEhPositivo(valor) {
+                if (!valor) return false;
+                const limpo = String(valor).replace(/R\$/g, '').replace(/\s+/g, '').trim();
+                if (!limpo) return false;
+                // Normaliza pra parseFloat: troca vírgula por ponto e tira separador de milhar.
+                const norm = limpo.replace(/\./g, '').replace(',', '.');
+                const num = parseFloat(norm);
+                return isFinite(num) && num > 0;
+            }
+
+            // Retorna string formatada "20%" ou '' quando o valor é inválido/zero.
+            // Cobre erros de fórmula da planilha (#ERROR!, #DIV/0!, #N/A...) que aparecem
+            // quando PreçoDe está vazio e a coluna V tenta calcular o desconto.
+            function sanitizarDesconto(valor) {
+                if (!valor) return '';
+                const str = String(valor).trim();
+                if (!str) return '';
+                // Qualquer erro de fórmula da planilha é descartado.
+                if (str.startsWith('#')) return '';
+                // "0%" ou "0" não é desconto válido pra exibir.
+                const numRaw = str.replace('%', '').replace(',', '.').trim();
+                const num = parseFloat(numRaw);
+                if (!isFinite(num) || num <= 0) return '';
+                return str.includes('%') ? str : str + '%';
+            }
 
             function formatarPreco(valor) {
                 if (!valor || valor === '') return '';
@@ -2051,9 +2137,9 @@ window.openWhatsApp = (message = '') => {
                         badgeHtml = `<span class="cat-faixa cat-faixa--ultimas">Últimas Unidades</span>`;
                     } else if (status === 'oferta especial') {
                         badgeHtml = `<span class="cat-faixa cat-faixa--oferta">Oferta Especial</span>`;
-                    } else if (desconto) {
-                        const descTexto = desconto.includes('%') ? desconto : desconto + '%';
-                        badgeHtml = `<span class="cat-badge">${descTexto}</span>`;
+                    } else {
+                        const descTexto = sanitizarDesconto(desconto);
+                        if (descTexto) badgeHtml = `<span class="cat-badge">${descTexto}</span>`;
                     }
 
                     card.innerHTML = `
@@ -2064,7 +2150,7 @@ window.openWhatsApp = (message = '') => {
                     <div class="cat-card-info">
                         <h3 class="cat-card-nome">${nome}</h3>
                         <div class="cat-card-precos">
-                            ${precoDe ? `<span class="cat-preco-de">${precoDe}</span>` : ''}
+                            ${(precoDe && precoEhPositivo(precoDe)) ? `<span class="cat-preco-de">${precoDe}</span>` : ''}
                             <span class="cat-preco-por">${precoPor}</span>
                         </div>
                         <span class="cat-card-tamanhos">${tamanhos || ''}</span>
@@ -2352,9 +2438,12 @@ window.openWhatsApp = (message = '') => {
                 });
 
                 // Lista de tamanhos disponíveis a partir do campo "tamanhos" do produto.
+                // Aceita separadores: vírgula, ponto-e-vírgula, pipe, barra, ponto,
+                // bullet (·•) e traço (- – —) cercado por espaços. NÃO usa espaço
+                // sozinho — preserva tamanhos compostos como "Único" / "Tam Único".
                 function parseTamanhos(produto) {
                     const raw = produto['tamanhos disponiveis *'] || produto['tamanhos'] || '';
-                    return raw.split(/[\/|·,]/).map(s => s.trim()).filter(Boolean);
+                    return String(raw).split(/[,;|·•/.]|\s[-–—/]\s/).map(s => s.trim()).filter(Boolean);
                 }
 
                 let _corTemp = null;

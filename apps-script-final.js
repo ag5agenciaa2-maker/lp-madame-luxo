@@ -35,6 +35,9 @@ function doPost(e) {
     if (data.action === 'set_validation') {
       return handleSetValidation(data);
     }
+    if (data.action === 'bulk_remove_option') {
+      return handleBulkRemoveOption(data);
+    }
 
     // ============================================
     // SEU CÓDIGO EXISTENTE (PLANILHA)
@@ -49,19 +52,34 @@ function doPost(e) {
            .setValues([data.valuesSemDesconto]);
       sheet.getRange(data.row, 23, 1, data.valuesAposDesconto.length)
            .setValues([data.valuesAposDesconto]);
+      // Reaplica formato BRL nas colunas T (Preço De) e U (Preço Por) — protege contra
+      // a célula ter sido formatada manualmente como "#.##0,0000" ou similar.
+      sheet.getRange(data.row, 20, 1, 2).setNumberFormat('[$R$ ]#,##0.00');
 
     } else if (data.action === 'update') {
       sheet.getRange(data.row, 1, 1, data.values.length)
            .setValues([data.values]);
+      // Reaplica formato BRL em T e U (defensivo).
+      sheet.getRange(data.row, 20, 1, 2).setNumberFormat('[$R$ ]#,##0.00');
 
     } else if (data.action === 'append') {
+      // Garante o header da coluna Y "Data Criação" antes do append (idempotente).
+      ensureDataCriacaoHeader(sheet);
+
       sheet.appendRow(data.values);
       var lastRow = sheet.getLastRow();
-      // Formata Preço De (T=20) e Preço Por (U=21) como moeda BRL.
-      sheet.getRange(lastRow, 20, 1, 2).setNumberFormat('R$ #.##0,00');
+      // Formata Preço De (T=20) e Preço Por (U=21) como Moeda BRL (formato nativo
+      // do Sheets — mesmo que o menu "Formatar → Número → Moeda → BRL" aplica).
+      sheet.getRange(lastRow, 20, 1, 2).setNumberFormat('[$R$ ]#,##0.00');
       // Coluna V (22) = Desconto: fórmula ((T-U)/T) formatada como porcentagem.
-      sheet.getRange(lastRow, 22).setFormula('=IFERROR(((T'+lastRow+'-U'+lastRow+')/T'+lastRow+'),"")');
+      // IFERROR envolve só pra evitar #DIV/0! visual quando T (PreçoDe) está vazio.
+      // O site público trata célula vazia ocultando o badge automaticamente.
+      sheet.getRange(lastRow, 22).setFormula('=IFERROR((T'+lastRow+'-U'+lastRow+')/T'+lastRow+',"")');
       sheet.getRange(lastRow, 22).setNumberFormat('0%');
+      // Coluna Y (25) = Data de criação. Preenchida automaticamente no momento do create.
+      // Formato: dd/MM/yyyy HH:mm (timezone do projeto Apps Script).
+      var nowStr = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd/MM/yyyy HH:mm');
+      sheet.getRange(lastRow, 25).setValue(nowStr);
 
     } else if (data.action === 'delete_row') {
       sheet.deleteRow(parseInt(data.row));
@@ -147,35 +165,34 @@ function handleSetValidation(payload) {
     var sheet = ss.getSheets()[0];
     var range = sheet.getRange(columnLetter + '2:' + columnLetter + '1000');
 
-    // Categoria (C) e Tipo (D) aceitam múltiplos valores por célula separados
-    // por vírgula (ex.: "Shorts, Bermudas"). A validação restrita
-    // requireValueInList trava a célula com strings CSV em algumas situações
-    // — limpamos a validação dessas colunas pra deixar livre, já que o admin
-    // é a interface principal de edição.
-    if (columnLetter === 'C' || columnLetter === 'D') {
-      range.clearDataValidations();
-      return ContentService.createTextOutput(JSON.stringify({
-        success: true, column: columnLetter, count: 0, note: 'csv-column-cleared'
-      })).setMimeType(ContentService.MimeType.JSON);
-    }
-
-    // Demais colunas (ex.: Status) mantêm o dropdown restrito.
+    // Deduplica, remove vazios e itens que vieram já em CSV (split por vírgula),
+    // ordena. Isso garante que o dropdown nativo tenha SÓ os valores individuais
+    // (sem opções "Plus Size, Acessórios" gigantes que viriam por engano).
     var unique = [];
     var seen = {};
     values.forEach(function(v) {
-      var s = (v == null ? '' : String(v)).trim();
-      if (s && !seen[s.toLowerCase()]) {
-        seen[s.toLowerCase()] = true;
-        unique.push(s);
-      }
+      var raw = (v == null ? '' : String(v));
+      // Divide por vírgula/ponto-e-vírgula/pipe — protege contra strings CSV
+      // entrando como opção única do dropdown.
+      raw.split(/[,;|]/).forEach(function(p) {
+        var s = p.trim();
+        if (s && !seen[s.toLowerCase()]) {
+          seen[s.toLowerCase()] = true;
+          unique.push(s);
+        }
+      });
     });
     unique.sort(function(a, b) { return a.localeCompare(b, 'pt-BR'); });
 
     if (unique.length === 0) {
       range.clearDataValidations();
     } else {
+      // requireValueInList + setAllowInvalid(true):
+      //  - mostra a seta de dropdown nativo na célula (pra escolher rápido)
+      //  - permite valor fora da lista sem bloquear a edição (essencial pra CSV
+      //    como "Shorts, Bermudas" — fica só com triângulo de aviso, salva normal)
       var rule = SpreadsheetApp.newDataValidation()
-        .requireValueInList(unique, true) // true = mostra seta de dropdown
+        .requireValueInList(unique, true)
         .setAllowInvalid(true)
         .build();
       range.setDataValidation(rule);
@@ -183,6 +200,132 @@ function handleSetValidation(payload) {
 
     return ContentService.createTextOutput(JSON.stringify({
       success: true, column: columnLetter, count: unique.length
+    })).setMimeType(ContentService.MimeType.JSON);
+
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({
+      success: false, error: error.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// ============================================
+// HEADER DA COLUNA Y (Data Criação) — idempotente
+// ============================================
+/**
+ * Garante que a coluna Y (25) tenha o header "Data Criação".
+ * Procura a linha de cabeçalho (a primeira linha que contém "Categoria" + "ID/Nome")
+ * e escreve o header em Y dessa linha se estiver vazio.
+ * Idempotente: chamada várias vezes não duplica nem sobrescreve.
+ */
+function ensureDataCriacaoHeader(sheet) {
+  try {
+    // Acha a linha de header lendo as primeiras 5 linhas da coluna A-X.
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 1) {
+      sheet.getRange(1, 25).setValue('Data Criação');
+      return;
+    }
+    var maxScan = Math.min(5, lastRow);
+    var head = sheet.getRange(1, 1, maxScan, 24).getValues();
+    var headerRow = 0;
+    for (var i = 0; i < head.length; i++) {
+      var joined = head[i].join(' ').toLowerCase();
+      if (joined.indexOf('categoria') !== -1 && (joined.indexOf('id') !== -1 || joined.indexOf('nome') !== -1)) {
+        headerRow = i + 1;
+        break;
+      }
+    }
+    if (!headerRow) headerRow = 2; // fallback
+    var atual = sheet.getRange(headerRow, 25).getValue();
+    if (!atual || String(atual).trim() === '') {
+      sheet.getRange(headerRow, 25).setValue('Data Criação');
+      // Replica formatação do header (bold) se conseguir.
+      try {
+        var sample = sheet.getRange(headerRow, 1);
+        sheet.getRange(headerRow, 25).setFontWeight(sample.getFontWeight() || 'bold');
+      } catch (_) { /* ignora estilo se não der */ }
+    }
+  } catch (e) {
+    // best-effort: não bloqueia o append se algo falhar
+  }
+}
+
+// ============================================
+// REMOÇÃO EM MASSA DE UMA OPÇÃO (categoria/tipo)
+// ============================================
+/**
+ * Lê a coluna inteira (C ou D), remove o valor `option` de cada célula CSV
+ * sem tocar nos outros valores, e regrava só as células que mudaram.
+ *
+ * Recebe { column: 'C'|'D', option: 'TESTE' }.
+ *
+ * Vantagens sobre o loop client-side:
+ *  - Atômico: lê o estado real da planilha (não confia em cache do navegador).
+ *  - Só toca nas células que realmente mudam (preserva o resto).
+ *  - Sem race condition entre N requisições.
+ */
+function handleBulkRemoveOption(payload) {
+  try {
+    var columnLetter = (payload.column || '').toUpperCase();
+    var option = (payload.option || '').trim();
+
+    if (!/^[CD]$/.test(columnLetter)) {
+      throw new Error('Coluna inválida (esperado C ou D): ' + columnLetter);
+    }
+    if (!option) {
+      throw new Error('option vazia');
+    }
+
+    var ss = SpreadsheetApp.openById('13I0DBjImUK8R1rZe1Nt0FC-WzALALbkAencGH5HdsdA');
+    var sheet = ss.getSheets()[0];
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) {
+      return ContentService.createTextOutput(JSON.stringify({
+        success: true, updated: 0, note: 'planilha vazia'
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // Lê todas as células da coluna a partir da linha 2 (pula header).
+    var range = sheet.getRange(columnLetter + '2:' + columnLetter + lastRow);
+    var values = range.getValues(); // [[val], [val], ...]
+
+    var norm = function(s) {
+      return String(s == null ? '' : s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+    };
+    var optionNorm = norm(option);
+
+    var updatedCount = 0;
+    var alteredRows = []; // [{row:N, before:'x', after:'y'}]
+
+    for (var i = 0; i < values.length; i++) {
+      var original = values[i][0];
+      if (original == null || original === '') continue;
+      var str = String(original);
+      // Quebra por vírgula, ponto-e-vírgula ou pipe.
+      var partes = str.split(/[,;|]/).map(function(p) { return p.trim(); }).filter(Boolean);
+      // Remove apenas o item que bate exatamente (normalizado).
+      var filtradas = partes.filter(function(p) { return norm(p) !== optionNorm; });
+
+      if (filtradas.length !== partes.length) {
+        var novo = filtradas.join(', ');
+        values[i][0] = novo;
+        updatedCount++;
+        alteredRows.push({ row: i + 2, before: str, after: novo });
+      }
+    }
+
+    // Só regrava se houve mudança (evita escrita desnecessária).
+    if (updatedCount > 0) {
+      range.setValues(values);
+    }
+
+    return ContentService.createTextOutput(JSON.stringify({
+      success: true,
+      column: columnLetter,
+      option: option,
+      updated: updatedCount,
+      details: alteredRows
     })).setMimeType(ContentService.MimeType.JSON);
 
   } catch (error) {

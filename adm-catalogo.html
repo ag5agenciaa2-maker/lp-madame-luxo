@@ -117,6 +117,21 @@
                 </button>
                 <div class="filter-multi-dropdown" id="filter-multi-status-dropdown" role="listbox" hidden></div>
             </div>
+            <div class="filter-sort" id="filter-sort">
+                <button type="button" class="filter-multi-btn" id="filter-sort-btn" aria-haspopup="listbox" aria-expanded="false" title="Ordenar produtos">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
+                    <span class="filter-multi-label" id="filter-sort-label">Mais recente</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div class="filter-multi-dropdown" id="filter-sort-dropdown" role="listbox" hidden>
+                    <div class="filter-multi-list">
+                        <div class="filter-sort-opt" data-sort="recent"><span>Mais recente primeiro</span></div>
+                        <div class="filter-sort-opt" data-sort="oldest"><span>Mais antigo primeiro</span></div>
+                        <div class="filter-sort-opt" data-sort="name-asc"><span>Nome A → Z</span></div>
+                        <div class="filter-sort-opt" data-sort="name-desc"><span>Nome Z → A</span></div>
+                    </div>
+                </div>
+            </div>
             <div class="view-toggle">
                 <button class="btn-view active" id="btn-view-grid" title="Visualização em grade">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -433,7 +448,7 @@
     <!-- Toast Notifications -->
     <div id="toast-container" class="toast-container"></div>
 
-    <script src="adm-catalogo.js?v=20260514c"></script>
+    <script src="adm-catalogo.js?v=20260514r"></script>
     <!-- Debug: verifica se o JS carregou corretamente -->
     <script>
         window.addEventListener('load', function () {

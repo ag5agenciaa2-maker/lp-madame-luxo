@@ -3823,6 +3823,26 @@ ol {
             color: rgba(255,255,255,0.5);
             margin: 16px 0 18px;
         }
+        /* Formatação rich-text na descrição (negrito/itálico/listas/quebras). */
+        .pmodal-texto b,
+        .pmodal-texto strong { font-weight: 700; color: rgba(255,255,255,0.85); }
+        .pmodal-texto i,
+        .pmodal-texto em { font-style: italic; }
+        .pmodal-texto u { text-decoration: underline; }
+        .pmodal-texto ul,
+        .pmodal-texto ol {
+            margin: 8px 0;
+            padding-left: 24px;
+        }
+        .pmodal-texto ul { list-style: disc outside; }
+        .pmodal-texto ol { list-style: decimal outside; }
+        .pmodal-texto li {
+            margin: 4px 0;
+            color: rgba(255,255,255,0.6);
+        }
+        .pmodal-texto p,
+        .pmodal-texto div { margin: 0 0 8px; }
+        .pmodal-texto br { display: block; content: ""; margin-top: 4px; }
 
         .pmodal-specs {
             display: grid;
