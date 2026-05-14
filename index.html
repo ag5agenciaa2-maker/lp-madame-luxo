@@ -19,11 +19,9 @@
     <meta name="geo.position" content="-22.9035;-43.2094">
     <meta name="ICBM" content="-22.9035, -43.2094">
 
-    <!-- Preloads Críticos -->
-    <link rel="preload" href="assets/madame-luxo-hero-colecao-verde-menta.webp" as="image">
-    <link rel="preload"
-        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&family=Playfair+Display:ital,wght@1,400;1,500&display=swap"
-        as="style">
+    <!-- Preloads Críticos (LCP) -->
+    <link rel="preload" href="assets/madame-luxo-hero-colecao-verde-menta.webp" as="image" fetchpriority="high">
+    <link rel="preload" href="style.min.css" as="style">
 
     <!-- Open Graph / Compartilhamento -->
     <meta property="og:site_name" content="Madame Luxo">
@@ -51,22 +49,34 @@
 
     <title>Moda Feminina & Plus Size em Santa Cruz e Campo Grande | Madame Luxo</title>
 
-    <!-- Google Fonts (non-blocking com display=swap) -->
+    <!-- Preconnects (DNS+TLS antecipado) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://assets.cdn.filesafe.space" crossorigin>
-    <link
+    <link rel="dns-prefetch" href="https://images.unsplash.com">
+
+    <!-- Google Fonts (non-blocking, display=swap) -->
+    <link rel="preload" as="style"
         href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&family=Playfair+Display:ital,wght@1,400;1,500&display=swap"
-        rel="stylesheet" media="print" onload="this.media='all'">
+        onload="this.onload=null;this.rel='stylesheet'">
     <noscript>
         <link
             href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&family=Playfair+Display:ital,wght@1,400;1,500&display=swap"
             rel="stylesheet">
     </noscript>
 
-    <!-- CSS -->
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="cookie-banner.css">
+    <!-- CSS principal minificado (bloqueante - necessário para LCP) -->
+    <link rel="stylesheet" href="style.min.css">
+    <!-- CSS secundário minificado (non-blocking) -->
+    <link rel="preload" href="cookie-banner.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="cookie-banner.min.css"></noscript>
+
+    <!-- PageSpeed: content-visibility pula renderização de seções offscreen (melhora INP/TBT) -->
+    <style>
+        .videos,.collection,.catalogo-section,.pain-solution,.features,.about,
+        .faq,.location,.footer{content-visibility:auto;contain-intrinsic-size:auto 800px}
+        .pmodal-overlay{content-visibility:auto;contain-intrinsic-size:auto 600px}
+    </style>
 
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="assets/favicon-madame-luxo.ico">
@@ -308,8 +318,11 @@
     <nav class="navbar" id="navbar" role="navigation" aria-label="Navegação principal">
         <div class="nav-container">
             <a href="#inicio" class="nav-logo" aria-label="Madame Luxo - Página inicial">
-                <img src="assets/logo-madame-luxo-desktop.webp" alt="Logo Madame Luxo" width="180" height="50"
-                    loading="eager">
+                <picture>
+                    <source media="(max-width: 768px)" srcset="assets/logo-madame-luxo-mobile.webp">
+                    <img src="assets/logo-madame-luxo-desktop.webp" alt="Logo Madame Luxo"
+                        width="180" height="50" loading="eager" fetchpriority="high" decoding="async">
+                </picture>
             </a>
 
             <button class="nav-toggle" id="navToggle" aria-label="Abrir menu" aria-expanded="false"
@@ -379,12 +392,10 @@
             <div class="videos-grid" role="list">
                 <article class="video-card" role="listitem">
                     <div class="video-wrapper">
-                        <video autoplay muted loop playsinline poster="assets/madame-luxo-hero-colecao-verde-menta.webp"
-                            class="video-element">
-                            <source
-                                src="https://assets.cdn.filesafe.space/7hzaWcGgawCV1WudlwA7/media/69d95d9761984c734e07ba95.mp4"
-                                type="video/mp4">
-                        </video>
+                        <video muted loop playsinline preload="none"
+                            poster="assets/madame-luxo-hero-colecao-verde-menta.webp"
+                            class="video-element lazy-video"
+                            data-src="https://assets.cdn.filesafe.space/7hzaWcGgawCV1WudlwA7/media/69d95d9761984c734e07ba95.mp4"></video>
                         <div class="video-overlay">
                             <span class="video-category">Coleção</span>
                         </div>
@@ -393,12 +404,10 @@
 
                 <article class="video-card" role="listitem">
                     <div class="video-wrapper">
-                        <video autoplay muted loop playsinline
-                            poster="assets/madame-luxo-conjunto-preto-plus-size-inclusiva.webp" class="video-element">
-                            <source
-                                src="https://assets.cdn.filesafe.space/7hzaWcGgawCV1WudlwA7/media/69d95d97019dc508d3163f22.mp4"
-                                type="video/mp4">
-                        </video>
+                        <video muted loop playsinline preload="none"
+                            poster="assets/madame-luxo-conjunto-preto-plus-size-inclusiva.webp"
+                            class="video-element lazy-video"
+                            data-src="https://assets.cdn.filesafe.space/7hzaWcGgawCV1WudlwA7/media/69d95d97019dc508d3163f22.mp4"></video>
                         <div class="video-overlay">
                             <span class="video-category">Estilo</span>
                         </div>
@@ -407,12 +416,10 @@
 
                 <article class="video-card" role="listitem">
                     <div class="video-wrapper">
-                        <video autoplay muted loop playsinline
-                            poster="assets/madame-luxo-macacao-longo-azul-claro-plus-size.webp" class="video-element">
-                            <source
-                                src="https://assets.cdn.filesafe.space/7hzaWcGgawCV1WudlwA7/media/69d95d9723917331fbd58d22.mp4"
-                                type="video/mp4">
-                        </video>
+                        <video muted loop playsinline preload="none"
+                            poster="assets/madame-luxo-macacao-longo-azul-claro-plus-size.webp"
+                            class="video-element lazy-video"
+                            data-src="https://assets.cdn.filesafe.space/7hzaWcGgawCV1WudlwA7/media/69d95d9723917331fbd58d22.mp4"></video>
                         <div class="video-overlay">
                             <span class="video-category">Tendências</span>
                         </div>
@@ -421,12 +428,10 @@
 
                 <article class="video-card" role="listitem">
                     <div class="video-wrapper">
-                        <video autoplay muted loop playsinline
-                            poster="assets/madame-luxo-moda-feminina-marrom-plus-size.webp" class="video-element">
-                            <source
-                                src="https://assets.cdn.filesafe.space/7hzaWcGgawCV1WudlwA7/media/69d95d9723917331fbd58d23.mp4"
-                                type="video/mp4">
-                        </video>
+                        <video muted loop playsinline preload="none"
+                            poster="assets/madame-luxo-moda-feminina-marrom-plus-size.webp"
+                            class="video-element lazy-video"
+                            data-src="https://assets.cdn.filesafe.space/7hzaWcGgawCV1WudlwA7/media/69d95d9723917331fbd58d23.mp4"></video>
                         <div class="video-overlay">
                             <span class="video-category">Exclusivo</span>
                         </div>
@@ -456,7 +461,7 @@
                 <article class="bento-cell bento-cell-large" role="listitem">
                     <img src="assets/madame-luxo-vestido-longo-listrado-azul.webp"
                         alt="Modelo usando vestido longo listrado azul e branco da coleção Madame Luxo"
-                        class="bento-image bento-image--top" width="800" height="600" loading="lazy">
+                        class="bento-image bento-image--top" width="800" height="600" loading="lazy" decoding="async">
                     <div class="bento-overlay">
                         <h3 class="bento-title">Vestidos</h3>
                         <a href="#catalogo" data-cat="vestidos" class="bento-cta" aria-label="Ver categoria Vestidos no catálogo">
@@ -469,7 +474,7 @@
                 <article class="bento-cell" role="listitem">
                     <img src="assets/madame-luxo-blusas-decote-u-varias-cores.webp"
                         alt="Arara com blusas de diversas cores com decote elegante em destaque"
-                        class="bento-image bento-image--top" width="400" height="600" loading="lazy">
+                        class="bento-image bento-image--top" width="400" height="600" loading="lazy" decoding="async">
                     <div class="bento-overlay">
                         <h3 class="bento-title">Blusas</h3>
                         <a href="#catalogo" data-cat="blusas" class="bento-cta" aria-label="Ver categoria Blusas no catálogo">
@@ -482,7 +487,7 @@
                 <article class="bento-cell" role="listitem">
                     <img src="assets/madame-luxo-macacao-longo-azul-claro-plus-size.webp"
                         alt="Modelos usando macacão longo azul claro com recortes da Madame Luxo"
-                        class="bento-image bento-image--top" width="400" height="600" loading="lazy">
+                        class="bento-image bento-image--top" width="400" height="600" loading="lazy" decoding="async">
                     <div class="bento-overlay">
                         <h3 class="bento-title">Macacão</h3>
                         <a href="#catalogo" data-cat="macacoes" class="bento-cta" aria-label="Ver categoria Macacões no catálogo">
@@ -495,7 +500,7 @@
                 <article class="bento-cell bento-cell-tall" role="listitem">
                     <img src="assets/madame-luxo-moda-feminina-marrom-plus-size.webp"
                         alt="Modelos com conjuntos elegantes na cor marrom da coleção Madame Luxo"
-                        class="bento-image bento-image--top" width="400" height="800" loading="lazy">
+                        class="bento-image bento-image--top" width="400" height="800" loading="lazy" decoding="async">
                     <div class="bento-overlay">
                         <h3 class="bento-title">Saia & Conjuntos</h3>
                         <a href="#catalogo" data-cat="saias" class="bento-cta" aria-label="Ver categoria Saias e Conjuntos no catálogo">
@@ -508,7 +513,7 @@
                 <article class="bento-cell" role="listitem">
                     <img src="assets/madame-luxo-conjunto-resort-preto-tela-plus-size.webp"
                         alt="Modelo plus size usando conjunto resort preto em tela da Madame Luxo"
-                        class="bento-image bento-image--top" width="400" height="600" loading="lazy">
+                        class="bento-image bento-image--top" width="400" height="600" loading="lazy" decoding="async">
                     <div class="bento-overlay">
                         <h3 class="bento-title">Bodys</h3>
                         <a href="#catalogo" data-cat="bodys" class="bento-cta" aria-label="Ver categoria Bodys no catálogo">
@@ -521,7 +526,7 @@
                 <article class="bento-cell bento-cell-large" role="listitem">
                     <img src="assets/madame-luxo-vestido-midi-plus-size-verde.webp"
                         alt="Modelo plus size usando vestido midi verde com recortes da Madame Luxo"
-                        class="bento-image bento-image--top" width="800" height="600" loading="lazy">
+                        class="bento-image bento-image--top" width="800" height="600" loading="lazy" decoding="async">
                     <div class="bento-overlay">
                         <h3 class="bento-title">Plus Size</h3>
                         <a href="#catalogo" data-cat="plus-size" class="bento-cta" aria-label="Ver categoria Plus Size no catálogo">
@@ -534,7 +539,7 @@
                 <article class="bento-cell" role="listitem">
                     <img src="assets/madame-luxo-conjunto-croche-off-white-feminino.webp"
                         alt="Modelo usando conjunto de crochê off-white da boutique Madame Luxo"
-                        class="bento-image bento-image--top" width="400" height="600" loading="lazy">
+                        class="bento-image bento-image--top" width="400" height="600" loading="lazy" decoding="async">
                     <div class="bento-overlay">
                         <h3 class="bento-title">Cropped</h3>
                         <a href="#catalogo" data-cat="cropped" class="bento-cta" aria-label="Ver categoria Cropped no catálogo">
@@ -545,9 +550,9 @@
 
                 <!-- Célula 8: Shorts (Agora Wide para equilibrar) -->
                 <article class="bento-cell bento-cell-wide" role="listitem">
-                    <img src="assets/madame-luxo-shorts-estilo-casual.png"
+                    <img src="assets/madame-luxo-shorts-estilo-casual.webp"
                         alt="Shorts femininos de linho da coleção de verão Madame Luxo em estilo casual chique"
-                        class="bento-image" width="800" height="400" loading="lazy">
+                        class="bento-image" width="800" height="400" loading="lazy" decoding="async">
                     <div class="bento-overlay">
                         <h3 class="bento-title">Shorts</h3>
                         <a href="#catalogo" data-cat="shorts" class="bento-cta" aria-label="Ver categoria Shorts no catálogo">
@@ -558,9 +563,9 @@
 
                 <!-- Célula 9: Acessórios -->
                 <article class="bento-cell bento-cell-wide" role="listitem">
-                    <img src="assets/madame-luxo-acessorios-luxo-feminino.png"
+                    <img src="assets/madame-luxo-acessorios-luxo-feminino.webp"
                         alt="Acessórios de luxo, incluindo bolsa de couro e joias minimalistas da Madame Luxo"
-                        class="bento-image" width="800" height="400" loading="lazy">
+                        class="bento-image" width="800" height="400" loading="lazy" decoding="async">
                     <div class="bento-overlay">
                         <h3 class="bento-title">Acessórios</h3>
                         <a href="#catalogo" data-cat="acessorios" class="bento-cta" aria-label="Ver categoria Acessórios no catálogo">
@@ -573,7 +578,7 @@
                 <article class="bento-cell" role="listitem">
                     <img src="assets/madame-luxo-macaquinho-rosa-feminino.webp"
                         alt="Modelo usando macaquinho rosa elegante da coleção Madame Luxo"
-                        class="bento-image bento-image--top" width="400" height="600" loading="lazy">
+                        class="bento-image bento-image--top" width="400" height="600" loading="lazy" decoding="async">
                     <div class="bento-overlay">
                         <h3 class="bento-title">Macaquinho</h3>
                         <a href="#catalogo" data-cat="macaquinhos" class="bento-cta" aria-label="Ver categoria Macaquinhos no catálogo">
@@ -586,7 +591,7 @@
                 <article class="bento-cell bento-cell-wide" role="listitem">
                     <img src="assets/fachada-loja-madame-luxo-vitrine.webp"
                         alt="Fachada da loja Madame Luxo with vitrine exhibiting dresses from the new collection and modern logo"
-                        class="bento-image" width="800" height="400" loading="lazy">
+                        class="bento-image" width="800" height="400" loading="lazy" decoding="async">
                     <div class="bento-overlay">
                         <h3 class="bento-title">Looks Completos</h3>
                         <a href="#catalogo" data-cat="todos" data-filter="todos" class="bento-cta" aria-label="Ver todos os produtos no catálogo">
@@ -599,7 +604,7 @@
                 <article class="bento-cell" role="listitem">
                     <img src="assets/madame-luxo-vestido-trico-listrado-colorido.webp"
                         alt="Modelo usando vestido de tricô listrado colorido da coleção Madame Luxo"
-                        class="bento-image" width="400" height="600" loading="lazy">
+                        class="bento-image" width="400" height="600" loading="lazy" decoding="async">
                     <div class="bento-overlay">
                         <h3 class="bento-title">Nova Coleção</h3>
                         <a href="#catalogo" data-cat="nova-colecao" data-filter="novidades" class="bento-cta" aria-label="Ver Nova Coleção no catálogo">
@@ -676,7 +681,7 @@
                     <article class="cat-card" data-modal="modal-p1">
                         <div class="cat-card-img-wrap">
                             <img src="https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=600"
-                                alt="Vestido Midi Floral Manga Longa" class="cat-card-img" loading="lazy">
+                                alt="Vestido Midi Floral Manga Longa" class="cat-card-img" loading="lazy" decoding="async">
                             <span class="cat-faixa cat-faixa--ultimas">Últimas Unidades</span>
                             <span class="cat-badge">−18%</span>
                         </div>
@@ -691,7 +696,7 @@
                     <article class="cat-card" data-modal="modal-p2">
                         <div class="cat-card-img-wrap">
                             <img src="https://images.unsplash.com/photo-1585487000160-6ebcfceb0d03?w=600"
-                                alt="Vestido Longo Ombro a Ombro Listra" class="cat-card-img" loading="lazy">
+                                alt="Vestido Longo Ombro a Ombro Listra" class="cat-card-img" loading="lazy" decoding="async">
                             <span class="cat-faixa cat-faixa--oferta">Oferta Especial</span>
                             <span class="cat-badge">−23%</span>
                         </div>
@@ -706,7 +711,7 @@
                     <article class="cat-card" data-modal="modal-p3">
                         <div class="cat-card-img-wrap">
                             <img src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600"
-                                alt="Vestido Curto Babado Festa" class="cat-card-img" loading="lazy">
+                                alt="Vestido Curto Babado Festa" class="cat-card-img" loading="lazy" decoding="async">
                             <span class="cat-faixa cat-faixa--ultimas">Últimas Unidades</span>
                             <span class="cat-badge">−21%</span>
                         </div>
@@ -727,7 +732,7 @@
                     <article class="cat-card" data-modal="modal-p1">
                         <div class="cat-card-img-wrap">
                             <img src="https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=600"
-                                alt="Vestido Midi Floral Manga Longa" class="cat-card-img" loading="lazy">
+                                alt="Vestido Midi Floral Manga Longa" class="cat-card-img" loading="lazy" decoding="async">
                             <span class="cat-badge">−18%</span>
                         </div>
                         <div class="cat-card-info">
@@ -741,7 +746,7 @@
                     <article class="cat-card" data-modal="modal-p2">
                         <div class="cat-card-img-wrap">
                             <img src="https://images.unsplash.com/photo-1585487000160-6ebcfceb0d03?w=600"
-                                alt="Vestido Longo Ombro a Ombro Listra" class="cat-card-img" loading="lazy">
+                                alt="Vestido Longo Ombro a Ombro Listra" class="cat-card-img" loading="lazy" decoding="async">
                             <span class="cat-badge">−23%</span>
                         </div>
                         <div class="cat-card-info">
@@ -755,7 +760,7 @@
                     <article class="cat-card" data-modal="modal-p3">
                         <div class="cat-card-img-wrap">
                             <img src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600"
-                                alt="Vestido Curto Babado Festa" class="cat-card-img" loading="lazy">
+                                alt="Vestido Curto Babado Festa" class="cat-card-img" loading="lazy" decoding="async">
                             <span class="cat-badge">−21%</span>
                         </div>
                         <div class="cat-card-info">
@@ -775,7 +780,7 @@
                     <article class="cat-card" data-modal="modal-p4">
                         <div class="cat-card-img-wrap">
                             <img src="https://images.unsplash.com/photo-1509631179647-0177331693ae?w=600"
-                                alt="Macacão Pantacourt Linho Bege" class="cat-card-img" loading="lazy">
+                                alt="Macacão Pantacourt Linho Bege" class="cat-card-img" loading="lazy" decoding="async">
                             <span class="cat-badge">−15%</span>
                         </div>
                         <div class="cat-card-info">
@@ -789,7 +794,7 @@
                     <article class="cat-card" data-modal="modal-p5">
                         <div class="cat-card-img-wrap">
                             <img src="https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=600"
-                                alt="Macacão Curto Jeans Destroyed" class="cat-card-img" loading="lazy">
+                                alt="Macacão Curto Jeans Destroyed" class="cat-card-img" loading="lazy" decoding="async">
                             <span class="cat-badge">−15%</span>
                         </div>
                         <div class="cat-card-info">
@@ -803,7 +808,7 @@
                     <article class="cat-card" data-modal="modal-p6">
                         <div class="cat-card-img-wrap">
                             <img src="https://images.unsplash.com/photo-1562157873-818bc0726f68?w=600"
-                                alt="Macacão Ciganinha Estampado" class="cat-card-img" loading="lazy">
+                                alt="Macacão Ciganinha Estampado" class="cat-card-img" loading="lazy" decoding="async">
                             <span class="cat-badge">−19%</span>
                         </div>
                         <div class="cat-card-info">
@@ -823,7 +828,7 @@
                     <article class="cat-card" data-modal="modal-p7">
                         <div class="cat-card-img-wrap">
                             <img src="https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=600"
-                                alt="Conjunto Saia + Blusa Linho Rosa" class="cat-card-img" loading="lazy">
+                                alt="Conjunto Saia + Blusa Linho Rosa" class="cat-card-img" loading="lazy" decoding="async">
                             <span class="cat-badge">−17%</span>
                         </div>
                         <div class="cat-card-info">
@@ -837,7 +842,7 @@
                     <article class="cat-card" data-modal="modal-p9">
                         <div class="cat-card-img-wrap">
                             <img src="https://images.unsplash.com/photo-1586771107445-d3ca888129ff?w=600"
-                                alt="Conjunto Saia Jeans + Top Cropped" class="cat-card-img" loading="lazy">
+                                alt="Conjunto Saia Jeans + Top Cropped" class="cat-card-img" loading="lazy" decoding="async">
                             <span class="cat-badge">−18%</span>
                         </div>
                         <div class="cat-card-info">
@@ -857,7 +862,7 @@
                     <article class="cat-card" data-modal="modal-p8">
                         <div class="cat-card-img-wrap">
                             <img src="https://images.unsplash.com/photo-1551803091-e20673f15770?w=600"
-                                alt="Saia Midi Plissada Verde Oliva" class="cat-card-img" loading="lazy">
+                                alt="Saia Midi Plissada Verde Oliva" class="cat-card-img" loading="lazy" decoding="async">
                             <span class="cat-badge">−23%</span>
                         </div>
                         <div class="cat-card-info">
@@ -877,7 +882,7 @@
                     <article class="cat-card" data-modal="modal-p10">
                         <div class="cat-card-img-wrap">
                             <img src="https://images.unsplash.com/photo-1602488283247-29bf1f5b148a?w=600"
-                                alt="Body Manga Longa Canelado Preto" class="cat-card-img" loading="lazy">
+                                alt="Body Manga Longa Canelado Preto" class="cat-card-img" loading="lazy" decoding="async">
                             <span class="cat-badge">−14%</span>
                         </div>
                         <div class="cat-card-info">
@@ -891,7 +896,7 @@
                     <article class="cat-card" data-modal="modal-p11">
                         <div class="cat-card-img-wrap">
                             <img src="https://images.unsplash.com/photo-1566479179817-f0eed2c3fbf2?w=600"
-                                alt="Body Decote V Renda Off White" class="cat-card-img" loading="lazy">
+                                alt="Body Decote V Renda Off White" class="cat-card-img" loading="lazy" decoding="async">
                             <span class="cat-badge">−11%</span>
                         </div>
                         <div class="cat-card-info">
@@ -905,7 +910,7 @@
                     <article class="cat-card" data-modal="modal-p12">
                         <div class="cat-card-img-wrap">
                             <img src="https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600"
-                                alt="Body Alcinha Fitness Compressão" class="cat-card-img" loading="lazy">
+                                alt="Body Alcinha Fitness Compressão" class="cat-card-img" loading="lazy" decoding="async">
                             <span class="cat-badge">−19%</span>
                         </div>
                         <div class="cat-card-info">
@@ -925,7 +930,7 @@
                     <article class="cat-card" data-modal="modal-p13">
                         <div class="cat-card-img-wrap">
                             <img src="https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?w=600"
-                                alt="Cropped Tricô Manga Curta Caramelo" class="cat-card-img" loading="lazy">
+                                alt="Cropped Tricô Manga Curta Caramelo" class="cat-card-img" loading="lazy" decoding="async">
                             <span class="cat-badge">−20%</span>
                         </div>
                         <div class="cat-card-info">
@@ -939,7 +944,7 @@
                     <article class="cat-card" data-modal="modal-p14">
                         <div class="cat-card-img-wrap">
                             <img src="https://images.unsplash.com/photo-1578632749014-ca77efd052eb?w=600"
-                                alt="Cropped Estampado Tie Dye" class="cat-card-img" loading="lazy">
+                                alt="Cropped Estampado Tie Dye" class="cat-card-img" loading="lazy" decoding="async">
                             <span class="cat-badge">−17%</span>
                         </div>
                         <div class="cat-card-info">
@@ -953,7 +958,7 @@
                     <article class="cat-card" data-modal="modal-p15">
                         <div class="cat-card-img-wrap">
                             <img src="https://images.unsplash.com/photo-1576185850227-1f72b7f8d483?w=600"
-                                alt="Cropped Alcinha Satin Acetinado" class="cat-card-img" loading="lazy">
+                                alt="Cropped Alcinha Satin Acetinado" class="cat-card-img" loading="lazy" decoding="async">
                             <span class="cat-badge">−17%</span>
                         </div>
                         <div class="cat-card-info">
@@ -973,7 +978,7 @@
                     <article class="cat-card" data-modal="modal-p16">
                         <div class="cat-card-img-wrap">
                             <img src="https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=600"
-                                alt="Vestido Floral Plus Size Midi" class="cat-card-img" loading="lazy">
+                                alt="Vestido Floral Plus Size Midi" class="cat-card-img" loading="lazy" decoding="async">
                             <span class="cat-badge">−17%</span>
                         </div>
                         <div class="cat-card-info">
@@ -987,7 +992,7 @@
                     <article class="cat-card" data-modal="modal-p17">
                         <div class="cat-card-img-wrap">
                             <img src="https://images.unsplash.com/photo-1594938298603-c8148c4b4d5c?w=600"
-                                alt="Calça Wide Leg Plus Size Preta" class="cat-card-img" loading="lazy">
+                                alt="Calça Wide Leg Plus Size Preta" class="cat-card-img" loading="lazy" decoding="async">
                             <span class="cat-badge">−17%</span>
                         </div>
                         <div class="cat-card-info">
@@ -1001,7 +1006,7 @@
                     <article class="cat-card" data-modal="modal-p18">
                         <div class="cat-card-img-wrap">
                             <img src="https://images.unsplash.com/photo-1566479179817-f0eed2c3fbf2?w=600"
-                                alt="Blusa Plus Size Manga Bufante Estampada" class="cat-card-img" loading="lazy">
+                                alt="Blusa Plus Size Manga Bufante Estampada" class="cat-card-img" loading="lazy" decoding="async">
                             <span class="cat-badge">−17%</span>
                         </div>
                         <div class="cat-card-info">
@@ -1021,7 +1026,7 @@
                     <article class="cat-card" data-modal="modal-p19">
                         <div class="cat-card-img-wrap">
                             <img src="https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=600"
-                                alt="Short Jeans Cintura Alta Destroyed" class="cat-card-img" loading="lazy">
+                                alt="Short Jeans Cintura Alta Destroyed" class="cat-card-img" loading="lazy" decoding="async">
                             <span class="cat-badge">−15%</span>
                         </div>
                         <div class="cat-card-info">
@@ -1035,7 +1040,7 @@
                     <article class="cat-card" data-modal="modal-p20">
                         <div class="cat-card-img-wrap">
                             <img src="https://images.unsplash.com/photo-1596783074918-c84cb06531ca?w=600"
-                                alt="Short de Alfaiataria Marrom" class="cat-card-img" loading="lazy">
+                                alt="Short de Alfaiataria Marrom" class="cat-card-img" loading="lazy" decoding="async">
                             <span class="cat-badge">−17%</span>
                         </div>
                         <div class="cat-card-info">
@@ -1049,7 +1054,7 @@
                     <article class="cat-card" data-modal="modal-p21">
                         <div class="cat-card-img-wrap">
                             <img src="https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600"
-                                alt="Short Fitness Suplex Cintura Alta" class="cat-card-img" loading="lazy">
+                                alt="Short Fitness Suplex Cintura Alta" class="cat-card-img" loading="lazy" decoding="async">
                             <span class="cat-badge">−20%</span>
                         </div>
                         <div class="cat-card-info">
@@ -1069,7 +1074,7 @@
                     <article class="cat-card" data-modal="modal-p22">
                         <div class="cat-card-img-wrap">
                             <img src="https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=600"
-                                alt="Bolsa Tiracolo Couro Caramelo" class="cat-card-img" loading="lazy">
+                                alt="Bolsa Tiracolo Couro Caramelo" class="cat-card-img" loading="lazy" decoding="async">
                             <span class="cat-badge">−20%</span>
                         </div>
                         <div class="cat-card-info">
@@ -1083,7 +1088,7 @@
                     <article class="cat-card" data-modal="modal-p23">
                         <div class="cat-card-img-wrap">
                             <img src="https://images.unsplash.com/photo-1624222247344-550fb60583dc?w=600"
-                                alt="Cinto Largo Trançado Preto" class="cat-card-img" loading="lazy">
+                                alt="Cinto Largo Trançado Preto" class="cat-card-img" loading="lazy" decoding="async">
                             <span class="cat-badge">−17%</span>
                         </div>
                         <div class="cat-card-info">
@@ -1097,7 +1102,7 @@
                     <article class="cat-card" data-modal="modal-p24">
                         <div class="cat-card-img-wrap">
                             <img src="https://images.unsplash.com/photo-1601924921557-45e6dea0a157?w=600"
-                                alt="Lenço Seda Floral Estampado" class="cat-card-img" loading="lazy">
+                                alt="Lenço Seda Floral Estampado" class="cat-card-img" loading="lazy" decoding="async">
                             <span class="cat-badge">−13%</span>
                         </div>
                         <div class="cat-card-info">
@@ -1117,7 +1122,7 @@
                     <article class="cat-card" data-modal="modal-p25">
                         <div class="cat-card-img-wrap">
                             <img src="https://images.unsplash.com/photo-1562157873-818bc0726f68?w=600"
-                                alt="Macaquinho Floral Alça Fina" class="cat-card-img" loading="lazy">
+                                alt="Macaquinho Floral Alça Fina" class="cat-card-img" loading="lazy" decoding="async">
                             <span class="cat-badge">−15%</span>
                         </div>
                         <div class="cat-card-info">
@@ -1131,7 +1136,7 @@
                     <article class="cat-card" data-modal="modal-p26">
                         <div class="cat-card-img-wrap">
                             <img src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=600"
-                                alt="Macaquinho Canelado Liso" class="cat-card-img" loading="lazy">
+                                alt="Macaquinho Canelado Liso" class="cat-card-img" loading="lazy" decoding="async">
                             <span class="cat-badge">−15%</span>
                         </div>
                         <div class="cat-card-info">
@@ -1145,7 +1150,7 @@
                     <article class="cat-card" data-modal="modal-p27">
                         <div class="cat-card-img-wrap">
                             <img src="https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=600"
-                                alt="Macaquinho Jeans Short Destroyed" class="cat-card-img" loading="lazy">
+                                alt="Macaquinho Jeans Short Destroyed" class="cat-card-img" loading="lazy" decoding="async">
                             <span class="cat-badge">−14%</span>
                         </div>
                         <div class="cat-card-info">
@@ -1165,7 +1170,7 @@
                     <article class="cat-card" data-modal="modal-p28">
                         <div class="cat-card-img-wrap">
                             <img src="https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=600"
-                                alt="Vestido Midi Cetim Nova Coleção" class="cat-card-img" loading="lazy">
+                                alt="Vestido Midi Cetim Nova Coleção" class="cat-card-img" loading="lazy" decoding="async">
                             <span class="cat-badge-novo">Novo</span>
                             <span class="cat-badge">−13%</span>
                         </div>
@@ -1180,7 +1185,7 @@
                     <article class="cat-card" data-modal="modal-p29">
                         <div class="cat-card-img-wrap">
                             <img src="https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=600"
-                                alt="Conjunto Linho Calça + Cropped" class="cat-card-img" loading="lazy">
+                                alt="Conjunto Linho Calça + Cropped" class="cat-card-img" loading="lazy" decoding="async">
                             <span class="cat-badge-novo">Novo</span>
                             <span class="cat-badge">−14%</span>
                         </div>
@@ -1195,7 +1200,7 @@
                     <article class="cat-card" data-modal="modal-p30">
                         <div class="cat-card-img-wrap">
                             <img src="https://images.unsplash.com/photo-1566479179817-f0eed2c3fbf2?w=600"
-                                alt="Blusa Transparência Tule Bordado" class="cat-card-img" loading="lazy">
+                                alt="Blusa Transparência Tule Bordado" class="cat-card-img" loading="lazy" decoding="async">
                             <span class="cat-badge-novo">Novo</span>
                             <span class="cat-badge">−15%</span>
                         </div>
@@ -2593,9 +2598,9 @@
             <div class="pain-solution-cards">
                 <!-- Card Dor -->
                 <article class="card-pain" role="article">
-                    <img src="assets/madame-luxo-dor-escolha-limitada.png"
+                    <img src="assets/madame-luxo-dor-escolha-limitada.webp"
                         alt="Cabide vazio representando a frustração de não encontrar o look ideal" width="600"
-                        height="400" loading="lazy">
+                        height="400" loading="lazy" decoding="async">
                     <h3>A frustração atual</h3>
                     <p>Sabemos como é desanimador procurar por horas e não encontrar roupas que realmente valorizem seu
                         corpo e seu estilo único.</p>
@@ -2615,7 +2620,7 @@
                 <article class="card-solution" role="article">
                     <img src="assets/madame-luxo-blusas-decote-u-varias-cores.webp"
                         alt="Arara de roupas premium organizada representando a curadoria exclusiva Madame Luxo"
-                        width="600" height="400" loading="lazy">
+                        width="600" height="400" loading="lazy" decoding="async">
                     <h3>O Estilo Madame Luxo</h3>
                     <p>Desde 2007, nossa missão é resgatar o melhor que há em você com uma curadoria exclusiva que
                         celebra todas as silhuetas.</p>
@@ -2711,7 +2716,7 @@
                 <!-- Lighthouse/PageSpeed fix: removed fetchpriority="high" from non-LCP image to not compete with hero -->
             <img src="assets/wind-banner-loja-madame-luxo-entrada.webp"
                     alt="Entrada da loja Madame Luxo com wind banner personalizado" class="about-image" width="600"
-                    height="800" loading="lazy">
+                    height="800" loading="lazy" decoding="async">
             </div>
             <div class="about-content">
                 <div class="about-text-box reveal-right">
@@ -3122,8 +3127,8 @@
                     </article>
                     <div class="location-hub-map">
                         <iframe
-                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3675.296041359647!2d-43.6865!3d-22.9311!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjLCsDU1JzUyLjAiUyA0M8KwNDEnMTEuNCJX!5e0!3m2!1spt-BR!2sbr!4v1609459200000!5m2!1spt-BR!2sbr"
-                            width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"
+                            data-src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3675.296041359647!2d-43.6865!3d-22.9311!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjLCsDU1JzUyLjAiUyA0M8KwNDEnMTEuNCJX!5e0!3m2!1spt-BR!2sbr!4v1609459200000!5m2!1spt-BR!2sbr"
+                            width="100%" height="100%" style="border:0;background:#1a1a1a;" allowfullscreen="" loading="lazy"
                             referrerpolicy="no-referrer-when-downgrade" title="Mapa da loja Santa Cruz">
                         </iframe>
                     </div>
@@ -3196,8 +3201,8 @@
                     </article>
                     <div class="location-hub-map">
                         <iframe
-                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3675.0!2d-43.5567!3d-22.9411!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjLCsDU2JzI4LjAiUyA0M8KwMzMnMjQuMSJX!5e0!3m2!1spt-BR!2sbr!4v1609459200000!5m2!1spt-BR!2sbr"
-                            width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"
+                            data-src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3675.0!2d-43.5567!3d-22.9411!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjLCsDU2JzI4LjAiUyA0M8KwMzMnMjQuMSJX!5e0!3m2!1spt-BR!2sbr!4v1609459200000!5m2!1spt-BR!2sbr"
+                            width="100%" height="100%" style="border:0;background:#1a1a1a;" allowfullscreen="" loading="lazy"
                             referrerpolicy="no-referrer-when-downgrade" title="Mapa da loja Campo Grande">
                         </iframe>
                     </div>
@@ -3264,7 +3269,7 @@
             <div class="footer-grid">
                 <div class="footer-brand">
                     <img src="assets/logo-madame-luxo-desktop.webp" alt="Logo Madame Luxo" class="footer-logo"
-                        width="150" height="42" loading="lazy">
+                        width="150" height="42" loading="lazy" decoding="async">
                     <p class="footer-tagline">O prazer de você se vestir bem!</p>
                     <p class="footer-description">Desde 2007, a Madame Luxo é referência em moda feminina casual e plus
                         size no Rio de Janeiro, oferecendo curadoria exclusiva de peças que celebram todas as silhuetas
@@ -3410,8 +3415,8 @@
     <div class="drawer-overlay" id="drawerOverlay" aria-hidden="true"></div>
     <aside class="drawer" id="drawerMenu" aria-hidden="true">
         <div class="drawer-header">
-            <img src="assets/logo-madame-luxo-desktop.webp" alt="Logo Madame Luxo" class="drawer-logo" width="120"
-                height="34">
+            <img src="assets/logo-madame-luxo-mobile.webp" alt="Logo Madame Luxo" class="drawer-logo" width="120"
+                height="34" loading="lazy" decoding="async">
             <button class="drawer-close" id="drawerClose" aria-label="Fechar menu">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round">
@@ -3527,7 +3532,7 @@
             </button>
             <div class="whatsapp-bubble-content">
                 <div class="whatsapp-bubble-logo-wrapper">
-                    <img src="assets/logo-madame-luxo-desktop.webp" alt="Madame Luxo" class="whatsapp-bubble-logo">
+                    <img src="assets/logo-madame-luxo-mobile.webp" alt="Madame Luxo" class="whatsapp-bubble-logo" loading="lazy" decoding="async">
                     <span class="whatsapp-online-dot"></span>
                 </div>
                 <div class="whatsapp-bubble-text">
@@ -3643,9 +3648,50 @@
         <button class="img-lightbox-arrow lb-next" id="lb-next" aria-label="Próxima">&#8594;</button>
     </div>
 
-    <!-- Lighthouse/PageSpeed fix: defer scripts to eliminate render-blocking JS (TBT/FCP) -->
-    <script src="script.js" defer></script>
-    <script src="cookie-banner.js" defer></script>
+    <!-- Lighthouse/PageSpeed fix: defer scripts minificados (TBT/FCP) -->
+    <script src="script.min.js" defer></script>
+    <script src="cookie-banner.min.js" defer></script>
+
+    <!-- Lazy load de vídeos e iframes (PageSpeed/LCP/INP fix) -->
+    <script>
+    (function(){
+        if (!('IntersectionObserver' in window)) {
+            // Fallback: carrega tudo imediato
+            document.querySelectorAll('video.lazy-video[data-src]').forEach(function(v){
+                var s=document.createElement('source');s.src=v.dataset.src;s.type='video/mp4';v.appendChild(s);v.load();v.play().catch(function(){});
+            });
+            document.querySelectorAll('iframe[data-src]').forEach(function(f){f.src=f.dataset.src;});
+            return;
+        }
+        var videoObs = new IntersectionObserver(function(entries, obs){
+            entries.forEach(function(entry){
+                if (!entry.isIntersecting) return;
+                var v = entry.target;
+                if (!v.dataset.src) { obs.unobserve(v); return; }
+                var s = document.createElement('source');
+                s.src = v.dataset.src;
+                s.type = 'video/mp4';
+                v.appendChild(s);
+                v.load();
+                var p = v.play();
+                if (p && p.catch) p.catch(function(){});
+                v.removeAttribute('data-src');
+                obs.unobserve(v);
+            });
+        }, { rootMargin: '200px 0px' });
+        document.querySelectorAll('video.lazy-video[data-src]').forEach(function(v){ videoObs.observe(v); });
+
+        var iframeObs = new IntersectionObserver(function(entries, obs){
+            entries.forEach(function(entry){
+                if (!entry.isIntersecting) return;
+                var f = entry.target;
+                if (f.dataset.src) { f.src = f.dataset.src; f.removeAttribute('data-src'); }
+                obs.unobserve(f);
+            });
+        }, { rootMargin: '300px 0px' });
+        document.querySelectorAll('iframe[data-src]').forEach(function(f){ iframeObs.observe(f); });
+    })();
+    </script>
 </body>
 
 </html>
