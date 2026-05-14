@@ -156,14 +156,8 @@ function initEventListeners() {
     document.getElementById('btn-refresh').addEventListener('click', loadProducts);
     document.getElementById('btn-novo-produto').addEventListener('click', () => openModal());
     document.getElementById('btn-logout').addEventListener('click', logout);
-    document.getElementById('btn-historico').addEventListener('click', openHistorico);
-    document.getElementById('historico-close').addEventListener('click', closeHistorico);
-    document.getElementById('historico-refresh').addEventListener('click', loadHistorico);
-    document.getElementById('historico-search').addEventListener('input', debounce(filterHistorico, 300));
-    document.getElementById('modal-historico').addEventListener('click', (e) => {
-        if (e.target === document.getElementById('modal-historico')) closeHistorico();
-    });
-    initHistoricoFiltros();
+    // UI de histórico removida do painel — a função registrarHistorico() segue
+    // ativa e continua enviando cada alteração para a aba "Historico" da planilha.
     
     // Modal
     document.getElementById('modal-close').addEventListener('click', closeModal);
@@ -1596,7 +1590,7 @@ async function salvarEdicaoInline(overlay, product, fecharFn) {
         });
 
         showToast(`"${dados.nome}" atualizado!`, 'success');
-        registrarHistorico('Editado', dados.nome, `Status: ${dados.status} | Preço: R$ ${dados.precoPor}`);
+        registrarDiffsEdicao(product, { ...dados, imagens: urls });
         setTimeout(() => location.reload(), 800);
     } catch (err) {
         showToast('Erro ao salvar: ' + err.message, 'error');
@@ -2607,10 +2601,14 @@ async function handleSubmit(e) {
         
         if (success) {
             showToast(isEdit ? 'Produto atualizado!' : 'Produto criado!', 'success');
-            const detalheHist = isEdit
-                ? `Categoria: ${productData.categoria} | Status: ${productData.status} | Preço: R$ ${productData.precoPor}`
-                : `Categoria: ${productData.categoria} | Status: ${productData.status} | Preço: R$ ${productData.precoPor}`;
-            registrarHistorico(isEdit ? 'Editado' : 'Criado', productData.nome, detalheHist);
+            if (isEdit && currentProduct) {
+                registrarDiffsEdicao(currentProduct, productData);
+            } else {
+                const resumoCriacao = `Categoria: ${productData.categoria} | Status: ${productData.status}`
+                    + ` | Preço: R$ ${productData.precoPor}`
+                    + ` | ${(productData.imagens || []).length} foto(s)`;
+                registrarHistorico('Criado', productData.nome, resumoCriacao);
+            }
             closeModal();
             loadProducts();
         } else {
@@ -3740,6 +3738,94 @@ async function registrarHistorico(tipo, nomeProduto, detalhe) {
     try {
         await enviarViaIframe({ action: 'append_historico', tipo, produto: nomeProduto, detalhe: detalhe || '' });
     } catch (e) { /* histórico é não-crítico */ }
+}
+
+// Compara o produto antes (currentProduct, formato interno _campo) com o productData
+// enviado pelo form, emitindo uma entrada de histórico por campo alterado.
+// Why: o cliente exigiu rastro fino — "trocou nome", "trocou preço", "adicionou foto" —
+// para evitar contestações ("não fui eu que mudei"). Cada diff vira uma linha na planilha.
+function registrarDiffsEdicao(antes, depois) {
+    const nome = depois.nome || antes._nome || '(sem nome)';
+    const norm = (v) => (v == null ? '' : String(v)).trim();
+    const fmtPreco = (v) => {
+        const s = norm(v);
+        if (!s) return '—';
+        return s.startsWith('R$') ? s : `R$ ${s}`;
+    };
+
+    const campos = [
+        { label: 'Nome',       antes: antes._nome,        depois: depois.nome },
+        { label: 'Categoria',  antes: antes._categoria,   depois: depois.categoria },
+        { label: 'Tipo',       antes: antes._tipo,        depois: depois.tipo },
+        { label: 'Cor',        antes: antes._cor,         depois: depois.cor },
+        { label: 'Tamanhos',   antes: antes._tamanhos,    depois: depois.tamanhos },
+        { label: 'Material',   antes: antes._material,    depois: depois.material },
+        { label: 'Descrição',  antes: antes._descricao,   depois: depois.descricao },
+        { label: 'Status',     antes: antes._status,      depois: depois.status },
+    ];
+
+    let mudou = false;
+
+    campos.forEach(({ label, antes: a, depois: d }) => {
+        if (norm(a) !== norm(d)) {
+            mudou = true;
+            const de  = norm(a) || '(vazio)';
+            const pra = norm(d) || '(vazio)';
+            // Descrição costuma ser longa — trunca para caber na coluna da planilha.
+            const ellipsis = (s) => s.length > 80 ? s.slice(0, 77) + '...' : s;
+            registrarHistorico(`${label} alterado`, nome, `${ellipsis(de)} → ${ellipsis(pra)}`);
+        }
+    });
+
+    // Preços (DE / POR / Desconto) — agrupados num único registro pra não poluir.
+    const precoDeAntes  = norm(antes._precoDe);
+    const precoDeDepois = norm(depois.precoDe);
+    const precoPorAntes  = norm(antes._precoPor);
+    const precoPorDepois = norm(depois.precoPor);
+    const descAntes  = norm(antes._desconto);
+    const descDepois = norm(depois.desconto);
+
+    if (precoDeAntes !== precoDeDepois || precoPorAntes !== precoPorDepois || descAntes !== descDepois) {
+        mudou = true;
+        const partes = [];
+        if (precoDeAntes !== precoDeDepois)   partes.push(`DE ${fmtPreco(precoDeAntes)} → ${fmtPreco(precoDeDepois)}`);
+        if (precoPorAntes !== precoPorDepois) partes.push(`POR ${fmtPreco(precoPorAntes)} → ${fmtPreco(precoPorDepois)}`);
+        if (descAntes !== descDepois)         partes.push(`Desconto ${descAntes || '0'}% → ${descDepois || '0'}%`);
+        registrarHistorico('Preço alterado', nome, partes.join(' | '));
+    }
+
+    // Imagens — compara o array antes/depois, registrando adições e remoções.
+    const imgsAntes  = [];
+    for (let i = 1; i <= 10; i++) {
+        const v = norm(antes[`_imagem${i}`]);
+        if (v) imgsAntes.push(v);
+    }
+    const imgsDepois = (depois.imagens || []).map(norm).filter(Boolean);
+
+    const adicionadas = imgsDepois.filter(u => !imgsAntes.includes(u));
+    const removidas   = imgsAntes.filter(u => !imgsDepois.includes(u));
+    const reordenou   = adicionadas.length === 0 && removidas.length === 0
+        && JSON.stringify(imgsAntes) !== JSON.stringify(imgsDepois);
+
+    if (adicionadas.length) {
+        mudou = true;
+        registrarHistorico('Fotos adicionadas', nome,
+            `+${adicionadas.length} foto(s) — total: ${imgsDepois.length}`);
+    }
+    if (removidas.length) {
+        mudou = true;
+        registrarHistorico('Fotos removidas', nome,
+            `-${removidas.length} foto(s) — total: ${imgsDepois.length}`);
+    }
+    if (reordenou) {
+        mudou = true;
+        registrarHistorico('Fotos reordenadas', nome, `Ordem das ${imgsDepois.length} foto(s) alterada`);
+    }
+
+    // Fallback: edição salva sem nenhum campo monitorado mudar (raro, mas registra).
+    if (!mudou) {
+        registrarHistorico('Editado', nome, 'Produto salvo sem alterações detectáveis');
+    }
 }
 
 // ============================================
