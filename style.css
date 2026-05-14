@@ -2830,6 +2830,16 @@ ol {
     .nav-cta {
         display: none !important;
     }
+
+    /* Ordem em mobile: Logo (esq) | espaço | Sacola | Hamburger (dir).
+       Como o flex container já alinha do início ao fim, basta ajustar order para
+       garantir Sacola antes do Hamburger. */
+    .nav-container {
+        gap: 8px;
+    }
+    .nav-logo { order: 1; margin-right: auto; }
+    .nav-sacola { order: 2; }
+    .nav-toggle { order: 3; }
 }
 
 /* ======== CATÁLOGO DE PEÇAS — PREMIUM ======== */
@@ -3616,6 +3626,13 @@ ol {
             display: flex;
             flex-direction: column;
             gap: 12px;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        /* Wrapper relativo pra ancorar as setas sobre a imagem principal */
+        .pmodal-main-wrap {
+            position: relative;
         }
 
         .pmodal-img-main {
@@ -3627,20 +3644,82 @@ ol {
             transition: opacity 0.22s ease;
         }
 
-        .pmodal-thumbs {
-            display: flex;
-            gap: 8px;
+        /* Setas de navegação na imagem principal (desktop) */
+        .pmodal-main-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 42px;
+            height: 42px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(200, 169, 106, 0.4);
+            color: #F0D98A;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 4;
+            transition: all 0.2s ease;
+            opacity: 0;
+        }
+        .pmodal-main-wrap:hover .pmodal-main-arrow {
+            opacity: 1;
+        }
+        .pmodal-main-arrow:hover {
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            transform: translateY(-50%) scale(1.08);
+        }
+        .pmodal-main-arrow--prev { left: 12px; }
+        .pmodal-main-arrow--next { right: 12px; }
+        .pmodal-main-arrow[hidden] { display: none !important; }
+
+        /* Em telas touch, sempre visível pra dedo achar */
+        @media (hover: none) {
+            .pmodal-main-arrow { opacity: 1; }
         }
 
+        /* Galeria de thumbs: linha única com scroll horizontal premium. */
+        .pmodal-thumbs {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 8px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(200,169,106,0.4) transparent;
+            padding-bottom: 4px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .pmodal-thumbs::-webkit-scrollbar { height: 4px; }
+        .pmodal-thumbs::-webkit-scrollbar-track { background: transparent; }
+        .pmodal-thumbs::-webkit-scrollbar-thumb {
+            background: rgba(200,169,106,0.35);
+            border-radius: 100px;
+        }
+        .pmodal-thumbs::-webkit-scrollbar-thumb:hover { background: rgba(200,169,106,0.6); }
+
         .pmodal-thumb {
-            width: calc(33.33% - 6px);
+            width: 64px;
+            height: 64px;
+            flex: 0 0 64px;
             aspect-ratio: 1;
             object-fit: cover;
             border-radius: 8px;
             cursor: pointer;
-            opacity: 0.45;
+            opacity: 0.4;
             border: 2px solid transparent;
-            transition: opacity 0.2s, border-color 0.2s;
+            transition: opacity 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+        }
+        .pmodal-thumb:hover { opacity: 0.85; transform: translateY(-1px); }
+        .pmodal-thumb.active {
+            opacity: 1;
+            border-color: #C8A96A;
+            box-shadow: 0 2px 8px rgba(200,169,106,0.35);
         }
 
         .pmodal-thumb:hover { opacity: 0.75; }
@@ -4964,3 +5043,92 @@ ol {
                 padding: 18px 18px 32px;
             }
         }
+
+        /* ── Pills de cor no modal de produto (quando há múltiplas cores) ── */
+        .pmodal-cor-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .pmodal-cor-pill {
+            padding: 4px 12px;
+            background: rgba(200, 169, 106, 0.08);
+            border: 1px solid rgba(200, 169, 106, 0.3);
+            color: #fff;
+            border-radius: 100px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.18s ease;
+        }
+        .pmodal-cor-pill:hover {
+            background: rgba(200, 169, 106, 0.18);
+            border-color: rgba(200, 169, 106, 0.6);
+        }
+        .pmodal-cor-pill.is-selected {
+            background: linear-gradient(135deg, #8C6B2F 0%, #C8A96A 35%, #F0D98A 55%, #C8A96A 75%, #8C6B2F 100%);
+            border-color: transparent;
+            color: #1A1A1A;
+            font-weight: 700;
+        }
+
+        /* ── Seções do popover (Cor / Tamanho) ── */
+        .tam-popover-section {
+            margin-bottom: 16px;
+        }
+        .tam-popover-section[hidden] { display: none; }
+        .tam-popover-section-label {
+            display: block;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(200, 169, 106, 0.75);
+            margin-bottom: 8px;
+        }
+
+        /* ============================================
+           Fallback de imagem: produto sem foto vira logo Madame
+           ============================================ */
+        /* Card sem imagem: fundo neutro + logo contida (não preenche, não distorce) */
+        .cat-card-img-wrap--fallback {
+            background: #1A1A1A;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .cat-card-img--fallback {
+            object-fit: contain !important;
+            width: 60% !important;
+            height: 60% !important;
+            opacity: 0.55;
+        }
+
+        /* Modal: imagem principal sem foto = logo contida */
+        .pmodal-img-fallback {
+            object-fit: contain !important;
+            background: #1A1A1A;
+            padding: 18%;
+            opacity: 0.6;
+        }
+
+        /* Forma de pagamento abaixo do preço (pill dourada com ícone) */
+        .pmodal-pagamento {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin: 8px 0 4px;
+            padding: 6px 14px;
+            background: linear-gradient(135deg, rgba(200,169,106,0.10), rgba(240,217,138,0.18));
+            border: 1px solid rgba(200, 169, 106, 0.3);
+            border-radius: 100px;
+            color: #F0D98A;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+        .pmodal-pagamento[hidden] { display: none !important; }
+        .pmodal-pagamento svg { flex-shrink: 0; opacity: 0.85; }

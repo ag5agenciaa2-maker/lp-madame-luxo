@@ -122,8 +122,8 @@ window.Sacola = (function () {
         total: () => _itens.reduce((acc, it) => acc + parseValor(it.precoPor) * (it.qtd || 1), 0),
 
         add(item) {
-            // item: { id, nome, precoPor, precoDe, imagem, tamanho, link }
-            const id = item.id || (item.nome + '|' + (item.tamanho || ''));
+            // item: { id, nome, precoPor, precoDe, imagem, tamanho, cor, link }
+            const id = item.id || (item.nome + '|' + (item.cor || '') + '|' + (item.tamanho || ''));
             const existente = _itens.find(it => it.id === id);
             if (existente) {
                 existente.qtd = (existente.qtd || 1) + 1;
@@ -158,9 +158,12 @@ window.Sacola = (function () {
             const lista = itemExtra ? [..._itens, itemExtra] : _itens;
             if (!lista.length) return '';
             const linhas = lista.map(it => {
-                const tamanho = it.tamanho ? ` (Tam: ${it.tamanho})` : '';
+                const detalhes = [];
+                if (it.cor) detalhes.push(`Cor: ${it.cor}`);
+                if (it.tamanho) detalhes.push(`Tam: ${it.tamanho}`);
+                const meta = detalhes.length ? ` (${detalhes.join(' · ')})` : '';
                 const qtd = (it.qtd || 1) > 1 ? ` x${it.qtd}` : '';
-                return `• ${it.nome}${tamanho}${qtd} — ${formatBRL(parseValor(it.precoPor))}`;
+                return `• ${it.nome}${meta}${qtd} — ${formatBRL(parseValor(it.precoPor))}`;
             });
             const total = lista.reduce((acc, it) => acc + parseValor(it.precoPor) * (it.qtd || 1), 0);
             return `Olá! Vim através do site e tenho interesse${lista.length > 1 ? ' nos produtos abaixo' : ' no produto abaixo'}:\n\n${linhas.join('\n')}\n\nTotal: ${formatBRL(total)}`;
@@ -1132,6 +1135,111 @@ window.openWhatsApp = (message = '') => {
                 track.onmouseleave = () => { if (dragStartX !== null) onPointerUp(); };
             }
 
+            // Separa cores por vírgula, traço, pipe, ponto, barra, "·" ou "•".
+            // Ignora separadores curtos sozinhos (ex: "Off-White" não vira ["Off","White"]).
+            function parseCores(raw) {
+                if (!raw) return [];
+                return String(raw)
+                    .split(/[,;|·•/]|\s-\s|\s\/\s/)
+                    .map(s => s.trim())
+                    .filter(Boolean);
+            }
+
+            // Renderiza a célula "Cor" do modal: texto se 1 cor, pills clicáveis se múltiplas.
+            function renderCoresPills(corRaw) {
+                const cell = document.getElementById('pmodal-cor-dinamico');
+                if (!cell) return;
+                const cores = parseCores(corRaw);
+                if (cores.length === 0) {
+                    cell.innerText = 'Não informado';
+                    return;
+                }
+                if (cores.length === 1) {
+                    cell.innerText = cores[0];
+                    window.__corSelecionada = cores[0]; // única cor já vira a selecionada
+                    return;
+                }
+                // Múltiplas → pills clicáveis. A primeira não vem pré-selecionada.
+                cell.innerHTML = `<div class="pmodal-cor-pills">${cores.map(c => `
+                    <button type="button" class="pmodal-cor-pill" data-cor="${escapeAttr(c)}">${c}</button>
+                `).join('')}</div>`;
+                cell.querySelectorAll('.pmodal-cor-pill').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        cell.querySelectorAll('.pmodal-cor-pill').forEach(b => b.classList.remove('is-selected'));
+                        btn.classList.add('is-selected');
+                        window.__corSelecionada = btn.dataset.cor;
+                    });
+                });
+            }
+
+            // Helper local para parsear tamanhos do raw da planilha (a função "parseTamanhos"
+            // dentro do SacolaUI espera o objeto produto inteiro e fica fora de escopo aqui).
+            function parseTamanhosFromRaw(raw) {
+                if (!raw) return [];
+                return String(raw).split(/[\/|·,]/).map(s => s.trim()).filter(Boolean);
+            }
+
+            // Renderiza a célula "Tamanhos" do modal: texto se 1, pills clicáveis se múltiplos.
+            function renderTamanhosPills(tamRaw) {
+                const cell = document.getElementById('pmodal-tam-dinamico');
+                if (!cell) return;
+                const tams = parseTamanhosFromRaw(tamRaw);
+                if (tams.length === 0) {
+                    cell.innerText = 'Não informado';
+                    return;
+                }
+                if (tams.length === 1) {
+                    cell.innerText = tams[0];
+                    window.__tamSelecionado = tams[0];
+                    return;
+                }
+                cell.innerHTML = `<div class="pmodal-cor-pills">${tams.map(t => `
+                    <button type="button" class="pmodal-cor-pill" data-tam="${escapeAttr(t)}">${t}</button>
+                `).join('')}</div>`;
+                cell.querySelectorAll('.pmodal-cor-pill').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        cell.querySelectorAll('.pmodal-cor-pill').forEach(b => b.classList.remove('is-selected'));
+                        btn.classList.add('is-selected');
+                        window.__tamSelecionado = btn.dataset.tam;
+                    });
+                });
+            }
+
+            function escapeAttr(s) {
+                return String(s).replace(/"/g, '&quot;').replace(/</g, '&lt;');
+            }
+
+            // Liga setas prev/next na imagem principal do modal de produto (desktop).
+            // Esconde botões se houver 0 ou 1 imagem.
+            function ligarSetasMainModal(imagens) {
+                const mainImg = document.getElementById('pimg-dinamico');
+                const prevBtn = document.getElementById('pmodal-main-prev');
+                const nextBtn = document.getElementById('pmodal-main-next');
+                if (!mainImg || !prevBtn || !nextBtn) return;
+
+                const podeNavegar = imagens && imagens.length > 1;
+                prevBtn.hidden = !podeNavegar;
+                nextBtn.hidden = !podeNavegar;
+                if (!podeNavegar) return;
+
+                let idx = 0;
+                function mostrarIdx(i) {
+                    idx = (i + imagens.length) % imagens.length;
+                    mainImg.src = imagens[idx];
+                    // Sincroniza highlight nas thumbs.
+                    document.querySelectorAll('#pmodal-thumbs-dinamico .pmodal-thumb').forEach((t, j) => {
+                        t.classList.toggle('active', j === idx);
+                    });
+                }
+                prevBtn.onclick = () => mostrarIdx(idx - 1);
+                nextBtn.onclick = () => mostrarIdx(idx + 1);
+
+                // Ao clicar numa thumb, atualiza o índice interno também.
+                document.querySelectorAll('#pmodal-thumbs-dinamico .pmodal-thumb').forEach((t, j) => {
+                    t.addEventListener('click', () => { idx = j; }, { once: false });
+                });
+            }
+
             function abrirModalDinamico(produto) {
                 const modal = document.getElementById('modal-dinamico');
                 if (!modal) return;
@@ -1147,34 +1255,58 @@ window.openWhatsApp = (message = '') => {
                 const precoPor = formatarPreco(produto['preco por (r$) *'] || produto['precopor']);
                 const desconto = produto['desconto %'] || produto['desconto'];
                 const tamanhos = produto['tamanhos disponiveis *'] || produto['tamanhos'];
-                const imagem1 = produto['🖼️ imagem destaque (url)'] || produto['imagem1'];
-                const imagem2 = produto['imagem 2 (url)'] || produto['imagem2'];
-                const imagem3 = produto['imagem 3 (url)'] || produto['imagem3'];
+                // Coleta as 10 imagens possíveis na ordem (1 a 10) — só não-vazias.
+                const imagensTodas = [
+                    produto['🖼️ imagem destaque (url)'] || produto['imagem1'],
+                    produto['imagem 2 (url)']  || produto['imagem2'],
+                    produto['imagem 3 (url)']  || produto['imagem3'],
+                    produto['imagem 4 (url)']  || produto['imagem4'],
+                    produto['imagem 5 (url)']  || produto['imagem5'],
+                    produto['imagem 6 (url)']  || produto['imagem6'],
+                    produto['imagem 7 (url)']  || produto['imagem7'],
+                    produto['imagem 8 (url)']  || produto['imagem8'],
+                    produto['imagem 9 (url)']  || produto['imagem9'],
+                    produto['imagem 10 (url)'] || produto['imagem10']
+                ].filter(img => img && img.trim() !== '');
+
+                // Fallback: produto sem imagens → usa logo única (nada de carrossel/thumbs).
+                const FALLBACK_IMG = 'assets/logo-madame-luxo-desktop.webp';
+                const imagens = imagensTodas.length ? imagensTodas : [FALLBACK_IMG];
+                const semImagemReal = imagensTodas.length === 0;
+                const imagem1 = imagens[0];
+
                 const descricao = produto['descricao *'] || produto['descricao'];
                 const material = produto['material / tecido'] || produto['material'];
                 const cor = produto['cor disponivel*'] || produto['cor disponivel'] || produto['cor'];
                 const estoque = produto['qtd. estoque'] || produto['estoque'];
                 const linkProduto = produto['link do produto (url)'];
+                const formaPagamento = produto['forma de pagamento'];
 
                 document.getElementById('pimg-dinamico').src = imagem1;
                 document.getElementById('pimg-dinamico').alt = nome;
+                // Sem imagem real → mostra a logo "contida" (em vez de cover) pra não distorcer.
+                document.getElementById('pimg-dinamico').classList.toggle('pmodal-img-fallback', semImagemReal);
 
                 const thumbsContainer = document.getElementById('pmodal-thumbs-dinamico');
                 thumbsContainer.innerHTML = '';
 
-                const imagens = [imagem1, imagem2, imagem3].filter(img => img && img.trim() !== '');
+                // Sem imagem real ou apenas 1 imagem: nada de thumbs (não polui a galeria).
+                if (!semImagemReal && imagens.length > 1) {
+                    imagens.forEach((img, index) => {
+                        const thumb = document.createElement('img');
+                        thumb.src = img;
+                        thumb.className = `pmodal-thumb ${index === 0 ? 'active' : ''}`;
+                        thumb.alt = nome;
+                        thumb.onclick = function () { window.mlTrocarImg('pimg-dinamico', this); };
+                        thumbsContainer.appendChild(thumb);
+                    });
+                }
 
-                imagens.forEach((img, index) => {
-                    const thumb = document.createElement('img');
-                    thumb.src = img;
-                    thumb.className = `pmodal-thumb ${index === 0 ? 'active' : ''}`;
-                    thumb.alt = nome;
-                    thumb.onclick = function () { window.mlTrocarImg('pimg-dinamico', this); };
-                    thumbsContainer.appendChild(thumb);
-                });
+                // ── Setas prev/next na imagem principal (desktop) ──
+                ligarSetasMainModal(semImagemReal ? [] : imagens);
 
-                // ── Carrossel mobile (substitui imagem main + thumbs em telas <=768px) ──
-                montarCarrosselMobile(imagens, nome);
+                // ── Carrossel mobile (mostra só se houver imagens reais, e respeita 1 imagem) ──
+                montarCarrosselMobile(semImagemReal ? [FALLBACK_IMG] : imagens, nome);
 
                 // Breadcrumb mostra só a categoria; tipo agora vai na grid de specs.
                 document.getElementById('pmodal-cat-dinamico').innerText = categoria;
@@ -1198,18 +1330,31 @@ window.openWhatsApp = (message = '') => {
                     descBadge.style.display = 'none';
                 }
 
+                // Forma de pagamento — só aparece se vier preenchida da planilha.
+                const pagBox = document.getElementById('pmodal-pagamento-dinamico');
+                const pagTxt = document.getElementById('pmodal-pagamento-texto');
+                if (pagBox && pagTxt) {
+                    if (formaPagamento && formaPagamento.trim()) {
+                        pagTxt.textContent = formaPagamento.trim();
+                        pagBox.hidden = false;
+                    } else {
+                        pagBox.hidden = true;
+                    }
+                }
+
                 const statusProd = (produto['status *'] || produto['status'] || '').toLowerCase().trim();
                 const esgotadoProd = statusProd === 'esgotado';
 
                 document.getElementById('pmodal-texto-dinamico').innerText = descricao || '';
                 document.getElementById('pmodal-tipo-dinamico').innerText = tipo || 'Não informado';
                 document.getElementById('pmodal-mat-dinamico').innerText = material || 'Não informado';
-                document.getElementById('pmodal-tam-dinamico').innerText = tamanhos || 'Não informado';
                 document.getElementById('pmodal-est-dinamico').innerText = estoque || 'Não informado';
 
-                // Cor: se houver múltiplas, vira pills clicáveis. Reset a cada produto.
+                // Cor e Tamanho: se houver múltiplas opções, viram pills clicáveis. Reset a cada produto.
                 window.__corSelecionada = null;
+                window.__tamSelecionado = null;
                 renderCoresPills(cor);
+                renderTamanhosPills(tamanhos);
 
                 // Badge esgotado dentro do modal
                 var badgeEsgotado = document.getElementById('pmodal-badge-esgotado');
@@ -1822,7 +1967,10 @@ window.openWhatsApp = (message = '') => {
                     const precoPor = formatarPreco(prod['preco por (r$) *'] || prod['precopor']);
                     const desconto = prod['desconto %'] || prod['desconto'];
                     const tamanhos = prod['tamanhos disponiveis *'] || prod['tamanhos'];
-                    const imagem1 = prod['🖼️ imagem destaque (url)'] || prod['imagem1'];
+                    const imagem1Raw = prod['🖼️ imagem destaque (url)'] || prod['imagem1'];
+                    // Fallback: produto sem imagem usa a logo (não distorce com object-fit cover).
+                    const imagem1 = (imagem1Raw && imagem1Raw.trim()) ? imagem1Raw : 'assets/logo-madame-luxo-desktop.webp';
+                    const semImagemCard = !(imagem1Raw && imagem1Raw.trim());
                     // parseCSV normaliza headers: lowercase + sem acentos.
                     const material = prod['material / tecido'] || prod['material'] || '';
                     const cor = prod['cor disponivel*'] || prod['cor disponivel'] || prod['cor'] || '';
@@ -1868,8 +2016,8 @@ window.openWhatsApp = (message = '') => {
                     }
 
                     card.innerHTML = `
-                    <div class="cat-card-img-wrap">
-                        <img src="${imagem1}" alt="${nome}" class="cat-card-img" loading="lazy">
+                    <div class="cat-card-img-wrap${semImagemCard ? ' cat-card-img-wrap--fallback' : ''}">
+                        <img src="${imagem1}" alt="${nome}" class="cat-card-img${semImagemCard ? ' cat-card-img--fallback' : ''}" loading="lazy">
                         ${badgeHtml}
                     </div>
                     <div class="cat-card-info">
@@ -2060,7 +2208,7 @@ window.openWhatsApp = (message = '') => {
                             <img src="${it.imagem || ''}" alt="${it.nome}" class="sacola-item-img" onerror="this.style.opacity=0.2">
                             <div class="sacola-item-info">
                                 <h4 class="sacola-item-nome">${it.nome}</h4>
-                                <span class="sacola-item-meta">${it.tamanho ? 'Tam: ' + it.tamanho : ''}</span>
+                                <span class="sacola-item-meta">${[it.cor && 'Cor: ' + it.cor, it.tamanho && 'Tam: ' + it.tamanho].filter(Boolean).join(' · ')}</span>
                                 <span class="sacola-item-preco">${window.Sacola.formatBRL(window.Sacola.parseValor(it.precoPor))}</span>
                                 <div class="sacola-item-actions">
                                     <button class="sacola-qtd-btn" data-act="dec" aria-label="Diminuir">−</button>
@@ -2154,42 +2302,91 @@ window.openWhatsApp = (message = '') => {
                     return raw.split(/[\/|·,]/).map(s => s.trim()).filter(Boolean);
                 }
 
+                let _corTemp = null;
+
                 function abrirPopoverTamanho(produto, modoComprar) {
                     _produtoTemp = produto;
                     _tamanhoTemp = null;
+                    _corTemp = null;
                     _aposConfirmar = modoComprar ? 'comprar' : 'add';
 
                     const pop = document.getElementById('tamPopover');
                     const titulo = document.getElementById('tamPopoverTitulo');
                     const prodEl = document.getElementById('tamPopoverProduto');
                     const optsEl = document.getElementById('tamPopoverOpts');
+                    const corSection = document.getElementById('tamPopoverCorSection');
+                    const corOptsEl = document.getElementById('tamPopoverCorOpts');
+                    const tamSection = document.getElementById('tamPopoverTamSection');
                     const confirm = document.getElementById('tamPopoverConfirm');
 
                     const nome = produto['nome da peca / conjunto *'] || produto['nome'];
+                    const corRaw = produto['cor disponivel*'] || produto['cor disponivel'] || produto['cor'] || '';
                     prodEl.textContent = nome;
-                    titulo.textContent = modoComprar ? 'Escolha o tamanho' : 'Adicionar à sacola';
+                    titulo.textContent = modoComprar ? 'Confirme as opções' : 'Adicionar à sacola';
                     confirm.textContent = modoComprar ? 'Comprar pelo WhatsApp' : 'Adicionar à Sacola';
                     confirm.disabled = true;
 
                     const tamanhos = parseTamanhos(produto);
-                    if (!tamanhos.length) {
-                        // Produto sem tamanho — pula popover, adiciona/compra direto.
-                        confirmarTamanho(null);
-                        return;
+                    const cores = parseCores(corRaw);
+
+                    // Cor com 1 opção é auto-selecionada; várias opções viram pills.
+                    if (cores.length <= 1) {
+                        _corTemp = cores[0] || null;
+                        corSection.hidden = true;
+                    } else {
+                        corSection.hidden = false;
+                        // Se o usuário já escolheu uma cor no modal de produto, marca como pré-selecionada.
+                        const corPre = window.__corSelecionada && cores.includes(window.__corSelecionada)
+                            ? window.__corSelecionada : null;
+                        _corTemp = corPre;
+                        corOptsEl.innerHTML = cores.map(c =>
+                            `<button class="tam-opt${c === corPre ? ' is-selected' : ''}" type="button" data-cor="${escapeAttr(c)}">${c}</button>`
+                        ).join('');
+                        corOptsEl.querySelectorAll('.tam-opt').forEach(btn => {
+                            btn.addEventListener('click', () => {
+                                corOptsEl.querySelectorAll('.tam-opt').forEach(b => b.classList.remove('is-selected'));
+                                btn.classList.add('is-selected');
+                                _corTemp = btn.dataset.cor;
+                                atualizarBotaoConfirm();
+                            });
+                        });
                     }
 
-                    optsEl.innerHTML = tamanhos.map(t =>
-                        `<button class="tam-opt" type="button" data-tam="${t}">${t}</button>`
-                    ).join('');
-
-                    optsEl.querySelectorAll('.tam-opt').forEach(btn => {
-                        btn.addEventListener('click', () => {
-                            optsEl.querySelectorAll('.tam-opt').forEach(b => b.classList.remove('is-selected'));
-                            btn.classList.add('is-selected');
-                            _tamanhoTemp = btn.dataset.tam;
-                            confirm.disabled = false;
+                    if (!tamanhos.length) {
+                        // Produto sem tamanho — esconde seção. Se cor também já está OK, fecha direto.
+                        tamSection.hidden = true;
+                        _tamanhoTemp = null;
+                        if (cores.length <= 1) {
+                            confirmarTamanho(null);
+                            return;
+                        }
+                    } else {
+                        tamSection.hidden = false;
+                        // Pré-seleciona o tamanho escolhido no modal de produto (se houver).
+                        const tamPre = window.__tamSelecionado && tamanhos.includes(window.__tamSelecionado)
+                            ? window.__tamSelecionado : null;
+                        _tamanhoTemp = tamPre;
+                        optsEl.innerHTML = tamanhos.map(t =>
+                            `<button class="tam-opt${t === tamPre ? ' is-selected' : ''}" type="button" data-tam="${t}">${t}</button>`
+                        ).join('');
+                        optsEl.querySelectorAll('.tam-opt').forEach(btn => {
+                            btn.addEventListener('click', () => {
+                                optsEl.querySelectorAll('.tam-opt').forEach(b => b.classList.remove('is-selected'));
+                                btn.classList.add('is-selected');
+                                _tamanhoTemp = btn.dataset.tam;
+                                atualizarBotaoConfirm();
+                            });
                         });
-                    });
+                    }
+
+                    function atualizarBotaoConfirm() {
+                        const precisaTam = tamanhos.length > 0;
+                        const precisaCor = cores.length > 1;
+                        const okTam = !precisaTam || !!_tamanhoTemp;
+                        const okCor = !precisaCor || !!_corTemp;
+                        confirm.disabled = !(okTam && okCor);
+                    }
+                    atualizarBotaoConfirm();
 
                     pop.hidden = false;
                     pop.setAttribute('aria-hidden', 'false');
@@ -2204,6 +2401,7 @@ window.openWhatsApp = (message = '') => {
                     window.BodyScroll.unlock();
                     _produtoTemp = null;
                     _tamanhoTemp = null;
+                    _corTemp = null;
                     _aposConfirmar = null;
                 }
 
@@ -2217,6 +2415,7 @@ window.openWhatsApp = (message = '') => {
                         precoDe: prod['preco de (r$)'] || prod['precode'] || '',
                         imagem: prod['🖼️ imagem destaque (url)'] || prod['imagem1'] || '',
                         tamanho: tam || '',
+                        cor: _corTemp || '',
                         link: prod['link do produto (url)'] || ''
                     };
 

@@ -2508,8 +2508,16 @@
             </button>
             <div class="pmodal-inner">
                 <div class="pmodal-galeria">
-                    <!-- Imagem principal (desktop) -->
-                    <img id="pimg-dinamico" src="" alt="" class="pmodal-img-main">
+                    <!-- Imagem principal (desktop) com setas pra navegar entre as imagens -->
+                    <div class="pmodal-main-wrap">
+                        <button type="button" class="pmodal-main-arrow pmodal-main-arrow--prev" id="pmodal-main-prev" aria-label="Imagem anterior" hidden>
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                        </button>
+                        <img id="pimg-dinamico" src="" alt="" class="pmodal-img-main">
+                        <button type="button" class="pmodal-main-arrow pmodal-main-arrow--next" id="pmodal-main-next" aria-label="Próxima imagem" hidden>
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                        </button>
+                    </div>
                     <!-- Thumbnails (desktop) -->
                     <div class="pmodal-thumbs" id="pmodal-thumbs-dinamico"></div>
 
@@ -2540,6 +2548,13 @@
                         <span class="pmodal-de" id="pmodal-de-dinamico"></span>
                         <span class="pmodal-por" id="pmodal-por-dinamico"></span>
                         <span class="pmodal-desc" id="pmodal-desc-dinamico"></span>
+                    </div>
+                    <div class="pmodal-pagamento" id="pmodal-pagamento-dinamico" hidden>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <rect x="2" y="5" width="20" height="14" rx="2"/>
+                            <line x1="2" y1="10" x2="22" y2="10"/>
+                        </svg>
+                        <span id="pmodal-pagamento-texto"></span>
                     </div>
                     <p class="pmodal-texto" id="pmodal-texto-dinamico"></p>
                     <div class="pmodal-specs">
@@ -3606,7 +3621,14 @@
                 </button>
             </header>
             <p class="tam-popover-produto" id="tamPopoverProduto"></p>
-            <div class="tam-popover-opts" id="tamPopoverOpts"></div>
+            <div class="tam-popover-section" id="tamPopoverCorSection" hidden>
+                <span class="tam-popover-section-label">Cor</span>
+                <div class="tam-popover-opts" id="tamPopoverCorOpts"></div>
+            </div>
+            <div class="tam-popover-section" id="tamPopoverTamSection">
+                <span class="tam-popover-section-label">Tamanho</span>
+                <div class="tam-popover-opts" id="tamPopoverOpts"></div>
+            </div>
             <button class="tam-popover-confirm" id="tamPopoverConfirm" type="button" disabled>
                 Confirmar
             </button>

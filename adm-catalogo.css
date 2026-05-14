@@ -739,6 +739,7 @@ body {
 
 /* Card */
 .prod-card {
+    position: relative;
     background: var(--admin-surface);
     border: 1px solid var(--admin-border);
     border-radius: var(--admin-radius);
@@ -2474,4 +2475,1332 @@ body {
         height: 30px;
         font-size: 11px;
     }
+}
+
+/* ============================================
+   SELEÇÃO EM LOTE — checkboxes + barra de ações
+   ============================================ */
+.prod-check {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 5;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.15s ease;
+}
+/* Aparece no hover do card OU quando há qualquer seleção ativa no painel
+   (revela todos os checkboxes para facilitar seleção em lote). */
+.prod-card:hover .prod-check,
+.prod-list-item:hover .prod-check,
+body.has-selection .prod-check,
+.prod-card.is-selected .prod-check,
+.prod-list-item.is-selected .prod-check {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+.prod-check-input {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    cursor: pointer;
+}
+.prod-check-box {
+    display: block;
+    width: 22px;
+    height: 22px;
+    background: rgba(20, 20, 20, 0.7);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1.5px solid rgba(200, 169, 106, 0.4);
+    border-radius: 6px;
+    transition: all 0.15s ease;
+    position: relative;
+}
+.prod-check-input:checked + .prod-check-box {
+    background: linear-gradient(135deg, #8C6B2F, #F0D98A);
+    border-color: transparent;
+}
+.prod-check-input:checked + .prod-check-box::after {
+    content: '';
+    position: absolute;
+    top: 4px;
+    left: 7px;
+    width: 6px;
+    height: 11px;
+    border: solid #1A1A1A;
+    border-width: 0 2.5px 2.5px 0;
+    transform: rotate(45deg);
+}
+.prod-check:hover .prod-check-box {
+    border-color: var(--admin-primary);
+}
+
+/* No modo lista, o checkbox vai à esquerda da imagem (sem absolute) e fica sempre visível. */
+.prod-list-item .prod-check {
+    position: relative;
+    top: auto;
+    left: auto;
+    align-self: center;
+    margin-right: 4px;
+    flex-shrink: 0;
+    opacity: 1; /* sempre visível em lista — espaço já reservado no layout */
+}
+
+/* Card/lista selecionados: borda dourada destacada */
+.prod-card.is-selected,
+.prod-list-item.is-selected {
+    outline: 2px solid var(--admin-primary);
+    outline-offset: -2px;
+    background: rgba(200, 169, 106, 0.05);
+}
+
+/* Barra flutuante de ações em lote */
+.batch-bar {
+    position: sticky;
+    top: 12px;
+    z-index: 25;
+    margin: 0 auto 16px;
+    max-width: 1400px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 18px;
+    background: linear-gradient(135deg, rgba(20,20,20,0.95), rgba(40,30,15,0.95));
+    border: 1px solid var(--admin-primary);
+    border-radius: var(--admin-radius-md);
+    box-shadow: 0 8px 24px rgba(200, 169, 106, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: var(--admin-text);
+    font-family: inherit;
+    font-size: 13px;
+    animation: batchBarIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.batch-bar[hidden] { display: none !important; }
+@keyframes batchBarIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.batch-bar-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+}
+.batch-bar-info #batchCount {
+    color: var(--admin-primary);
+    font-weight: 700;
+    font-size: 16px;
+}
+.batch-clear {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--admin-text-muted);
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.batch-clear:hover {
+    color: #fff;
+    border-color: rgba(255,255,255,0.4);
+}
+.batch-bar-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+.batch-select-all {
+    background: transparent;
+    border: 1px solid var(--admin-primary);
+    color: var(--admin-primary);
+    padding: 8px 14px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.batch-select-all:hover {
+    background: rgba(200, 169, 106, 0.12);
+}
+.batch-delete {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #b94545, #ff6b6b);
+    border: none;
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.batch-delete:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+}
+
+@media (max-width: 640px) {
+    .batch-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        padding: 12px 14px;
+    }
+    .batch-bar-actions {
+        flex-direction: column;
+        gap: 6px;
+    }
+    .batch-select-all, .batch-delete { width: 100%; justify-content: center; }
+}
+
+/* ============================================
+   GALERIA DE IMAGENS PREMIUM
+   ============================================ */
+
+/* Header da seção: título + contador com barra de progresso */
+.img-gallery-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+
+.img-gallery-progress {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: inherit;
+}
+.img-gallery-count {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--admin-primary);
+    font-variant-numeric: tabular-nums;
+}
+.img-gallery-max {
+    font-size: 13px;
+    color: var(--admin-text-muted);
+    font-weight: 500;
+}
+.img-gallery-bar {
+    width: 90px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 100px;
+    overflow: hidden;
+}
+.img-gallery-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #8C6B2F, #F0D98A);
+    border-radius: 100px;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Drop zone unificada */
+.img-dropzone {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 22px 24px;
+    background: linear-gradient(135deg, rgba(200,169,106,0.04), rgba(200,169,106,0.10));
+    border: 2px dashed rgba(200, 169, 106, 0.35);
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+}
+.img-dropzone::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(240,217,138,0.18), transparent 60%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+.img-dropzone:hover {
+    border-color: var(--admin-primary);
+    background: linear-gradient(135deg, rgba(200,169,106,0.08), rgba(200,169,106,0.16));
+}
+.img-dropzone:hover::before { opacity: 1; }
+.img-dropzone.is-dragover {
+    border-color: #F0D98A;
+    background: linear-gradient(135deg, rgba(200,169,106,0.18), rgba(240,217,138,0.18));
+    transform: scale(1.005);
+    box-shadow: 0 0 0 4px rgba(200,169,106,0.18), 0 12px 40px rgba(0,0,0,0.3);
+}
+.img-dropzone.is-dragover::before { opacity: 1; }
+.img-dropzone.is-full {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.img-dropzone-icon {
+    flex-shrink: 0;
+    width: 56px;
+    height: 56px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(200, 169, 106, 0.15);
+    border-radius: 14px;
+    color: var(--admin-primary);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.img-dropzone:hover .img-dropzone-icon,
+.img-dropzone.is-dragover .img-dropzone-icon {
+    transform: translateY(-3px) scale(1.05);
+    background: rgba(240, 217, 138, 0.22);
+    color: #F0D98A;
+}
+
+.img-dropzone-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.img-dropzone-text strong {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--admin-text);
+    letter-spacing: 0.01em;
+}
+.img-dropzone-text span {
+    font-size: 13px;
+    color: var(--admin-text-muted);
+}
+.img-dropzone-text u {
+    color: var(--admin-primary);
+    text-decoration: none;
+    font-weight: 600;
+}
+.img-dropzone-text small {
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    margin-top: 2px;
+    letter-spacing: 0.02em;
+}
+
+/* Galeria de cards */
+.img-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+    margin-top: 18px;
+}
+.img-gallery:empty { display: none; }
+
+.img-card {
+    position: relative;
+    aspect-ratio: 3/4;
+    background: var(--admin-surface);
+    border: 1px solid var(--admin-border);
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: grab;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+    animation: imgCardIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    /* Garante que o gesto de drag em mobile não dispare scroll/seleção do navegador. */
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-user-drag: none;
+}
+.img-card img { -webkit-user-drag: none; user-select: none; pointer-events: none; }
+@keyframes imgCardIn {
+    from { opacity: 0; transform: translateY(8px) scale(0.95); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.img-card:hover {
+    border-color: var(--admin-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4), 0 0 0 1px rgba(200,169,106,0.2);
+}
+.img-card:active { cursor: grabbing; }
+.img-card.is-dragging {
+    opacity: 0.4;
+    transform: scale(0.96);
+}
+.img-card.is-drag-over {
+    border-color: #F0D98A;
+    border-style: dashed;
+    box-shadow: 0 0 0 3px rgba(200,169,106,0.25);
+}
+
+.img-card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+    user-select: none;
+}
+
+.img-card-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: rgba(0,0,0,0.5);
+    color: var(--admin-primary);
+}
+.img-card-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid rgba(200,169,106,0.2);
+    border-top-color: var(--admin-primary);
+    border-radius: 50%;
+    animation: imgCardSpin 0.8s linear infinite;
+}
+@keyframes imgCardSpin { to { transform: rotate(360deg); } }
+.img-card-progress {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: #F0D98A;
+}
+
+.img-card-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: rgba(0,0,0,0.4);
+}
+.img-card-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #8C6B2F, #F0D98A);
+    transition: width 0.2s ease;
+}
+
+/* Badge "Destaque" no primeiro card (canto inferior esquerdo, fora do handle) */
+.img-card-badge-destaque {
+    position: absolute;
+    bottom: 8px; left: 8px;
+    padding: 3px 9px;
+    background: linear-gradient(135deg, #8C6B2F, #F0D98A);
+    color: #1A1A1A;
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: 100px;
+    z-index: 2;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    pointer-events: none; /* não bloqueia o drag */
+}
+
+/* Handle de arrastar (canto superior direito) — só visual; o drag funciona em toda a card */
+.img-card-handle {
+    position: absolute;
+    top: 6px; right: 6px;
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border-radius: 8px;
+    color: rgba(255,255,255,0.85);
+    opacity: 0;
+    transition: opacity 0.18s ease;
+    pointer-events: none; /* só decorativo — drag acontece no card inteiro */
+}
+.img-card:hover .img-card-handle { opacity: 1; }
+
+/* Botão remover (canto inferior direito) */
+.img-card-remove {
+    position: absolute;
+    bottom: 8px; right: 8px;
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(220, 50, 50, 0.85);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: none;
+    border-radius: 50%;
+    color: #fff;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.18s ease, transform 0.18s ease, background 0.18s ease;
+    z-index: 3;
+}
+.img-card:hover .img-card-remove,
+.img-card.is-error .img-card-remove { opacity: 1; }
+.img-card-remove:hover {
+    background: #ff4444;
+    transform: scale(1.1);
+}
+
+.img-card.is-error {
+    border-color: #ff6b6b;
+    animation: imgCardShake 0.4s;
+}
+@keyframes imgCardShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+}
+
+/* Hint embaixo da galeria */
+.img-gallery-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 12px;
+    font-size: 11px;
+    color: var(--admin-text-muted);
+    letter-spacing: 0.02em;
+}
+.img-gallery-hint svg {
+    color: var(--admin-primary);
+    flex-shrink: 0;
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+    .img-dropzone {
+        padding: 18px 16px;
+        gap: 14px;
+    }
+    .img-dropzone-icon { width: 44px; height: 44px; }
+    .img-dropzone-text strong { font-size: 14px; }
+    .img-dropzone-text span { font-size: 12px; }
+    .img-gallery {
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        gap: 10px;
+    }
+    /* Em mobile, remove e handle aparecem sempre (sem hover) */
+    .img-card-handle, .img-card-remove { opacity: 1; }
+    .img-card-handle { pointer-events: auto; }
+}
+
+/* ============================================
+   GALERIA com setas — detail modal admin
+   ============================================ */
+.detail-main-wrap {
+    position: relative;
+}
+.detail-main-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(200, 169, 106, 0.4);
+    color: #F0D98A;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 4;
+    opacity: 0;
+    transition: all 0.2s ease;
+}
+.detail-main-wrap:hover .detail-main-arrow { opacity: 1; }
+.detail-main-arrow:hover {
+    background: rgba(0, 0, 0, 0.85);
+    color: #fff;
+    transform: translateY(-50%) scale(1.08);
+}
+.detail-main-arrow--prev { left: 10px; }
+.detail-main-arrow--next { right: 10px; }
+.detail-main-arrow[hidden] { display: none !important; }
+
+@media (hover: none) {
+    .detail-main-arrow { opacity: 1; }
+}
+
+/* ============================================
+   Modal admin no estilo do site público
+   ============================================ */
+/* Remove sacola flutuante e WhatsApp CTA do contexto admin (não fazem sentido). */
+.admin-pmodal .pmodal-sacola-fab,
+.admin-pmodal .whatsapp-container,
+.admin-pmodal .pmodal-add-sacola { display: none !important; }
+
+/* CTA "Editar Produto" no estilo do botão verde do site mas em dourado (não-comercial). */
+.admin-pmodal .pmodal-cta {
+    background: linear-gradient(135deg, #8C6B2F 0%, #C8A96A 35%, #F0D98A 55%, #C8A96A 75%, #8C6B2F 100%);
+    color: #1A1A1A;
+    font-weight: 700;
+    border: none;
+    width: 100%;
+    margin-top: 16px;
+}
+.admin-pmodal .pmodal-cta:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(200, 169, 106, 0.4);
+}
+
+.admin-detail-status-row {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: 8px;
+}
+
+/* Barra de ação rápida (view mode): status + editar lado a lado */
+.dm-quick-bar {
+    display: flex;
+    align-items: stretch;
+    gap: 10px;
+    margin-top: 18px;
+    padding: 4px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(200, 169, 106, 0.18);
+    border-radius: 100px;
+}
+.dm-quick-status {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 0 0 16px;
+    min-width: 0;
+}
+.dm-quick-status-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--admin-text-muted);
+    flex-shrink: 0;
+}
+.dm-quick-status-select {
+    flex: 1;
+    appearance: none;
+    -webkit-appearance: none;
+    border: none;
+    background: transparent;
+    color: #fff;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 8px 28px 8px 12px;
+    border-radius: 100px;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    transition: all 0.18s ease;
+    min-width: 0;
+}
+.dm-quick-status-select:hover { background-color: rgba(255, 255, 255, 0.05); }
+.dm-quick-status-select:disabled { opacity: 0.5; cursor: wait; }
+/* Cores por status (replica STATUS_MAP) */
+.dm-quick-status-select.status-ativo { color: #6BFFA0; }
+.dm-quick-status-select.status-inativo { color: #888; }
+.dm-quick-status-select.status-esgotado { color: #ff7a7a; }
+.dm-quick-status-select.status-ultimas { color: #FFD25C; }
+.dm-quick-status-select.status-oferta { color: #F0D98A; }
+
+.dm-quick-bar .dm-edit-btn {
+    margin: 0 !important;
+    width: auto !important;
+    flex-shrink: 0;
+    padding: 10px 22px !important;
+}
+
+@media (max-width: 768px) {
+    .dm-quick-bar {
+        flex-direction: column;
+        border-radius: 16px;
+        padding: 8px;
+        gap: 8px;
+    }
+    .dm-quick-status {
+        background: rgba(200, 169, 106, 0.08);
+        border-radius: 12px;
+        padding: 6px 14px;
+    }
+    .dm-quick-bar .dm-edit-btn {
+        width: 100% !important;
+    }
+}
+
+/* ============================================
+   MODO EDIÇÃO INLINE — modal de detalhes admin
+   ============================================ */
+
+/* Em modo edit: esconde a galeria de fotos da esquerda e dá largura total ao form. */
+.admin-pmodal.is-editing .pmodal-galeria { display: none !important; }
+.admin-pmodal.is-editing .pmodal-inner {
+    grid-template-columns: 1fr !important;
+}
+.admin-pmodal.is-editing .pmodal-detalhes {
+    border-radius: 0 20px 20px 0;
+}
+
+.dm-field {
+    position: relative;
+}
+
+/* Edit container — esconde por default, mostra quando ativado */
+.dm-edit { display: none; }
+
+/* Inputs editáveis no estilo do modal */
+.dm-input {
+    width: 100%;
+    padding: 10px 14px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(200, 169, 106, 0.25);
+    border-radius: 10px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+.dm-input:hover {
+    border-color: rgba(200, 169, 106, 0.5);
+}
+.dm-input:focus {
+    border-color: var(--admin-primary);
+    background: rgba(0, 0, 0, 0.6);
+    box-shadow: 0 0 0 3px rgba(200, 169, 106, 0.15);
+}
+.dm-input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+/* Nome em destaque (input grande estilo título) */
+.dm-input--big {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    font-style: italic;
+    padding: 12px 16px;
+}
+
+.dm-textarea {
+    resize: vertical;
+    min-height: 70px;
+    line-height: 1.5;
+}
+
+.dm-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23C8A96A' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+    cursor: pointer;
+}
+
+.dm-precos-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+.dm-mini {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.dm-mini > span {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--admin-text-muted);
+    padding-left: 2px;
+}
+
+/* Footer com botões editar/salvar/cancelar */
+.dm-footer {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+    align-items: center;
+}
+.dm-footer .pmodal-cta { width: auto; flex: 1; }
+.dm-footer .dm-edit-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.dm-cancel-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--admin-text-muted);
+    padding: 12px 20px;
+    border-radius: 100px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+.dm-cancel-btn:hover {
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.dm-save-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+/* ============================================
+   MODOS view/edit do detail modal
+   ============================================ */
+
+/* Forma de pagamento na view (linha discreta com ícone) */
+.dm-pagamento {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: -6px 0 12px;
+    padding: 5px 12px;
+    background: rgba(200, 169, 106, 0.1);
+    border: 1px solid rgba(200, 169, 106, 0.25);
+    border-radius: 100px;
+    font-size: 12px;
+    color: #F0D98A;
+    font-weight: 500;
+}
+.dm-pagamento svg { flex-shrink: 0; opacity: 0.8; }
+
+/* Header do modo edit — agora barra destacada com badge + seletor de Status */
+.dm-edit-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+    padding: 12px 14px;
+    background: linear-gradient(135deg, rgba(232, 224, 0, 0.06) 0%, rgba(200, 169, 106, 0.08) 100%);
+    border: 1px solid rgba(200, 169, 106, 0.3);
+    border-left: 3px solid var(--admin-primary, #C8A96A);
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+}
+.dm-edit-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    background: linear-gradient(135deg, rgba(200,169,106,0.15), rgba(240,217,138,0.2));
+    border: 1px solid rgba(200, 169, 106, 0.4);
+    border-radius: 100px;
+    color: #F0D98A;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+}
+
+/* Pill de Status destacada no header do modo edit */
+.dm-edit-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+    padding: 6px 10px 6px 14px;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(200, 169, 106, 0.35);
+    border-radius: 100px;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+.dm-edit-status-pill-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--admin-primary, #C8A96A);
+    white-space: nowrap;
+}
+.dm-edit-status-select {
+    padding: 6px 32px 6px 14px;
+    margin: 0;
+    background-color: rgba(200, 169, 106, 0.12);
+    border: 1px solid rgba(200, 169, 106, 0.45);
+    border-radius: 100px;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    min-width: 150px;
+    cursor: pointer;
+    transition: border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease;
+}
+.dm-edit-status-select:hover {
+    border-color: rgba(200, 169, 106, 0.7);
+    background-color: rgba(200, 169, 106, 0.18);
+}
+.dm-edit-status-select:focus {
+    border-color: var(--admin-primary, #C8A96A);
+    box-shadow: 0 0 0 3px rgba(200, 169, 106, 0.2);
+}
+
+/* Grid de campos no modo edit (legacy — mantido por segurança) */
+.dm-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+/* Layout em 2 colunas: esquerda = dados | direita = descrição + ações */
+.dm-edit-cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    align-items: stretch;
+}
+.dm-edit-col {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+}
+.dm-edit-col--right {
+    /* Faz a textarea esticar e os botões ficarem na base. */
+    height: 100%;
+}
+
+/* Linhas com 2 campos lado a lado dentro de uma coluna */
+.dm-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.dm-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+.dm-form-field--full { grid-column: 1 / -1; }
+.dm-form-field--grow { flex: 1; min-height: 0; }
+
+/* Textarea grande na coluna direita ocupa altura disponível */
+.dm-textarea--big {
+    flex: 1;
+    min-height: 220px;
+    height: 100%;
+    resize: none;
+}
+
+/* Textarea média (quando coluna direita também tem galeria) */
+.dm-textarea--mid {
+    min-height: 110px;
+    resize: vertical;
+}
+
+.dm-form-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--admin-text-muted);
+    padding-left: 2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.dm-form-counter {
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 600;
+    font-size: 11px;
+    color: var(--admin-primary);
+    background: rgba(200,169,106,0.12);
+    padding: 1px 8px;
+    border-radius: 100px;
+    margin-left: auto;
+}
+
+/* Inputs */
+.dm-input {
+    width: 100%;
+    padding: 10px 14px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(200, 169, 106, 0.25);
+    border-radius: 10px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+.dm-input:hover { border-color: rgba(200, 169, 106, 0.5); }
+.dm-input:focus {
+    border-color: var(--admin-primary);
+    background: rgba(0, 0, 0, 0.6);
+    box-shadow: 0 0 0 3px rgba(200, 169, 106, 0.15);
+}
+.dm-input::placeholder { color: rgba(255, 255, 255, 0.3); }
+
+.dm-input--big {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 700;
+    font-style: italic;
+    padding: 12px 16px;
+}
+
+.dm-textarea {
+    resize: vertical;
+    min-height: 70px;
+    line-height: 1.5;
+}
+
+.dm-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23C8A96A' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+    cursor: pointer;
+}
+
+/* Dropzone compacta dentro do modo edit (na coluna direita, depois da descrição) */
+.dm-edit-dropzone {
+    padding: 12px 14px;
+    margin-top: 4px;
+}
+.dm-edit-dropzone .img-dropzone-icon { width: 38px; height: 38px; }
+.dm-edit-dropzone .img-dropzone-text strong { font-size: 13px; }
+.dm-edit-dropzone .img-dropzone-text span { font-size: 11px; }
+.dm-edit-dropzone .img-dropzone-text small { display: none; }
+.dm-edit-gallery {
+    margin-top: 10px;
+    grid-template-columns: repeat(5, 1fr) !important;
+    gap: 8px !important;
+}
+@media (max-width: 768px) {
+    .dm-edit-gallery {
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 6px !important;
+    }
+}
+
+/* Footer com botões (alinha no fim da coluna direita) */
+.dm-footer {
+    display: flex;
+    gap: 10px;
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid rgba(200, 169, 106, 0.12);
+    align-items: center;
+}
+.dm-footer .pmodal-cta { width: auto; flex: 1; margin-top: 0; }
+.dm-edit-btn {
+    width: 100%;
+    margin-top: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.dm-cancel-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--admin-text-muted);
+    padding: 12px 24px;
+    border-radius: 100px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+.dm-cancel-btn:hover {
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.dm-save-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+@media (max-width: 768px) {
+    .dm-form-grid { grid-template-columns: 1fr; }
+
+    /* Header do modo edit no mobile: status pill ocupa linha cheia abaixo do badge */
+    .dm-edit-header {
+        gap: 10px;
+        padding: 10px 12px;
+    }
+    .dm-edit-status-pill {
+        margin-left: 0;
+        width: 100%;
+        justify-content: space-between;
+    }
+    .dm-edit-status-select {
+        flex: 1;
+        min-width: 0;
+    }
+
+    /* Mobile: 1 coluna empilhada. Status já fica em destaque no .dm-edit-header acima.
+       Ordem visual desejada: descrição → galeria → demais dados → salvar/descartar.
+       Truque: display:contents na col--right faz seus filhos participarem do mesmo
+       flex container do dm-edit-cols, então conseguimos colocar o footer depois
+       da col--left via order numérica. */
+    .dm-edit-cols {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        display: flex;
+        flex-direction: column;
+    }
+    .dm-edit-col--right { display: contents; }
+    .dm-edit-col--right > .dm-form-field:nth-child(1) { order: 1; } /* descrição */
+    .dm-edit-col--right > .dm-form-field:nth-child(2) { order: 2; } /* galeria */
+    .dm-edit-col--left {
+        order: 3;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    .dm-edit-col--right > .dm-footer {
+        order: 4;
+        margin-top: 4px;
+    }
+
+    .dm-form-row { grid-template-columns: 1fr; gap: 10px; }
+    .dm-textarea--big { min-height: 100px; }
+    .dm-textarea--mid { min-height: 80px; }
+}
+
+/* ============================================
+   MOBILE PREMIUM REDESIGN
+   Painel admin compacto, organizado, com priorização visual.
+   ============================================ */
+@media (max-width: 768px) {
+
+    /* ── Header em uma linha (logo · ADMIN · ações ícones) ── */
+    .admin-header {
+        padding: 12px 16px !important;
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background: rgba(15, 15, 15, 0.92);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border-bottom: 1px solid rgba(200, 169, 106, 0.15);
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 10px !important;
+    }
+    .header-brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+    }
+    .header-brand img {
+        width: 36px !important;
+        height: 36px !important;
+        object-fit: contain;
+    }
+    .header-badge {
+        font-size: 9px !important;
+        padding: 2px 8px !important;
+        letter-spacing: 0.12em !important;
+    }
+
+    /* Botões do header viram só ícones (CTA principal continua texto) */
+    .header-actions {
+        display: inline-flex !important;
+        gap: 8px !important;
+        align-items: center !important;
+        flex-shrink: 0;
+        background: transparent !important;
+        padding: 0 !important;
+        border: none !important;
+    }
+    /* Botões do header viram círculos minimalistas (não pílulas largas) */
+    .header-actions .btn-header,
+    .header-actions .btn-header.btn-primary,
+    .header-actions .btn-header.btn-historico,
+    .header-actions .btn-header.btn-logout {
+        width: 38px !important;
+        height: 38px !important;
+        min-width: 38px !important;
+        max-width: 38px !important;
+        padding: 0 !important;
+        font-size: 0 !important;
+        border-radius: 50% !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0 !important;
+        background: rgba(255, 255, 255, 0.04) !important;
+        border: 1px solid rgba(200, 169, 106, 0.2) !important;
+        color: var(--admin-text-muted) !important;
+        box-shadow: none !important;
+    }
+    .header-actions .btn-header.btn-historico {
+        color: #6BB2FF !important;
+        border-color: rgba(107, 178, 255, 0.25) !important;
+    }
+    .header-actions .btn-header.btn-logout {
+        color: #ff6b6b !important;
+        border-color: rgba(255, 107, 107, 0.3) !important;
+    }
+    .header-actions .btn-header svg {
+        width: 16px !important;
+        height: 16px !important;
+    }
+    /* "Novo Produto" do header é levado pra baixo como FAB */
+    .header-actions #btn-novo-produto {
+        position: fixed !important;
+        bottom: 20px !important;
+        right: 20px !important;
+        top: auto !important;
+        left: auto !important;
+        width: auto !important;
+        max-width: none !important;
+        min-width: 0 !important;
+        height: auto !important;
+        padding: 14px 20px !important;
+        border-radius: 100px !important;
+        font-size: 13px !important;
+        font-weight: 700 !important;
+        background: linear-gradient(135deg, #8C6B2F 0%, #C8A96A 35%, #F0D98A 55%, #C8A96A 75%, #8C6B2F 100%) !important;
+        color: #1A1A1A !important;
+        border: none !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 4px 14px rgba(200, 169, 106, 0.45) !important;
+        z-index: 40 !important;
+        gap: 6px !important;
+        animation: fabPulse 2.5s ease-in-out infinite;
+    }
+    .header-actions #btn-novo-produto svg { width: 16px !important; height: 16px !important; }
+    @keyframes fabPulse {
+        0%, 100% { box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 4px 14px rgba(200,169,106,0.45); }
+        50%      { box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 4px 22px rgba(240,217,138,0.7); }
+    }
+
+    /* ── Stats: linha horizontal compacta (não 2x2) ── */
+    .stats-bar {
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 1px !important;
+        padding: 10px !important;
+        margin: 12px 14px !important;
+        background: rgba(200, 169, 106, 0.04);
+        border: 1px solid rgba(200, 169, 106, 0.12);
+        border-radius: 12px;
+    }
+    .stat-item {
+        padding: 8px 4px !important;
+        background: transparent !important;
+        border: none !important;
+        text-align: center;
+        position: relative;
+    }
+    .stat-item:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 25%;
+        bottom: 25%;
+        width: 1px;
+        background: rgba(200, 169, 106, 0.15);
+    }
+    .stat-item::before { display: none !important; }
+    .stat-value {
+        font-size: 20px !important;
+        line-height: 1 !important;
+        font-weight: 800 !important;
+        margin-bottom: 4px !important;
+    }
+    .stat-label {
+        font-size: 9px !important;
+        letter-spacing: 0.06em !important;
+        text-transform: uppercase;
+        color: var(--admin-text-muted);
+        line-height: 1.2;
+    }
+
+    /* ── Filtros: search full + categoria/status em 2 colunas ── */
+    .filters-bar {
+        padding: 0 14px !important;
+        gap: 10px !important;
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        margin-bottom: 14px !important;
+    }
+    .filter-group {
+        grid-column: 1 / -1;
+    }
+    .filter-input {
+        font-size: 14px;
+    }
+    .filter-multi-btn {
+        font-size: 13px !important;
+        padding: 10px 12px !important;
+        min-width: 0 !important;
+    }
+    .filter-multi-label {
+        font-size: 12px;
+    }
+    /* View toggle pequeno e discreto */
+    .view-toggle {
+        grid-column: 1 / -1;
+        justify-self: end;
+        margin-top: -4px;
+    }
+
+    /* ── Espaçamento geral mais apertado ── */
+    .table-container {
+        padding: 0 14px 80px !important; /* 80px embaixo pra não cobrir conteúdo com FAB */
+    }
+
+    .batch-bar {
+        margin: 0 14px 12px !important;
+        top: 76px !important; /* logo abaixo do header sticky */
+    }
+}
+
+/* Mobile bem pequeno (< 380px): refina ainda mais */
+@media (max-width: 380px) {
+    .header-brand img { width: 30px !important; height: 30px !important; }
+    .header-actions .btn-header { width: 32px; height: 32px; }
+    .header-actions .btn-header svg { width: 14px; height: 14px; }
+    .stat-value { font-size: 18px !important; }
+    .stat-label { font-size: 8px !important; }
 }

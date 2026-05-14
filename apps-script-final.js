@@ -43,9 +43,11 @@ function doPost(e) {
     var sheet = ss.getSheets()[0];
 
     if (data.action === 'update_skip_desconto') {
+      // Planilha (24 colunas): A..U = sem desconto (21 cols), V = desconto (fórmula),
+      // W..X = forma de pagamento + status (após desconto).
       sheet.getRange(data.row, 1, 1, data.valuesSemDesconto.length)
            .setValues([data.valuesSemDesconto]);
-      sheet.getRange(data.row, 16, 1, data.valuesAposDesconto.length)
+      sheet.getRange(data.row, 23, 1, data.valuesAposDesconto.length)
            .setValues([data.valuesAposDesconto]);
 
     } else if (data.action === 'update') {
@@ -55,9 +57,11 @@ function doPost(e) {
     } else if (data.action === 'append') {
       sheet.appendRow(data.values);
       var lastRow = sheet.getLastRow();
-      sheet.getRange(lastRow, 13, 1, 2).setNumberFormat('R$ #.##0,00');
-      sheet.getRange(lastRow, 15).setFormula('=((M'+lastRow+'-N'+lastRow+')/M'+lastRow+')');
-      sheet.getRange(lastRow, 15).setNumberFormat('0%');
+      // Formata Preço De (T=20) e Preço Por (U=21) como moeda BRL.
+      sheet.getRange(lastRow, 20, 1, 2).setNumberFormat('R$ #.##0,00');
+      // Coluna V (22) = Desconto: fórmula ((T-U)/T) formatada como porcentagem.
+      sheet.getRange(lastRow, 22).setFormula('=IFERROR(((T'+lastRow+'-U'+lastRow+')/T'+lastRow+'),"")');
+      sheet.getRange(lastRow, 22).setNumberFormat('0%');
 
     } else if (data.action === 'delete_row') {
       sheet.deleteRow(parseInt(data.row));

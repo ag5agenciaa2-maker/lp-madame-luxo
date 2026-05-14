@@ -64,13 +64,21 @@ const CONFIG = {
         IMAGEM1: 8,
         IMAGEM2: 9,
         IMAGEM3: 10,
-        LINK: 11,
-        PRECO_DE: 12,
-        PRECO_POR: 13,
-        DESCONTO: 14,
-        ESTOQUE: 15,
-        STATUS: 16
+        IMAGEM4: 11,
+        IMAGEM5: 12,
+        IMAGEM6: 13,
+        IMAGEM7: 14,
+        IMAGEM8: 15,
+        IMAGEM9: 16,
+        IMAGEM10: 17,
+        LINK: 18,
+        PRECO_DE: 19,
+        PRECO_POR: 20,
+        DESCONTO: 21,
+        FORMA_PAGAMENTO: 22,
+        STATUS: 23
     }
+    // Total: 24 colunas (A..X). Imagem em coluna I..R (10 slots).
     // Credenciais R2 vivem no Apps Script (Script Properties).
     // Upload passa por APPS_SCRIPT_URL com action=upload_r2.
 };
@@ -82,6 +90,8 @@ const CONFIG = {
 let allProducts = [];
 let filteredProducts = [];
 let currentView = localStorage.getItem('ml_view') || 'grid'; // 'grid' | 'list'
+// Set de _rowIndex dos produtos selecionados em lote.
+const _selecionados = new Set();
 let currentPage = 1;
 const ITENS_POR_PAGINA = 24;
 
@@ -131,6 +141,14 @@ function initEventListeners() {
     document.getElementById('btn-view-list').addEventListener('click', () => setView('list'));
     setView(currentView, false);
     
+    // Barra de seleção em lote
+    document.getElementById('batchClear').addEventListener('click', limparSelecao);
+    document.getElementById('batchSelectAll').addEventListener('click', selecionarTodosVisiveis);
+    document.getElementById('batchDelete').addEventListener('click', () => {
+        const lista = filteredProducts.filter(p => _selecionados.has(p._rowIndex));
+        if (lista.length) deleteProductsBatch(lista);
+    });
+
     // Botões header
     document.getElementById('btn-refresh').addEventListener('click', loadProducts);
     document.getElementById('btn-novo-produto').addEventListener('click', () => openModal());
@@ -148,10 +166,7 @@ function initEventListeners() {
     document.getElementById('modal-close').addEventListener('click', closeModal);
     document.getElementById('btn-cancelar').addEventListener('click', closeModal);
     document.getElementById('form-produto').addEventListener('submit', handleSubmit);
-    
-    // Preview de imagem (URL manual)
-    document.getElementById('prod-imagem1').addEventListener('input', updateImagePreview);
-    
+
     // Fechar modal ao clicar fora
     document.getElementById('modal-produto').addEventListener('click', (e) => {
         if (e.target === document.getElementById('modal-produto')) closeModal();
@@ -234,7 +249,11 @@ async function loadProducts() {
     const loadingEl = document.getElementById('loading-state');
     const tbody = document.getElementById('products-tbody');
     const emptyEl = document.getElementById('empty-state');
-    
+
+    // Reseta seleção ao recarregar (rowIndex mudou).
+    _selecionados.clear();
+    atualizarBarraSelecao();
+
     loadingEl.hidden = false;
     tbody.innerHTML = '';
     emptyEl.hidden = true;
@@ -303,10 +322,10 @@ function parseCSV(text) {
             product[h] = values[idx] || '';
         });
         
-        // Mapeamento direto pela posição das colunas (ordem real da planilha)
+        // Mapeamento direto pela posição das colunas (ordem real da planilha — 24 colunas):
         // 0:ID 1:Nome 2:Categoria 3:Tipo 4:Cor 5:Tamanhos 6:Material 7:Descrição
-        // 8:Imagem1 9:Imagem2 10:Imagem3 11:Link 12:PrecoDe 13:PrecoPor 14:Desconto
-        // 15:Estoque 16:Oferta 17:Status
+        // 8..17:Imagem 1..10  18:Link  19:PrecoDe  20:PrecoPor  21:Desconto
+        // 22:Forma de pagamento  23:Status
         product._id       = values[0] || '';
         product._nome     = values[1] || '';
         product._categoria= values[2] || '';
@@ -318,13 +337,27 @@ function parseCSV(text) {
         product._imagem1  = values[8] || '';
         product._imagem2  = values[9] || '';
         product._imagem3  = values[10] || '';
-        product._link     = values[11] || '';
+        product._imagem4  = values[11] || '';
+        product._imagem5  = values[12] || '';
+        product._imagem6  = values[13] || '';
+        product._imagem7  = values[14] || '';
+        product._imagem8  = values[15] || '';
+        product._imagem9  = values[16] || '';
+        product._imagem10 = values[17] || '';
+        // Array com todas as imagens não-vazias (em ordem) — útil pra carrossel/galeria.
+        product._imagens  = [
+            product._imagem1, product._imagem2, product._imagem3, product._imagem4, product._imagem5,
+            product._imagem6, product._imagem7, product._imagem8, product._imagem9, product._imagem10
+        ].filter(u => u && u.trim());
+        product._link     = values[18] || '';
         // Remove "R$ " caso a planilha guarde com prefixo
-        product._precoDe  = (values[12] || '').replace(/R\$\s*/g, '').trim();
-        product._precoPor = (values[13] || '').replace(/R\$\s*/g, '').trim();
-        product._desconto = values[14] || '';
-        product._estoque  = values[15] || '';
-        product._status   = values[16] || 'Ativo';
+        product._precoDe  = (values[19] || '').replace(/R\$\s*/g, '').trim();
+        product._precoPor = (values[20] || '').replace(/R\$\s*/g, '').trim();
+        product._desconto = values[21] || '';
+        product._formaPagamento = values[22] || '';
+        product._status   = values[23] || 'Ativo';
+        // Estoque: removido do form, não é mais lido (planilha não tem mais essa coluna).
+        product._estoque  = '';
         // _rowIndex em 1-based (linha real na planilha, já conta o header na linha 1)
         product._rowIndex = i + 1;
         
@@ -445,10 +478,16 @@ function renderTable() {
             </button>`;
 
         const el = document.createElement('div');
+        const checkboxHtml = `
+            <label class="prod-check" title="Selecionar">
+                <input type="checkbox" class="prod-check-input" data-row="${product._rowIndex}" ${_selecionados.has(product._rowIndex) ? 'checked' : ''}>
+                <span class="prod-check-box"></span>
+            </label>`;
 
         if (currentView === 'list') {
-            el.className = 'prod-list-item';
+            el.className = 'prod-list-item' + (_selecionados.has(product._rowIndex) ? ' is-selected' : '');
             el.innerHTML = `
+                ${checkboxHtml}
                 <div class="prod-list-img-wrap">
                     <img src="${product._imagem1 || 'assets/madame-luxo-hero-colecao-verde-menta.webp'}"
                          alt="${escapeHtml(product._nome)}"
@@ -475,8 +514,9 @@ function renderTable() {
                 <div class="prod-list-acoes prod-card-acoes">${acoesBtns}</div>
             `;
         } else {
-            el.className = 'prod-card';
+            el.className = 'prod-card' + (_selecionados.has(product._rowIndex) ? ' is-selected' : '');
             el.innerHTML = `
+                ${checkboxHtml}
                 <div class="prod-card-img-wrap">
                     <img src="${product._imagem1 || 'assets/madame-luxo-hero-colecao-verde-menta.webp'}"
                          alt="${escapeHtml(product._nome)}"
@@ -500,10 +540,27 @@ function renderTable() {
         }
 
         el.addEventListener('click', (e) => {
-            if (!e.target.closest('.btn-acao')) openDetailModal(product);
+            if (e.target.closest('.btn-acao') || e.target.closest('.prod-check')) return;
+            // Se há qualquer item selecionado no painel, click no card alterna a seleção
+            // dele (modo seleção em lote). Senão, abre o modal de detalhes normalmente.
+            if (_selecionados.size > 0) {
+                // Alterna direto no estado, sem disparar cb.click() (que faria o evento
+                // bubblar de volta no card → loop). Atualiza visual + barra na hora.
+                const cb = el.querySelector('.prod-check-input');
+                const novoEstado = !cb.checked;
+                cb.checked = novoEstado;
+                if (novoEstado) _selecionados.add(product._rowIndex);
+                else _selecionados.delete(product._rowIndex);
+                el.classList.toggle('is-selected', novoEstado);
+                atualizarBarraSelecao();
+                return;
+            }
+            openDetailModal(product);
         });
         el.querySelector('.btn-edit').addEventListener('click', (e) => {
-            e.stopPropagation(); openModal(product);
+            e.stopPropagation();
+            // Abre o modal de detalhes já no modo edição (atalho do ícone de lápis).
+            openDetailModal(product, { startEditing: true });
         });
         el.querySelector('.btn-toggle').addEventListener('click', (e) => {
             e.stopPropagation(); inactivateProduct(product);
@@ -512,59 +569,224 @@ function renderTable() {
             e.stopPropagation(); deleteProduct(product);
         });
 
+        // Checkbox de seleção em lote.
+        const cb = el.querySelector('.prod-check-input');
+        cb.addEventListener('click', (e) => e.stopPropagation());
+        cb.addEventListener('change', () => {
+            if (cb.checked) _selecionados.add(product._rowIndex);
+            else _selecionados.delete(product._rowIndex);
+            el.classList.toggle('is-selected', cb.checked);
+            atualizarBarraSelecao();
+        });
+
         container.appendChild(el);
     });
 
     renderPaginacao();
 }
 
-// Modal de detalhes do produto (visualização ao clicar no card)
-function openDetailModal(product) {
+// Modal de detalhes do produto (estilo do site público — pmodal-*).
+// `opts.startEditing = true` abre direto no modo de edição (atalho do ícone lápis).
+function openDetailModal(product, opts = {}) {
     const statusKey  = (product._status || '').toLowerCase();
     const statusInfo = STATUS_MAP[statusKey] || { cls: 'status-inativo', txt: product._status };
+
+    // Fallback de imagem (logo) se produto não tiver foto.
+    const FALLBACK = 'assets/logo-madame-luxo-desktop.webp';
+    const imagensReais = (product._imagens || []).filter(Boolean);
+    const semImg = imagensReais.length === 0;
+    const imagens = semImg ? [FALLBACK] : imagensReais;
+    const tamanhos = (product._tamanhos || '').split(/[\/|·,]/).map(s => s.trim()).filter(Boolean);
+    const cores = (product._cor || '').split(/[,;|·•/]|\s-\s|\s\/\s/).map(s => s.trim()).filter(Boolean);
 
     let existing = document.getElementById('detail-modal');
     if (existing) existing.remove();
 
     const overlay = document.createElement('div');
     overlay.id = 'detail-modal';
-    overlay.className = 'modal-overlay';
+    overlay.className = 'pmodal-overlay ml-open admin-pmodal';
     overlay.innerHTML = `
-        <div class="modal-content detail-modal-content">
-            <div class="modal-header">
-                <h2>${escapeHtml(product._nome)}</h2>
-                <button class="modal-close" id="detail-close">&times;</button>
-            </div>
-            <div class="detail-body">
-                <div class="detail-img-col">
-                    <img src="${product._imagem1 || 'assets/madame-luxo-hero-colecao-verde-menta.webp'}"
-                         alt="${escapeHtml(product._nome)}"
-                         class="detail-img-main"
-                         onerror="this.src='assets/madame-luxo-hero-colecao-verde-menta.webp'">
-                    <div class="detail-thumbs">
-                        ${[product._imagem1, product._imagem2, product._imagem3].filter(Boolean).map(url =>
-                            `<img src="${url}" class="detail-thumb" onerror="this.style.display='none'">`
-                        ).join('')}
+        <div class="pmodal-box">
+            <button class="pmodal-close" id="detail-close" aria-label="Fechar">✕</button>
+            <div class="pmodal-inner">
+                <!-- Galeria -->
+                <div class="pmodal-galeria">
+                    <div class="pmodal-main-wrap">
+                        <button type="button" class="pmodal-main-arrow pmodal-main-arrow--prev" id="dm-prev" aria-label="Imagem anterior" hidden>
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                        </button>
+                        <img id="dm-main-img" src="${imagens[0]}" alt="${escapeHtml(product._nome)}"
+                             class="pmodal-img-main${semImg ? ' pmodal-img-fallback' : ''}"
+                             onerror="this.src='${FALLBACK}'">
+                        <button type="button" class="pmodal-main-arrow pmodal-main-arrow--next" id="dm-next" aria-label="Próxima imagem" hidden>
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                        </button>
+                    </div>
+                    <div class="pmodal-thumbs" id="dm-thumbs"></div>
+
+                    <!-- Carrossel mobile -->
+                    <div class="pmodal-carousel" id="dm-carousel" aria-roledescription="carousel">
+                        <div class="pmodal-carousel-track" id="dm-carousel-track"></div>
+                        <button type="button" class="pmodal-carousel-arrow pmodal-carousel-arrow--prev" id="dm-c-prev" aria-label="Imagem anterior">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                        </button>
+                        <button type="button" class="pmodal-carousel-arrow pmodal-carousel-arrow--next" id="dm-c-next" aria-label="Próxima imagem">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                        </button>
+                        <div class="pmodal-carousel-dots" id="dm-carousel-dots" aria-hidden="true"></div>
                     </div>
                 </div>
-                <div class="detail-info-col">
-                    <span class="prod-categoria">${escapeHtml(product._categoria)}</span>
-                    <p class="detail-tipo">${escapeHtml(product._tipo)}</p>
-                    <div class="detail-precos">
-                        ${product._precoDe ? `<span class="prod-preco-de">R$ ${product._precoDe}</span>` : ''}
-                        <span class="prod-preco-por detail-preco-por">R$ ${product._precoPor || '-'}</span>
-                        ${product._desconto ? `<span class="detail-desconto">${product._desconto}</span>` : ''}
+
+                <!-- Detalhes — alterna entre view-mode e edit-mode -->
+                <div class="pmodal-detalhes admin-detalhes" data-mode="view">
+
+                    <!-- ═══════════════════ MODO VISUALIZAÇÃO ═══════════════════ -->
+                    <div class="dm-view-mode">
+                        <span class="pmodal-cat">${escapeHtml(product._categoria || '')}</span>
+                        <h2 class="pmodal-nome">${escapeHtml(product._nome)}</h2>
+
+                        ${statusKey === 'esgotado' ? `
+                        <div class="pmodal-badge-esgotado" style="display:inline-flex">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            Produto Esgotado
+                        </div>` : ''}
+
+                        <div class="pmodal-precos">
+                            ${product._precoDe ? `<span class="pmodal-de">R$ ${escapeHtml(product._precoDe)}</span>` : ''}
+                            <span class="pmodal-por">R$ ${escapeHtml(product._precoPor || '-')}</span>
+                            ${product._desconto ? `<span class="pmodal-desc">${escapeHtml(product._desconto)}</span>` : ''}
+                        </div>
+
+                        ${product._formaPagamento ? `
+                        <div class="dm-pagamento">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                            <span>${escapeHtml(product._formaPagamento)}</span>
+                        </div>` : ''}
+
+                        ${product._descricao ? `<p class="pmodal-texto">${escapeHtml(product._descricao)}</p>` : ''}
+
+                        <div class="pmodal-specs">
+                            <div class="pmodal-spec"><span class="pspec-l">Tipo</span><span class="pspec-v">${escapeHtml(product._tipo || 'Não informado')}</span></div>
+                            <div class="pmodal-spec"><span class="pspec-l">Material</span><span class="pspec-v">${escapeHtml(product._material || 'Não informado')}</span></div>
+                            <div class="pmodal-spec"><span class="pspec-l">Cor</span><span class="pspec-v">${cores.length <= 1
+                                ? escapeHtml(cores[0] || 'Não informado')
+                                : `<span class="pmodal-cor-pills">${cores.map(c => `<span class="pmodal-cor-pill">${escapeHtml(c)}</span>`).join('')}</span>`
+                            }</span></div>
+                            <div class="pmodal-spec"><span class="pspec-l">Tamanhos</span><span class="pspec-v">${tamanhos.length <= 1
+                                ? escapeHtml(tamanhos[0] || 'Não informado')
+                                : `<span class="pmodal-cor-pills">${tamanhos.map(t => `<span class="pmodal-cor-pill">${escapeHtml(t)}</span>`).join('')}</span>`
+                            }</span></div>
+                        </div>
+
+                        <!-- Barra de ação rápida: status quick-change + botão editar -->
+                        <div class="dm-quick-bar">
+                            <div class="dm-quick-status" data-current="${escapeAttr(product._status || '')}">
+                                <span class="dm-quick-status-label">Status</span>
+                                <select class="dm-quick-status-select" id="dm-quick-status-select"></select>
+                            </div>
+                            <button type="button" class="pmodal-cta dm-edit-btn">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4z"/></svg>
+                                Editar Produto
+                            </button>
+                        </div>
                     </div>
-                    <div class="detail-specs">
-                        ${product._material ? `<div class="detail-spec"><span>Material</span><span>${escapeHtml(product._material)}</span></div>` : ''}
-                        ${product._cor      ? `<div class="detail-spec"><span>Cor</span><span>${escapeHtml(product._cor)}</span></div>` : ''}
-                        ${product._tamanhos ? `<div class="detail-spec"><span>Tamanhos</span><span>${escapeHtml(product._tamanhos)}</span></div>` : ''}
-                        ${product._estoque  ? `<div class="detail-spec"><span>Estoque</span><span>${escapeHtml(product._estoque)} un.</span></div>` : ''}
-                    </div>
-                    ${product._descricao ? `<p class="detail-desc">${escapeHtml(product._descricao)}</p>` : ''}
-                    <div class="detail-status-row">
-                        <span class="status-badge ${statusInfo.cls}">${statusInfo.txt}</span>
-                        <button class="btn btn-primary detail-edit-btn">Editar Produto</button>
+
+                    <!-- ═══════════════════ MODO EDIÇÃO ═══════════════════ -->
+                    <div class="dm-edit-mode" hidden>
+                        <div class="dm-edit-header">
+                            <span class="dm-edit-badge">Editando produto</span>
+                            <div class="dm-edit-status-pill">
+                                <span class="dm-edit-status-pill-label">Status</span>
+                                <select class="dm-input dm-select dm-edit-status-select" data-key="status"></select>
+                            </div>
+                        </div>
+
+                        <div class="dm-edit-cols">
+                            <!-- COLUNA ESQUERDA: dados estruturados -->
+                            <div class="dm-edit-col dm-edit-col--left">
+                                <label class="dm-form-field">
+                                    <span class="dm-form-label">Nome do Produto *</span>
+                                    <input type="text" class="dm-input dm-input--big" data-key="nome" value="${escapeAttr(product._nome)}" placeholder="Ex: Vestido Midi Floral">
+                                </label>
+
+                                <div class="dm-form-row">
+                                    <label class="dm-form-field">
+                                        <span class="dm-form-label">Categoria *</span>
+                                        <select class="dm-input dm-select" data-key="categoria"></select>
+                                    </label>
+                                    <label class="dm-form-field">
+                                        <span class="dm-form-label">Tipo</span>
+                                        <select class="dm-input dm-select" data-key="tipo"></select>
+                                    </label>
+                                </div>
+
+                                <div class="dm-form-row">
+                                    <label class="dm-form-field">
+                                        <span class="dm-form-label">Preço DE (R$)</span>
+                                        <input type="text" class="dm-input" data-key="precoDe" value="${escapeAttr(product._precoDe)}" placeholder="219,90">
+                                    </label>
+                                    <label class="dm-form-field">
+                                        <span class="dm-form-label">Preço POR (R$) *</span>
+                                        <input type="text" class="dm-input" data-key="precoPor" value="${escapeAttr(product._precoPor)}" placeholder="179,90">
+                                    </label>
+                                </div>
+
+                                <label class="dm-form-field">
+                                    <span class="dm-form-label">Forma de pagamento</span>
+                                    <input type="text" class="dm-input" data-key="formaPagamento" value="${escapeAttr(product._formaPagamento)}" placeholder="Ex: 3x sem juros · Pix com 10% off">
+                                </label>
+
+                                <label class="dm-form-field">
+                                    <span class="dm-form-label">Material</span>
+                                    <input type="text" class="dm-input" data-key="material" value="${escapeAttr(product._material)}" placeholder="Ex: Viscose">
+                                </label>
+
+                                <label class="dm-form-field">
+                                    <span class="dm-form-label">Cores (separe por vírgula)</span>
+                                    <input type="text" class="dm-input" data-key="cor" value="${escapeAttr(product._cor)}" placeholder="Ex: Terracota, Azul, Verde">
+                                </label>
+
+                                <label class="dm-form-field">
+                                    <span class="dm-form-label">Tamanhos</span>
+                                    <input type="text" class="dm-input" data-key="tamanhos" value="${escapeAttr(product._tamanhos)}" placeholder="P · M · G · GG">
+                                </label>
+                            </div>
+
+                            <!-- COLUNA DIREITA: descrição + galeria de fotos + ações -->
+                            <div class="dm-edit-col dm-edit-col--right">
+                                <label class="dm-form-field">
+                                    <span class="dm-form-label">Descrição *</span>
+                                    <textarea class="dm-input dm-textarea dm-textarea--mid" data-key="descricao" placeholder="Descrição do produto...">${escapeHtml(product._descricao || '')}</textarea>
+                                </label>
+
+                                <!-- Galeria editável (dropzone premium + cards reordenáveis) -->
+                                <div class="dm-form-field">
+                                    <span class="dm-form-label">
+                                        Galeria de Fotos
+                                        <span class="dm-form-counter" id="dm-edit-counter">0/10</span>
+                                    </span>
+                                    <label class="img-dropzone dm-edit-dropzone" id="dm-edit-dropzone">
+                                        <input type="file" id="dm-edit-input" accept="image/*" multiple hidden>
+                                        <div class="img-dropzone-icon">
+                                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                        </div>
+                                        <div class="img-dropzone-text">
+                                            <strong>Adicionar fotos</strong>
+                                            <span>Arraste ou clique · até 10 fotos</span>
+                                        </div>
+                                    </label>
+                                    <div class="img-gallery dm-edit-gallery" id="dm-edit-gallery"></div>
+                                </div>
+
+                                <div class="dm-footer">
+                                    <button type="button" class="dm-cancel-btn">Cancelar</button>
+                                    <button type="button" class="pmodal-cta dm-save-btn">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                        Salvar Alterações
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -573,23 +795,422 @@ function openDetailModal(product) {
 
     document.body.appendChild(overlay);
     ScrollLock.lock();
-    const fechar = () => { ScrollLock.unlock(); overlay.remove(); };
-    requestAnimationFrame(() => { overlay.removeAttribute('hidden'); });
+    const fechar = () => {
+        if (overlay.dataset.editing === '1') {
+            if (!confirm('Você está editando. Descartar alterações?')) return;
+        }
+        ScrollLock.unlock();
+        overlay.remove();
+    };
 
     overlay.querySelector('#detail-close').addEventListener('click', fechar);
-    overlay.querySelector('.detail-edit-btn').addEventListener('click', () => { fechar(); openModal(product); });
     overlay.addEventListener('click', (e) => { if (e.target === overlay) fechar(); });
 
-    // Troca imagem principal ao clicar na thumbnail
-    overlay.querySelectorAll('.detail-thumb').forEach(thumb => {
-        thumb.addEventListener('click', () => {
-            overlay.querySelector('.detail-img-main').src = thumb.src;
-            overlay.querySelectorAll('.detail-thumb').forEach(t => t.classList.remove('active'));
-            thumb.classList.add('active');
+    // ── Modo Edição (inline) ──
+    const detalhes = overlay.querySelector('.admin-detalhes');
+    const btnEdit = overlay.querySelector('.dm-edit-btn');
+    const btnCancel = overlay.querySelector('.dm-cancel-btn');
+    const btnSave = overlay.querySelector('.dm-save-btn');
+
+    btnEdit.addEventListener('click', () => entrarModoEdicao(overlay, product));
+    btnCancel.addEventListener('click', () => sairModoEdicao(overlay, product));
+    btnSave.addEventListener('click', () => salvarEdicaoInline(overlay, product, fechar));
+
+    // Quick status (barra de ação rápida — view mode).
+    const quickStatusSel = overlay.querySelector('#dm-quick-status-select');
+    if (quickStatusSel) {
+        const statusList = _configDados.status || [];
+        quickStatusSel.innerHTML = statusList.map(s =>
+            `<option value="${escapeAttr(s)}" ${s === product._status ? 'selected' : ''}>${escapeHtml(s)}</option>`
+        ).join('');
+        // Aplica classe pelo status atual (cor do fundo da pill).
+        const aplicarCorStatus = () => {
+            const k = (quickStatusSel.value || '').toLowerCase();
+            const info = STATUS_MAP[k] || { cls: 'status-inativo' };
+            quickStatusSel.className = `dm-quick-status-select ${info.cls}`;
+        };
+        aplicarCorStatus();
+        quickStatusSel.addEventListener('change', async () => {
+            const novoStatus = quickStatusSel.value;
+            quickStatusSel.disabled = true;
+            try {
+                await enviarViaIframe({
+                    action: 'update',
+                    row: product._rowIndex,
+                    values: [
+                        product._id, product._nome, product._categoria, product._tipo,
+                        product._cor, product._tamanhos, product._material, product._descricao,
+                        product._imagem1 || '', product._imagem2 || '', product._imagem3 || '',
+                        product._imagem4 || '', product._imagem5 || '', product._imagem6 || '',
+                        product._imagem7 || '', product._imagem8 || '', product._imagem9 || '', product._imagem10 || '',
+                        product._link, product._precoDe, product._precoPor, product._desconto,
+                        product._formaPagamento || '', novoStatus
+                    ]
+                });
+                product._status = novoStatus;
+                aplicarCorStatus();
+                showToast(`Status: ${novoStatus}`, 'success');
+                registrarHistorico('Status', product._nome, `Status alterado para ${novoStatus}`);
+                setTimeout(() => location.reload(), 600);
+            } catch (err) {
+                showToast('Erro ao alterar status: ' + err.message, 'error');
+            } finally {
+                quickStatusSel.disabled = false;
+            }
+        });
+    }
+
+    // ── Thumbs (linha única) ──
+    const thumbsEl = overlay.querySelector('#dm-thumbs');
+    if (!semImg && imagens.length > 1) {
+        thumbsEl.innerHTML = imagens.map((u, i) =>
+            `<img src="${u}" class="pmodal-thumb${i === 0 ? ' active' : ''}" alt="">`
+        ).join('');
+    }
+
+    // ── Setas main image (desktop) ──
+    const mainImg = overlay.querySelector('#dm-main-img');
+    const prevBtn = overlay.querySelector('#dm-prev');
+    const nextBtn = overlay.querySelector('#dm-next');
+    let idx = 0;
+    function mostrarIdx(i) {
+        idx = (i + imagens.length) % imagens.length;
+        mainImg.src = imagens[idx];
+        thumbsEl.querySelectorAll('.pmodal-thumb').forEach((t, j) => t.classList.toggle('active', j === idx));
+    }
+    if (!semImg && imagens.length > 1) {
+        prevBtn.hidden = false;
+        nextBtn.hidden = false;
+        prevBtn.addEventListener('click', () => mostrarIdx(idx - 1));
+        nextBtn.addEventListener('click', () => mostrarIdx(idx + 1));
+        thumbsEl.querySelectorAll('.pmodal-thumb').forEach((thumb, i) => {
+            thumb.addEventListener('click', () => mostrarIdx(i));
+        });
+    }
+
+    // ── Carrossel mobile (drag + setas + dots) ──
+    montarCarrosselDetailMobile(overlay, imagens);
+
+    // Atalho: ícone lápis abre direto no modo edição.
+    if (opts.startEditing) {
+        // Próximo frame pra garantir que tudo está renderizado antes do toggle.
+        requestAnimationFrame(() => entrarModoEdicao(overlay, product));
+    }
+}
+
+// Carrossel mobile do modal admin (similar ao do index).
+// ============================================
+// MODO EDIÇÃO INLINE — alterna view/edit no modal de detalhes
+// ============================================
+// Estado da galeria do edit-mode (cards de imagem).
+let _dmEditCards = [];
+let _dmEditIdSeq = 0;
+
+function entrarModoEdicao(overlay, product) {
+    const detalhes = overlay.querySelector('.admin-detalhes');
+    const viewMode = overlay.querySelector('.dm-view-mode');
+    const editMode = overlay.querySelector('.dm-edit-mode');
+
+    detalhes.dataset.mode = 'edit';
+    overlay.dataset.editing = '1';
+    overlay.classList.add('is-editing'); // CSS esconde a galeria irmã
+    viewMode.hidden = true;
+    editMode.hidden = false;
+
+    // Popula selects (categoria, tipo, status).
+    const fillSelect = (key, lista, valorAtual, placeholder) => {
+        const sel = editMode.querySelector(`select[data-key="${key}"]`);
+        if (!sel) return;
+        const opts = (lista || []).map(v =>
+            `<option value="${escapeAttr(v)}" ${v === valorAtual ? 'selected' : ''}>${escapeHtml(v)}</option>`
+        ).join('');
+        sel.innerHTML = (placeholder ? `<option value="">${placeholder}</option>` : '') + opts;
+    };
+    fillSelect('categoria', _configDados.categorias, product._categoria, '— escolha —');
+    fillSelect('tipo', _configDados.tipos, product._tipo, '— sem tipo —');
+    fillSelect('status', _configDados.status, product._status);
+
+    // Popula galeria editável com as imagens atuais.
+    _dmEditCards = (product._imagens || []).filter(Boolean).map(url => ({
+        id: ++_dmEditIdSeq, url, status: 'idle', progress: 1
+    }));
+    _dmEditRender(overlay);
+    _dmEditLigarDropzone(overlay);
+}
+
+function sairModoEdicao(overlay, product) {
+    const detalhes = overlay.querySelector('.admin-detalhes');
+    detalhes.dataset.mode = 'view';
+    overlay.dataset.editing = '';
+    overlay.classList.remove('is-editing'); // volta a mostrar a galeria
+    overlay.querySelector('.dm-view-mode').hidden = false;
+    overlay.querySelector('.dm-edit-mode').hidden = true;
+    _dmEditCards = [];
+}
+
+// ── Galeria editável dentro do edit-mode ──
+function _dmEditAtualizarCounter(overlay) {
+    const counter = overlay.querySelector('#dm-edit-counter');
+    if (counter) counter.textContent = `${_dmEditCards.length}/${MAX_FOTOS}`;
+    const dz = overlay.querySelector('#dm-edit-dropzone');
+    if (dz) dz.classList.toggle('is-full', _dmEditCards.length >= MAX_FOTOS);
+}
+
+function _dmEditRender(overlay) {
+    const grid = overlay.querySelector('#dm-edit-gallery');
+    if (!grid) return;
+    grid.innerHTML = _dmEditCards.map((card, i) => `
+        <div class="img-card${card.status === 'uploading' ? ' is-uploading' : ''}${card.status === 'error' ? ' is-error' : ''}"
+             data-id="${card.id}">
+            ${i === 0 ? '<span class="img-card-badge-destaque">Destaque</span>' : ''}
+            <div class="img-card-handle" title="Arraste para reordenar">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="9" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="18" r="1"/>
+                    <circle cx="15" cy="6" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="18" r="1"/>
+                </svg>
+            </div>
+            ${card.url
+                ? `<img src="${card.url}" class="img-card-img" alt="">`
+                : `<div class="img-card-placeholder">
+                       <div class="img-card-spinner"></div>
+                       <span class="img-card-progress">${Math.round((card.progress || 0) * 100)}%</span>
+                   </div>`}
+            <button type="button" class="img-card-remove" title="Remover" aria-label="Remover foto">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+            ${card.status === 'uploading' ? `<div class="img-card-bar"><div class="img-card-bar-fill" style="width:${(card.progress || 0) * 100}%"></div></div>` : ''}
+        </div>
+    `).join('');
+    _dmEditAtualizarCounter(overlay);
+
+    grid.querySelectorAll('.img-card').forEach(el => {
+        const id = parseInt(el.dataset.id, 10);
+        el.querySelector('.img-card-remove').addEventListener('click', (e) => {
+            e.stopPropagation();
+            const card = _dmEditCards.find(c => c.id === id);
+            if (card?.url) deleteR2File(card.url);
+            _dmEditCards = _dmEditCards.filter(c => c.id !== id);
+            _dmEditRender(overlay);
+        });
+        // Drag-to-reorder (mouse + touch via Pointer Events).
+        bindReorderTouchDrag(el, id, grid, (fromId, toId) => {
+            const fromIdx = _dmEditCards.findIndex(c => c.id === fromId);
+            const toIdx = _dmEditCards.findIndex(c => c.id === toId);
+            if (fromIdx < 0 || toIdx < 0) return;
+            const [moved] = _dmEditCards.splice(fromIdx, 1);
+            _dmEditCards.splice(toIdx, 0, moved);
+            _dmEditRender(overlay);
         });
     });
-    const firstThumb = overlay.querySelector('.detail-thumb');
-    if (firstThumb) firstThumb.classList.add('active');
+}
+
+function _dmEditLigarDropzone(overlay) {
+    const dz = overlay.querySelector('#dm-edit-dropzone');
+    const input = overlay.querySelector('#dm-edit-input');
+    if (!dz || !input || dz.dataset.bound) return;
+    dz.dataset.bound = '1';
+
+    dz.addEventListener('click', (e) => {
+        if (_dmEditCards.length >= MAX_FOTOS) {
+            e.preventDefault();
+            showToast(`Limite de ${MAX_FOTOS} fotos atingido.`, 'error');
+        }
+    });
+    input.addEventListener('change', async (e) => {
+        const files = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
+        input.value = '';
+        if (files.length) await _dmEditProcessar(overlay, files);
+    });
+    dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('is-dragover'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('is-dragover'));
+    dz.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        dz.classList.remove('is-dragover');
+        const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+        if (files.length) await _dmEditProcessar(overlay, files);
+    });
+}
+
+async function _dmEditProcessar(overlay, files) {
+    const livres = MAX_FOTOS - _dmEditCards.length;
+    if (livres <= 0) {
+        showToast(`Limite de ${MAX_FOTOS} fotos atingido.`, 'error');
+        return;
+    }
+    const aceitar = files.slice(0, livres);
+    if (files.length > livres) showToast(`Só foram aceitas ${livres} foto(s).`, 'error');
+
+    const novos = aceitar.map(file => {
+        const card = { id: ++_dmEditIdSeq, url: '', status: 'uploading', progress: 0.05, file };
+        _dmEditCards.push(card);
+        return card;
+    });
+    _dmEditRender(overlay);
+
+    await Promise.all(novos.map(async (card) => {
+        try {
+            if (card.file.size > 30 * 1024 * 1024) throw new Error('Maior que 30MB');
+            card.progress = 0.2; _dmEditRender(overlay);
+            const webpFile = await convertToWebp(card.file);
+            card.progress = 0.5; _dmEditRender(overlay);
+            const filename = `produtos/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.webp`;
+            card.progress = 0.7; _dmEditRender(overlay);
+            const url = await uploadToR2Direct(filename, webpFile);
+            card.url = url;
+            card.status = 'idle';
+            card.progress = 1;
+            card.file = null;
+        } catch (err) {
+            console.error(err);
+            card.status = 'error';
+            showToast(`Erro: ${err.message}`, 'error');
+            setTimeout(() => {
+                _dmEditCards = _dmEditCards.filter(c => c.id !== card.id);
+                _dmEditRender(overlay);
+            }, 1200);
+        } finally {
+            _dmEditRender(overlay);
+        }
+    }));
+}
+
+async function salvarEdicaoInline(overlay, product, fecharFn) {
+    const btnSave = overlay.querySelector('.dm-save-btn');
+    const labelOriginal = btnSave.innerHTML;
+    btnSave.disabled = true;
+    btnSave.textContent = 'Salvando...';
+
+    const get = (k) => overlay.querySelector(`[data-key="${k}"]`)?.value.trim() || '';
+    const dados = {
+        nome: get('nome'),
+        categoria: get('categoria'),
+        tipo: get('tipo'),
+        precoDe: get('precoDe'),
+        precoPor: get('precoPor'),
+        formaPagamento: get('formaPagamento'),
+        descricao: get('descricao'),
+        material: get('material'),
+        cor: get('cor'),
+        tamanhos: get('tamanhos'),
+        status: get('status')
+    };
+
+    if (!dados.nome || !dados.categoria || !dados.precoPor) {
+        showToast('Preencha nome, categoria e preço.', 'error');
+        btnSave.disabled = false;
+        btnSave.innerHTML = labelOriginal;
+        return;
+    }
+
+    // URLs das imagens em ordem da galeria editada (slot 1..10).
+    const urls = _dmEditCards.map(c => c.url || '').filter(Boolean);
+    const slot = (i) => urls[i] || '';
+
+    try {
+        const valuesSemDesconto = [
+            product._id,
+            dados.nome,
+            dados.categoria,
+            dados.tipo,
+            dados.cor,
+            dados.tamanhos,
+            dados.material,
+            dados.descricao,
+            slot(0), slot(1), slot(2), slot(3), slot(4),
+            slot(5), slot(6), slot(7), slot(8), slot(9),
+            product._link || '',  // link preservado, não mais editável
+            dados.precoDe,
+            dados.precoPor
+        ];
+        const valuesAposDesconto = [
+            dados.formaPagamento,
+            dados.status
+        ];
+
+        await enviarViaIframe({
+            action: 'update_skip_desconto',
+            row: product._rowIndex,
+            valuesSemDesconto,
+            valuesAposDesconto
+        });
+
+        showToast(`"${dados.nome}" atualizado!`, 'success');
+        registrarHistorico('Editado', dados.nome, `Status: ${dados.status} | Preço: R$ ${dados.precoPor}`);
+        setTimeout(() => location.reload(), 800);
+    } catch (err) {
+        showToast('Erro ao salvar: ' + err.message, 'error');
+        btnSave.disabled = false;
+        btnSave.innerHTML = labelOriginal;
+    }
+}
+
+// Helper para escapar valores em atributo HTML.
+function escapeAttr(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
+function montarCarrosselDetailMobile(overlay, imagens) {
+    const carousel = overlay.querySelector('#dm-carousel');
+    const track = overlay.querySelector('#dm-carousel-track');
+    const dotsEl = overlay.querySelector('#dm-carousel-dots');
+    const prevBtn = overlay.querySelector('#dm-c-prev');
+    const nextBtn = overlay.querySelector('#dm-c-next');
+    if (!carousel || !track || !imagens.length) return;
+
+    track.innerHTML = imagens.map(src => `
+        <div class="pmodal-carousel-slide"><img src="${src}" alt="" loading="lazy"></div>
+    `).join('');
+    dotsEl.innerHTML = imagens.map((_, i) =>
+        `<button type="button" class="pmodal-carousel-dot${i === 0 ? ' is-active' : ''}" aria-label="Imagem ${i+1}"></button>`
+    ).join('');
+    carousel.classList.toggle('has-one', imagens.length === 1);
+
+    let idx = 0;
+    const total = imagens.length;
+    function goTo(i) {
+        idx = Math.max(0, Math.min(total - 1, i));
+        track.style.transform = `translateX(${-idx * 100}%)`;
+        dotsEl.querySelectorAll('.pmodal-carousel-dot').forEach((d, j) => d.classList.toggle('is-active', j === idx));
+        prevBtn.disabled = idx === 0;
+        nextBtn.disabled = idx === total - 1;
+    }
+    prevBtn.onclick = () => goTo(idx - 1);
+    nextBtn.onclick = () => goTo(idx + 1);
+    dotsEl.querySelectorAll('.pmodal-carousel-dot').forEach((d, i) => d.addEventListener('click', () => goTo(i)));
+    goTo(0);
+
+    // Drag (touch + mouse)
+    let dragStartX = null, dragCurrentX = 0, dragWidth = 0;
+    function onDown(e) {
+        dragStartX = (e.touches ? e.touches[0].clientX : e.clientX);
+        dragWidth = carousel.getBoundingClientRect().width;
+        track.classList.add('is-dragging');
+    }
+    function onMove(e) {
+        if (dragStartX === null) return;
+        const x = (e.touches ? e.touches[0].clientX : e.clientX);
+        dragCurrentX = x - dragStartX;
+        track.style.transform = `translateX(calc(${-idx * 100}% + ${dragCurrentX}px))`;
+    }
+    function onUp() {
+        if (dragStartX === null) return;
+        track.classList.remove('is-dragging');
+        const threshold = dragWidth * 0.2;
+        if (dragCurrentX > threshold && idx > 0) goTo(idx - 1);
+        else if (dragCurrentX < -threshold && idx < total - 1) goTo(idx + 1);
+        else goTo(idx);
+        dragStartX = null;
+        dragCurrentX = 0;
+    }
+    track.ontouchstart = onDown;
+    track.ontouchmove = onMove;
+    track.ontouchend = onUp;
+    track.onmousedown = (e) => { e.preventDefault(); onDown(e); };
+    track.onmousemove = (e) => { if (dragStartX !== null) onMove(e); };
+    track.onmouseup = onUp;
+    track.onmouseleave = () => { if (dragStartX !== null) onUp(); };
 }
 
 // Estado dos filtros multi-select (arrays de valores selecionados).
@@ -682,76 +1303,343 @@ function closeModal() {
     ScrollLock.unlock();
 }
 
-function updateImagePreview() {
-    const url = document.getElementById('prod-imagem1').value;
-    const preview = document.getElementById('preview-imagem1');
-    
-    if (url && url.startsWith('http')) {
-        preview.src = url;
-        preview.hidden = false;
-        preview.onerror = () => { preview.hidden = true; };
-    } else {
-        preview.hidden = true;
-    }
-}
-
 // ============================================
 // UPLOAD DE IMAGENS - CLOUDFLARE R2
 // ============================================
 
+// ============================================
+// SELEÇÃO EM LOTE — checkboxes + barra de ações
+// ============================================
+function atualizarBarraSelecao() {
+    const bar = document.getElementById('batchBar');
+    const count = document.getElementById('batchCount');
+    if (!bar || !count) return;
+    const n = _selecionados.size;
+    count.textContent = n;
+    bar.hidden = n === 0;
+    // Modo seleção: enquanto houver algum selecionado, qualquer click no card alterna
+    // a marcação (em vez de abrir o modal de detalhes). Body class controla o CSS também.
+    document.body.classList.toggle('has-selection', n > 0);
+}
+
+function limparSelecao() {
+    _selecionados.clear();
+    document.querySelectorAll('.prod-check-input').forEach(cb => { cb.checked = false; });
+    document.querySelectorAll('.prod-card.is-selected, .prod-list-item.is-selected').forEach(el => el.classList.remove('is-selected'));
+    atualizarBarraSelecao();
+}
+
+function selecionarTodosVisiveis() {
+    filteredProducts.forEach(p => _selecionados.add(p._rowIndex));
+    document.querySelectorAll('.prod-check-input').forEach(cb => { cb.checked = true; });
+    document.querySelectorAll('.prod-card, .prod-list-item').forEach(el => el.classList.add('is-selected'));
+    atualizarBarraSelecao();
+}
+
 /**
- * Inicializa os handlers de upload para todos os campos de imagem
- * Chamado no DOMContentLoaded
+ * Distribui múltiplas imagens nos slots disponíveis começando por `startField`.
+ * Pula slots que já têm imagem preenchida. Avisa se sobrarem.
  */
-function initImageUploads() {
-    ['imagem1', 'imagem2', 'imagem3'].forEach(field => {
-        const fileInput = document.getElementById(`file-${field}`);
-        const urlInput = document.getElementById(`url-${field}`);
-        const removeBtn = document.getElementById(`remove-${field}`);
-        const area = document.getElementById(`area-${field}`);
+// ============================================
+// GALERIA DE IMAGENS PREMIUM (até 10 fotos)
+// Modelo: drop zone unificada + lista visual ordenável + drag-to-reorder.
+// API pública preservada (resetImageFields, populateImageFields).
+// O form coleta as URLs em ordem via _slotsAtuais (handleSubmit).
+// ============================================
+const MAX_FOTOS = 10;
 
-        if (!fileInput) return;
+// Estado interno: array ordenado de cards. Cada card representa uma foto.
+// { id, url, status: 'idle'|'uploading'|'error', progress: 0..1, file }
+let _galleryCards = [];
+let _galleryIdSeq = 0;
 
-        // Upload via seleção de arquivo
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) handleImageUpload(field, file);
-        });
+// _slotsAtuais é mantido para compatibilidade com handleSubmit/saveToGoogleSheets
+// e reflete a ordem atual dos cards em formato 'imagem1', 'imagem2'...
+let _slotsAtuais = [];
 
-        // Upload via drag and drop
-        area.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            area.classList.add('drag-over');
-        });
-        area.addEventListener('dragleave', () => {
-            area.classList.remove('drag-over');
-        });
-        area.addEventListener('drop', (e) => {
-            e.preventDefault();
-            area.classList.remove('drag-over');
-            const file = e.dataTransfer.files[0];
-            if (file && file.type.startsWith('image/')) {
-                handleImageUpload(field, file);
-            } else {
-                showToast('Por favor, arraste apenas imagens.', 'error');
+function _galleryRecomputarSlots() {
+    _slotsAtuais = _galleryCards.map((_, i) => `imagem${i + 1}`);
+    // Sincroniza inputs hidden compatíveis para o handleSubmit ler.
+    const hiddenWrap = document.getElementById('img-hidden-inputs');
+    if (hiddenWrap) {
+        hiddenWrap.innerHTML = _galleryCards.map((c, i) =>
+            `<input type="hidden" id="prod-imagem${i + 1}" value="${c.url || ''}">`
+        ).join('');
+    }
+}
+
+function _galleryAtualizarHeader() {
+    const count = document.getElementById('img-gallery-count');
+    const fill = document.getElementById('img-gallery-bar-fill');
+    if (count) count.textContent = _galleryCards.filter(c => c.url).length;
+    if (fill) fill.style.width = `${(_galleryCards.length / MAX_FOTOS) * 100}%`;
+    // Esgota dropzone se chegou ao limite.
+    const dz = document.getElementById('img-dropzone');
+    if (dz) dz.classList.toggle('is-full', _galleryCards.length >= MAX_FOTOS);
+    const hint = document.getElementById('img-gallery-hint');
+    if (hint) hint.style.display = _galleryCards.length > 0 ? '' : 'none';
+}
+
+/**
+ * Helper: liga drag-to-reorder usando Pointer Events (funciona em mouse E touch).
+ * Resolve a limitação do HTML5 Drag&Drop que não funciona em mobile.
+ *
+ * @param {HTMLElement} el Card que pode ser arrastado.
+ * @param {number} id ID do card.
+ * @param {HTMLElement} grid Container que contém os outros cards.
+ * @param {Function} onReorder Callback (fromId, toId) ao soltar sobre outro card.
+ */
+function bindReorderTouchDrag(el, id, grid, onReorder) {
+    let dragging = false;
+    let startX = 0, startY = 0;
+    let ghost = null;
+    let lastTarget = null;
+    const THRESHOLD = 8; // px de movimento até começar drag (evita conflito com scroll)
+
+    function onPointerDown(e) {
+        // Não inicia drag se clicou no botão remover.
+        if (e.target.closest('.img-card-remove')) return;
+        // Só botão esquerdo do mouse.
+        if (e.button !== undefined && e.button !== 0) return;
+
+        startX = e.clientX;
+        startY = e.clientY;
+        dragging = false;
+        el.setPointerCapture(e.pointerId);
+
+        const onMove = (ev) => {
+            const dx = ev.clientX - startX;
+            const dy = ev.clientY - startY;
+            // Espera movimento suficiente pra começar (não atrapalha tap/scroll).
+            if (!dragging && Math.hypot(dx, dy) < THRESHOLD) return;
+            if (!dragging) {
+                dragging = true;
+                el.classList.add('is-dragging');
+                // Cria ghost flutuante seguindo o cursor.
+                ghost = el.cloneNode(true);
+                ghost.style.position = 'fixed';
+                ghost.style.pointerEvents = 'none';
+                ghost.style.opacity = '0.85';
+                ghost.style.zIndex = '9999';
+                ghost.style.width = el.offsetWidth + 'px';
+                ghost.style.height = el.offsetHeight + 'px';
+                ghost.style.transform = 'rotate(-2deg) scale(0.95)';
+                ghost.style.boxShadow = '0 14px 40px rgba(0,0,0,0.6), 0 0 0 2px rgba(200,169,106,0.5)';
+                document.body.appendChild(ghost);
             }
-        });
+            ghost.style.left = (ev.clientX - el.offsetWidth / 2) + 'px';
+            ghost.style.top = (ev.clientY - el.offsetHeight / 2) + 'px';
 
-        // URL manual (colar link)
-        if (urlInput) {
-            urlInput.addEventListener('input', () => {
-                const url = urlInput.value.trim();
-                if (url && url.startsWith('http')) {
-                    setImagePreview(field, url);
-                    document.getElementById(`prod-${field}`).value = url;
+            // Detecta sobre qual card está.
+            ghost.style.display = 'none';
+            const under = document.elementFromPoint(ev.clientX, ev.clientY);
+            ghost.style.display = '';
+            const overCard = under?.closest('.img-card');
+            if (overCard && overCard !== el && grid.contains(overCard)) {
+                if (lastTarget && lastTarget !== overCard) lastTarget.classList.remove('is-drag-over');
+                overCard.classList.add('is-drag-over');
+                lastTarget = overCard;
+            } else if (lastTarget) {
+                lastTarget.classList.remove('is-drag-over');
+                lastTarget = null;
+            }
+        };
+
+        const onUp = () => {
+            el.removeEventListener('pointermove', onMove);
+            el.removeEventListener('pointerup', onUp);
+            el.removeEventListener('pointercancel', onUp);
+            try { el.releasePointerCapture(e.pointerId); } catch {}
+
+            if (dragging) {
+                el.classList.remove('is-dragging');
+                if (ghost) { ghost.remove(); ghost = null; }
+                if (lastTarget) {
+                    const targetId = parseInt(lastTarget.dataset.id, 10);
+                    lastTarget.classList.remove('is-drag-over');
+                    if (!isNaN(targetId) && targetId !== id) onReorder(id, targetId);
+                    lastTarget = null;
                 }
-            });
-        }
+            }
+            dragging = false;
+        };
 
-        // Remover imagem
-        if (removeBtn) {
-            removeBtn.addEventListener('click', () => removeImage(field));
+        el.addEventListener('pointermove', onMove);
+        el.addEventListener('pointerup', onUp);
+        el.addEventListener('pointercancel', onUp);
+    }
+
+    el.addEventListener('pointerdown', onPointerDown);
+}
+
+function _galleryRender() {
+    const grid = document.getElementById('img-gallery');
+    if (!grid) return;
+    grid.innerHTML = _galleryCards.map((card, i) => `
+        <div class="img-card${card.status === 'uploading' ? ' is-uploading' : ''}${card.status === 'error' ? ' is-error' : ''}"
+             data-id="${card.id}">
+            ${i === 0 ? '<span class="img-card-badge-destaque">Destaque</span>' : ''}
+            <div class="img-card-handle" title="Arraste para reordenar">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="9" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="18" r="1"/>
+                    <circle cx="15" cy="6" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="18" r="1"/>
+                </svg>
+            </div>
+            ${card.url
+                ? `<img src="${card.url}" class="img-card-img" alt="">`
+                : `<div class="img-card-placeholder">
+                       <div class="img-card-spinner"></div>
+                       <span class="img-card-progress">${Math.round((card.progress || 0) * 100)}%</span>
+                   </div>`}
+            <button type="button" class="img-card-remove" title="Remover" aria-label="Remover foto">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+            ${card.status === 'uploading' ? `<div class="img-card-bar"><div class="img-card-bar-fill" style="width:${(card.progress || 0) * 100}%"></div></div>` : ''}
+        </div>
+    `).join('');
+
+    // Listeners por card.
+    grid.querySelectorAll('.img-card').forEach(el => {
+        const id = parseInt(el.dataset.id, 10);
+        el.querySelector('.img-card-remove').addEventListener('click', (e) => {
+            e.stopPropagation();
+            galleryRemoverPorId(id);
+        });
+        // Drag-to-reorder (mouse + touch via Pointer Events).
+        bindReorderTouchDrag(el, id, grid, (fromId, toId) => {
+            const fromIdx = _galleryCards.findIndex(c => c.id === fromId);
+            const toIdx = _galleryCards.findIndex(c => c.id === toId);
+            if (fromIdx < 0 || toIdx < 0) return;
+            const [moved] = _galleryCards.splice(fromIdx, 1);
+            _galleryCards.splice(toIdx, 0, moved);
+            _galleryRecomputarSlots();
+            _galleryRender();
+        });
+    });
+}
+
+function _galleryRefresh() {
+    _galleryRecomputarSlots();
+    _galleryRender();
+    _galleryAtualizarHeader();
+}
+
+function galleryRemoverPorId(id) {
+    const card = _galleryCards.find(c => c.id === id);
+    if (!card) return;
+    // Apaga do R2 (best-effort) se já tinha URL.
+    if (card.url) deleteR2File(card.url);
+    _galleryCards = _galleryCards.filter(c => c.id !== id);
+    _galleryRefresh();
+}
+
+function galleryAdicionarUrl(url) {
+    if (_galleryCards.length >= MAX_FOTOS) return;
+    _galleryCards.push({ id: ++_galleryIdSeq, url, status: 'idle', progress: 1 });
+    _galleryRefresh();
+}
+
+async function galleryProcessarArquivos(files) {
+    const slotsLivres = MAX_FOTOS - _galleryCards.length;
+    if (slotsLivres <= 0) {
+        showToast(`Limite de ${MAX_FOTOS} fotos atingido.`, 'error');
+        return;
+    }
+    const aceitar = files.slice(0, slotsLivres);
+    if (files.length > slotsLivres) {
+        showToast(`Só foram aceitas ${slotsLivres} foto(s). Limite ${MAX_FOTOS}.`, 'error');
+    }
+
+    // Cria placeholders na hora (UX imediato).
+    const novos = aceitar.map(file => {
+        const card = { id: ++_galleryIdSeq, url: '', status: 'uploading', progress: 0.05, file };
+        _galleryCards.push(card);
+        return card;
+    });
+    _galleryRefresh();
+
+    // Faz upload em paralelo, atualizando cada card.
+    await Promise.all(novos.map(async (card) => {
+        try {
+            // Validação básica.
+            if (!card.file.type.startsWith('image/')) throw new Error('Tipo inválido');
+            if (card.file.size > 30 * 1024 * 1024) throw new Error('Maior que 30MB');
+
+            // Conversão WEBP + upload (reusa pipeline existente de handleImageUpload).
+            card.progress = 0.2; _galleryRender();
+            const webpFile = await convertToWebp(card.file);
+            card.progress = 0.5; _galleryRender();
+            const filename = `produtos/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.webp`;
+            card.progress = 0.7; _galleryRender();
+            const publicUrl = await uploadToR2Direct(filename, webpFile);
+            card.url = publicUrl;
+            card.status = 'idle';
+            card.progress = 1;
+            card.file = null;
+        } catch (err) {
+            console.error('Falha no upload:', err);
+            card.status = 'error';
+            showToast(`Erro ao enviar foto: ${err.message}`, 'error');
+            // Remove o card que falhou após 1.2s pra usuário perceber.
+            setTimeout(() => galleryRemoverPorId(card.id), 1200);
+        } finally {
+            _galleryRefresh();
         }
+    }));
+}
+
+// ── API pública usada pelo handleSubmit / openModal / etc ──
+
+/** Reseta a galeria (chamado ao abrir modal de Novo Produto). */
+function resetImageFields() {
+    _galleryCards = [];
+    _galleryRefresh();
+}
+
+/** Popula a galeria ao editar produto existente. */
+function populateImageFields(product) {
+    _galleryCards = (product._imagens || [])
+        .filter(Boolean)
+        .map(url => ({ id: ++_galleryIdSeq, url, status: 'idle', progress: 1 }));
+    _galleryRefresh();
+}
+
+/** Atualiza o contador (mantido por compat — _galleryRefresh já cuida). */
+function atualizarBotaoAddFoto() { _galleryAtualizarHeader(); }
+
+/** Inicializa drop zone + input no carregamento. */
+function initImageUploads() {
+    _galleryCards = [];
+    _galleryRefresh();
+
+    const dz = document.getElementById('img-dropzone');
+    const input = document.getElementById('img-dropzone-input');
+    if (!dz || !input) return;
+
+    dz.addEventListener('click', (e) => {
+        if (_galleryCards.length >= MAX_FOTOS) {
+            e.preventDefault();
+            showToast(`Limite de ${MAX_FOTOS} fotos atingido.`, 'error');
+        }
+    });
+    input.addEventListener('change', (e) => {
+        const files = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
+        if (files.length) galleryProcessarArquivos(files);
+        input.value = '';
+    });
+    dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('is-dragover'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('is-dragover'));
+    dz.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dz.classList.remove('is-dragover');
+        const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+        if (!files.length) {
+            showToast('Por favor, arraste apenas imagens.', 'error');
+            return;
+        }
+        galleryProcessarArquivos(files);
     });
 }
 
@@ -812,6 +1700,9 @@ async function handleImageUpload(field, file) {
         if (previousUrl && previousUrl !== publicUrl) {
             deleteR2File(previousUrl);
         }
+
+        // Atualiza contador X/10.
+        atualizarBotaoAddFoto();
 
         showToast('Imagem enviada com sucesso!', 'success');
 
@@ -968,7 +1859,7 @@ function removeImage(field, { deleteFromR2 = true } = {}) {
     }
 
     hiddenField.value = '';
-    
+
     if (preview) {
         preview.src = '';
         preview.hidden = true;
@@ -978,32 +1869,35 @@ function removeImage(field, { deleteFromR2 = true } = {}) {
     if (removeBtn) removeBtn.hidden = true;
     if (fileInput) fileInput.value = '';
     if (urlInput) urlInput.value = '';
+    atualizarBotaoAddFoto();
 }
 
 /**
- * Reseta todos os campos de imagem ao abrir o modal
+ * Reseta todos os campos de imagem ao abrir o modal — recria os 3 slots padrão.
  */
 function resetImageFields() {
-    ['imagem1', 'imagem2', 'imagem3'].forEach(field => {
-        removeImage(field, { deleteFromR2: false });
-    });
+    montarSlotsImagem(3);
 }
 
 /**
- * Popula os campos de imagem ao editar um produto
+ * Popula os campos de imagem ao editar um produto. Recria slots na quantidade
+ * exata de imagens existentes (mínimo 3).
  */
 function populateImageFields(product) {
-    ['imagem1', 'imagem2', 'imagem3'].forEach(field => {
-        const url = product[`_${field}`] || '';
-        if (url) {
-            document.getElementById(`prod-${field}`).value = url;
-            setImagePreview(field, url);
-            const urlInput = document.getElementById(`url-${field}`);
-            if (urlInput) urlInput.value = url;
-        } else {
-            removeImage(field, { deleteFromR2: false });
-        }
+    const urls = (product._imagens && product._imagens.length)
+        ? product._imagens
+        : [product._imagem1, product._imagem2, product._imagem3].filter(Boolean);
+    const qtd = Math.max(3, urls.length);
+    montarSlotsImagem(qtd);
+    urls.forEach((url, idx) => {
+        const field = fieldNameAt(idx);
+        if (!document.getElementById(`prod-${field}`)) return;
+        document.getElementById(`prod-${field}`).value = url;
+        setImagePreview(field, url);
+        const urlInput = document.getElementById(`url-${field}`);
+        if (urlInput) urlInput.value = url;
     });
+    atualizarBotaoAddFoto();
 }
 
 // ============================================
@@ -1052,15 +1946,14 @@ async function handleSubmit(e) {
             precoPor: document.getElementById('prod-preco-por').value,
             desconto: document.getElementById('prod-desconto').value,
             tamanhos: document.getElementById('prod-tamanhos').value,
-            imagem1: document.getElementById('prod-imagem1').value,
-            imagem2: document.getElementById('prod-imagem2').value,
-            imagem3: document.getElementById('prod-imagem3').value,
+            // Coleta as URLs dos slots ativos (preserva ordem). saveToGoogleSheets distribui entre os 10 campos.
+            imagens: _slotsAtuais.map(f => document.getElementById(`prod-${f}`)?.value.trim() || '').filter(Boolean),
             descricao: document.getElementById('prod-descricao').value,
             material: document.getElementById('prod-material').value,
             cor: document.getElementById('prod-cor').value,
-            estoque: currentProduct?._estoque || '',
             status: document.getElementById('prod-status').value,
-            link: document.getElementById('prod-link').value
+            link: document.getElementById('prod-link').value,
+            formaPagamento: currentProduct?._formaPagamento || ''
         };
         
         // Verifica se está autenticado
@@ -1094,13 +1987,17 @@ async function handleSubmit(e) {
 }
 
 async function saveToGoogleSheets(data, isEdit, rowIndex) {
-    // Ordem real da planilha (17 colunas):
+    // Ordem real da planilha (24 colunas):
     // A=0:ID  B=1:Nome  C=2:Categoria  D=3:Tipo  E=4:Cor  F=5:Tamanhos
-    // G=6:Material  H=7:Descrição  I=8:Imagem1  J=9:Imagem2  K=10:Imagem3
-    // L=11:Link  M=12:PrecoDe  N=13:PrecoPor  O=14:Desconto (fórmula, não enviar)
-    // P=15:Estoque  Q=16:Status
+    // G=6:Material  H=7:Descrição
+    // I=8..R=17 → Imagem 1..10
+    // S=18:Link  T=19:PrecoDe  U=20:PrecoPor
+    // V=21:Desconto (fórmula — não enviar)
+    // W=22:FormaPagamento  X=23:Status
 
-    // Colunas A até N (antes do Desconto/coluna O)
+    // Colunas A até U (antes do Desconto/V).
+    const imagens = data.imagens || [];
+    const slot = (i) => imagens[i] || '';
     const valuesSemDesconto = [
         isEdit ? data.id : (allProducts.length + 1).toString(),
         data.nome,
@@ -1110,22 +2007,21 @@ async function saveToGoogleSheets(data, isEdit, rowIndex) {
         data.tamanhos,
         data.material,
         data.descricao,
-        data.imagem1,
-        data.imagem2,
-        data.imagem3,
+        slot(0), slot(1), slot(2), slot(3), slot(4),
+        slot(5), slot(6), slot(7), slot(8), slot(9),
         data.link,
         data.precoDe,
         data.precoPor
     ];
 
-    // Colunas P e Q (depois do Desconto/coluna O)
+    // Colunas W e X (depois do Desconto/V)
     const valuesAposDesconto = [
-        data.estoque,
+        data.formaPagamento || '',
         data.status
     ];
 
-    // Edição: dois blocos separados, pulando a coluna O (Desconto, fórmula).
-    // Novo: tudo junto com Desconto vazio (Apps Script preenche a fórmula em O).
+    // Edição: dois blocos separados, pulando a coluna V (Desconto, fórmula).
+    // Novo: tudo junto com Desconto vazio (Apps Script preenche a fórmula em V).
     const payload = isEdit
         ? { action: 'update_skip_desconto', row: parseInt(rowIndex), valuesSemDesconto, valuesAposDesconto }
         : { action: 'append', values: [...valuesSemDesconto, '', ...valuesAposDesconto] };
@@ -1134,15 +2030,15 @@ async function saveToGoogleSheets(data, isEdit, rowIndex) {
 }
 
 // Envia qualquer payload ao Apps Script via iframe (contorna CORS)
+// Contador para gerar IDs únicos por chamada — evita que requisições paralelas/sequenciais
+// se cancelem mutuamente removendo iframe/form da chamada anterior.
+let _iframeReqSeq = 0;
+
 function enviarViaIframe(payload) {
     return new Promise((resolve, reject) => {
-        const iframeId = 'apps-script-iframe';
-        const formId   = 'apps-script-form';
-
-        ['apps-script-iframe', 'apps-script-form'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.remove();
-        });
+        const reqId = ++_iframeReqSeq;
+        const iframeId = `apps-script-iframe-${reqId}`;
+        const formId   = `apps-script-form-${reqId}`;
 
         const iframe = document.createElement('iframe');
         iframe.id = iframeId;
@@ -1193,15 +2089,18 @@ async function inactivateProduct(product) {
     
     try {
         const novoStatus = product._status.toLowerCase() === 'ativo' ? 'Inativo' : 'Ativo';
+        // 24 colunas (A..X) — preserva todas as 10 imagens, link, preços, desconto e forma de pagamento.
         await enviarViaIframe({
             action: 'update',
             row: product._rowIndex,
             values: [
                 product._id, product._nome, product._categoria, product._tipo,
                 product._cor, product._tamanhos, product._material, product._descricao,
-                product._imagem1, product._imagem2, product._imagem3, product._link,
-                product._precoDe, product._precoPor, product._desconto,
-                product._estoque, novoStatus
+                product._imagem1 || '', product._imagem2 || '', product._imagem3 || '',
+                product._imagem4 || '', product._imagem5 || '', product._imagem6 || '',
+                product._imagem7 || '', product._imagem8 || '', product._imagem9 || '', product._imagem10 || '',
+                product._link, product._precoDe, product._precoPor, product._desconto,
+                product._formaPagamento || '', novoStatus
             ]
         });
         showToast(`Produto ${novoStatus === 'Ativo' ? 'reativado' : 'inativado'}!`, 'success');
@@ -1738,23 +2637,84 @@ async function registrarHistorico(tipo, nomeProduto, detalhe) {
 // EXCLUIR PRODUTO
 // ============================================
 async function deleteProduct(product) {
-    if (!confirm(`⚠️ Tem certeza que deseja EXCLUIR o produto "${product._nome}"?\n\nEsta ação removerá a linha da planilha permanentemente.`)) return;
-    if (!confirm(`Confirmação final: excluir "${product._nome}" permanentemente?`)) return;
+    const ok = confirmarExclusaoForte(`Excluir o produto "${product._nome}"?`,
+        'Esta ação remove a linha da planilha E as imagens do servidor PERMANENTEMENTE. Não há como restaurar.');
+    if (!ok) return;
 
     try {
         await enviarViaIframe({ action: 'delete_row', row: product._rowIndex });
 
-        // Limpa as imagens do produto no R2 (best-effort, não bloqueia).
-        [product._imagem1, product._imagem2, product._imagem3]
-            .filter(Boolean)
-            .forEach(deleteR2File);
+        // Limpa as 10 imagens possíveis do produto no R2 (best-effort, não bloqueia).
+        (product._imagens || []).forEach(deleteR2File);
 
         showToast(`Produto "${product._nome}" excluído.`, 'success');
         registrarHistorico('Excluído', product._nome, 'Produto removido da planilha');
-        loadProducts();
+        // Reset completo da página após exclusão (mesmo comportamento do lote).
+        setTimeout(() => location.reload(), 800);
     } catch (error) {
         showToast('Erro ao excluir: ' + error.message, 'error');
     }
+}
+
+/**
+ * Confirmação dupla com texto-âncora: usuário precisa digitar EXCLUIR para validar.
+ * Garante que o usuário leia o aviso antes de confirmar exclusão permanente.
+ */
+function confirmarExclusaoForte(titulo, aviso) {
+    if (!confirm(`⚠️ ${titulo}\n\n${aviso}`)) return false;
+    const resposta = prompt(`Para confirmar a exclusão PERMANENTE, digite EXCLUIR no campo abaixo:`);
+    if (resposta === null) return false;
+    if (resposta.trim().toUpperCase() !== 'EXCLUIR') {
+        showToast('Exclusão cancelada — texto não conferiu.', 'error');
+        return false;
+    }
+    return true;
+}
+
+/**
+ * Exclui múltiplos produtos em lote (planilha + imagens R2).
+ * Usa confirmação reforçada e processa em ordem reversa pra preservar índices da planilha.
+ */
+async function deleteProductsBatch(products) {
+    if (!products.length) return;
+    const nomes = products.length <= 3
+        ? products.map(p => `"${p._nome}"`).join(', ')
+        : `${products.length} produtos selecionados`;
+    const ok = confirmarExclusaoForte(
+        `Excluir ${nomes}?`,
+        `${products.length} produto(s) e suas imagens serão removidos PERMANENTEMENTE da planilha e do servidor. Não há como restaurar.`
+    );
+    if (!ok) return;
+
+    // Ordena por _rowIndex DESC: deletar de baixo pra cima evita reindexação.
+    const ordenados = products.slice().sort((a, b) => b._rowIndex - a._rowIndex);
+    let sucesso = 0, erro = 0;
+    showToast(`Excluindo ${products.length} produto(s)...`, 'success');
+
+    for (const product of ordenados) {
+        try {
+            await enviarViaIframe({ action: 'delete_row', row: product._rowIndex });
+            (product._imagens || []).forEach(deleteR2File);
+            registrarHistorico('Excluído', product._nome, 'Lote — produto removido');
+            sucesso++;
+            // Pequeno respiro entre chamadas — Apps Script tem rate limit em rajadas.
+            await new Promise(r => setTimeout(r, 350));
+        } catch (e) {
+            erro++;
+            console.warn('Falha ao excluir', product._nome, e);
+        }
+    }
+
+    if (erro === 0) {
+        showToast(`${sucesso} produto(s) excluído(s) com sucesso.`, 'success');
+    } else {
+        showToast(`${sucesso} excluídos · ${erro} falharam.`, 'error');
+    }
+    _selecionados.clear();
+    atualizarBarraSelecao();
+    // Reset completo da página: garante que listagem, contadores, filtros e
+    // qualquer índice em cache fiquem 100% sincronizados com a planilha.
+    setTimeout(() => location.reload(), 800);
 }
 
 // ============================================
