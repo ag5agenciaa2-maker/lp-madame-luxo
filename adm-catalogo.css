@@ -101,12 +101,14 @@ body {
 
 .login-logo {
     margin-bottom: 24px;
+    text-align: center;
 }
 
 .login-logo img {
     max-width: 160px;
     height: auto;
     filter: brightness(1.1);
+    display: inline-block;
 }
 
 .login-card h1 {
@@ -1467,14 +1469,20 @@ body {
     flex-shrink: 0;
 }
 
-/* Checkmark sempre visível quando selecionado, lixeira só no hover. */
+/* Checkmark sempre visível quando selecionado. Lixeira aparece SOMENTE
+   quando o item está selecionado (assim o usuário sabe que pode "remover"
+   a seleção atual permanentemente). Em itens não-selecionados, fica oculta. */
 .csd-option-check { color: var(--admin-primary); }
 
 .csd-option-del {
     opacity: 0;
+    pointer-events: none;
     transition: opacity 0.15s, background 0.15s, color 0.15s;
 }
-.csd-option:hover .csd-option-del { opacity: 1; }
+.csd-option.is-selected .csd-option-del {
+    opacity: 1;
+    pointer-events: auto;
+}
 
 .csd-option-edit,
 .csd-option-del {
@@ -4223,15 +4231,19 @@ body.has-selection .prod-check,
         display: flex;
         flex-direction: column;
     }
-    .dm-edit-col--right { display: contents; }
-    .dm-edit-col--right > .dm-form-field:nth-child(1) { order: 1; } /* descrição */
-    .dm-edit-col--right > .dm-form-field:nth-child(2) { order: 2; } /* galeria */
+    /* Ordem mobile: dados básicos (nome, categoria, tipo, preços, material, cor,
+       tamanhos) → descrição → galeria → salvar.
+       A col-esquerda vem primeiro. A col-direita é "explodida" com display:contents
+       e seus filhos recebem order pra vir DEPOIS da col-esquerda. */
     .dm-edit-col--left {
-        order: 3;
+        order: 1;
         display: flex;
         flex-direction: column;
         gap: 12px;
     }
+    .dm-edit-col--right { display: contents; }
+    .dm-edit-col--right > .dm-form-field:nth-child(1) { order: 2; } /* descrição */
+    .dm-edit-col--right > .dm-form-field:nth-child(2) { order: 3; } /* galeria */
     .dm-edit-col--right > .dm-footer {
         order: 4;
         margin-top: 4px;
@@ -4323,13 +4335,15 @@ body.has-selection .prod-check,
         width: 16px !important;
         height: 16px !important;
     }
-    /* "Novo Produto" do header é levado pra baixo como FAB */
+    /* "Novo Produto" do header é levado pra baixo como FAB.
+       Posiciona à ESQUERDA pra não conflitar com o botão Sair do header
+       quando o usuário rola e ambos ficam visíveis ao mesmo tempo. */
     .header-actions #btn-novo-produto {
         position: fixed !important;
         bottom: 20px !important;
-        right: 20px !important;
+        left: 20px !important;
+        right: auto !important;
         top: auto !important;
-        left: auto !important;
         width: auto !important;
         max-width: none !important;
         min-width: 0 !important;
