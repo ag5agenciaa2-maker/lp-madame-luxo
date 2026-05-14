@@ -247,6 +247,22 @@ function showAdminPanel() {
     document.getElementById('admin-panel').hidden = false;
     loginEl.classList.add('hide');
     setTimeout(() => { loginEl.hidden = true; }, 500);
+    // No mobile, move o "+ Novo Produto" para o <body> e devolve ao header no desktop.
+    // Why: .admin-header tem backdrop-filter, criando stacking context que prende
+    // `position: fixed` ao header (bug visto no print mobile com o FAB no topo).
+    const syncFabPlacement = () => {
+        const fab = document.getElementById('btn-novo-produto');
+        if (!fab) return;
+        const headerActions = document.querySelector('.header-actions');
+        const isMobile = window.matchMedia('(max-width: 768px)').matches;
+        if (isMobile && fab.parentElement !== document.body) {
+            document.body.appendChild(fab);
+        } else if (!isMobile && headerActions && fab.parentElement !== headerActions) {
+            headerActions.appendChild(fab);
+        }
+    };
+    syncFabPlacement();
+    window.addEventListener('resize', syncFabPlacement);
 }
 
 // ============================================

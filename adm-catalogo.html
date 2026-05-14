@@ -12,8 +12,8 @@
         rel="stylesheet">
     <link rel="icon" href="assets/favicon-madame-luxo.ico" type="image/x-icon">
     <!-- style.css traz as classes .pmodal-* reutilizadas no detail modal admin. -->
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="adm-catalogo.css">
+    <link rel="stylesheet" href="style.css?v=20260514t2">
+    <link rel="stylesheet" href="adm-catalogo.css?v=20260514t2">
 </head>
 
 <body>
@@ -40,7 +40,10 @@
         <!-- Header -->
         <header class="admin-header">
             <div class="header-brand">
-                <img src="assets/logo-madame-luxo-desktop.webp" alt="Madame Luxo" width="140">
+                <picture>
+                    <source media="(max-width: 768px)" srcset="assets/logo-madame-luxo-mobile.webp">
+                    <img src="assets/logo-madame-luxo-desktop.webp" alt="Madame Luxo" width="140" height="40">
+                </picture>
                 <span class="header-badge">Admin</span>
             </div>
             <div class="header-actions">
@@ -448,7 +451,7 @@
     <!-- Toast Notifications -->
     <div id="toast-container" class="toast-container"></div>
 
-    <script src="adm-catalogo.js?v=20260514s"></script>
+    <script src="adm-catalogo.js?v=20260514t2"></script>
     <!-- Debug: verifica se o JS carregou corretamente -->
     <script>
         window.addEventListener('load', function () {
