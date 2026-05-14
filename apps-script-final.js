@@ -143,7 +143,23 @@ function handleSetValidation(payload) {
       throw new Error('values deve ser um array');
     }
 
-    // Deduplica, remove vazios, ordena
+    var ss = SpreadsheetApp.openById('13I0DBjImUK8R1rZe1Nt0FC-WzALALbkAencGH5HdsdA');
+    var sheet = ss.getSheets()[0];
+    var range = sheet.getRange(columnLetter + '2:' + columnLetter + '1000');
+
+    // Categoria (C) e Tipo (D) aceitam múltiplos valores por célula separados
+    // por vírgula (ex.: "Shorts, Bermudas"). A validação restrita
+    // requireValueInList trava a célula com strings CSV em algumas situações
+    // — limpamos a validação dessas colunas pra deixar livre, já que o admin
+    // é a interface principal de edição.
+    if (columnLetter === 'C' || columnLetter === 'D') {
+      range.clearDataValidations();
+      return ContentService.createTextOutput(JSON.stringify({
+        success: true, column: columnLetter, count: 0, note: 'csv-column-cleared'
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // Demais colunas (ex.: Status) mantêm o dropdown restrito.
     var unique = [];
     var seen = {};
     values.forEach(function(v) {
@@ -155,17 +171,12 @@ function handleSetValidation(payload) {
     });
     unique.sort(function(a, b) { return a.localeCompare(b, 'pt-BR'); });
 
-    var ss = SpreadsheetApp.openById('13I0DBjImUK8R1rZe1Nt0FC-WzALALbkAencGH5HdsdA');
-    var sheet = ss.getSheets()[0];
-
-    var range = sheet.getRange(columnLetter + '2:' + columnLetter + '1000');
-
     if (unique.length === 0) {
       range.clearDataValidations();
     } else {
       var rule = SpreadsheetApp.newDataValidation()
         .requireValueInList(unique, true) // true = mostra seta de dropdown
-        .setAllowInvalid(true)            // permite digitar valor fora da lista (mais flexível)
+        .setAllowInvalid(true)
         .build();
       range.setDataValidation(rule);
     }

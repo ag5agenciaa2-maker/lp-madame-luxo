@@ -1,16 +1,24 @@
 {
 	"folders": [
 		{
+			"name": "LP - Madame Luxo",
 			"path": "."
 		},
 		{
+			"name": "madame-luxo",
 			"path": "../../04 - Links 360/madame-luxo"
 		},
 		{
+			"name": "04 - Links 360",
 			"path": "../../04 - Links 360"
 		},
 		{
+			"name": "LP - Fabio Oliveira",
 			"path": "../LP - Fabio Oliveira"
+		},
+		{
+			"name": "LP - Gomes e Pimentel CG (Adv)",
+			"path": "../../03 - LP Concluídas/LP - Gomes e Pimentel CG (Adv)"
 		}
 	],
 	"settings": {

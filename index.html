@@ -19,9 +19,11 @@
     <meta name="geo.position" content="-22.9035;-43.2094">
     <meta name="ICBM" content="-22.9035, -43.2094">
 
-    <!-- Preloads Críticos (LCP) -->
-    <link rel="preload" href="assets/madame-luxo-hero-colecao-verde-menta.webp" as="image" fetchpriority="high">
-    <link rel="preload" href="style.min.css" as="style">
+    <!-- Preloads Críticos (LCP) - hero responsivo (mobile pega -small, desktop pega completo) -->
+    <link rel="preload" href="assets/madame-luxo-hero-colecao-verde-menta-small.webp" as="image" fetchpriority="high"
+        imagesrcset="assets/madame-luxo-hero-colecao-verde-menta-small.webp 600w, assets/madame-luxo-hero-colecao-verde-menta-medium.webp 900w, assets/madame-luxo-hero-colecao-verde-menta.webp 1200w"
+        imagesizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 600px">
+    <link rel="preload" href="style.min.css?v=20260514" as="style">
 
     <!-- Open Graph / Compartilhamento -->
     <meta property="og:site_name" content="Madame Luxo">
@@ -66,7 +68,7 @@
     </noscript>
 
     <!-- CSS principal minificado (bloqueante - necessário para LCP) -->
-    <link rel="stylesheet" href="style.min.css">
+    <link rel="stylesheet" href="style.min.css?v=20260514">
     <!-- CSS secundário minificado (non-blocking) -->
     <link rel="preload" href="cookie-banner.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="cookie-banner.min.css"></noscript>
@@ -374,9 +376,11 @@
                 </a>
             </div>
             <div class="hero-image-wrapper">
-                <img src="assets/madame-luxo-hero-colecao-verde-menta.webp"
+                <img src="assets/madame-luxo-hero-colecao-verde-menta-small.webp"
+                    srcset="assets/madame-luxo-hero-colecao-verde-menta-small.webp 600w, assets/madame-luxo-hero-colecao-verde-menta-medium.webp 900w, assets/madame-luxo-hero-colecao-verde-menta.webp 1200w"
+                    sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 600px"
                     alt="Modelos com looks verde menta da nova coleção Madame Luxo em ambiente externo ensolarado"
-                    class="hero-image" width="600" height="800" loading="eager" fetchpriority="high">
+                    class="hero-image" width="600" height="800" loading="eager" fetchpriority="high" decoding="async">
             </div>
         </div>
     </header>
@@ -459,7 +463,7 @@
             <div class="bento-grid" role="list" aria-label="Categorias de produtos">
                 <!-- Célula 1: Vestidos (span 2) -->
                 <article class="bento-cell bento-cell-large" role="listitem">
-                    <img src="assets/madame-luxo-vestido-longo-listrado-azul.webp"
+                    <img src="assets/madame-luxo-vestido-longo-listrado-azul.webp" srcset="assets/madame-luxo-vestido-longo-listrado-azul-400w.webp 400w, assets/madame-luxo-vestido-longo-listrado-azul.webp 800w" sizes="(max-width: 600px) 50vw, (max-width: 1024px) 33vw, 400px"
                         alt="Modelo usando vestido longo listrado azul e branco da coleção Madame Luxo"
                         class="bento-image bento-image--top" width="800" height="600" loading="lazy" decoding="async">
                     <div class="bento-overlay">
@@ -472,7 +476,7 @@
 
                 <!-- Célula 2: Blusas -->
                 <article class="bento-cell" role="listitem">
-                    <img src="assets/madame-luxo-blusas-decote-u-varias-cores.webp"
+                    <img src="assets/madame-luxo-blusas-decote-u-varias-cores.webp" srcset="assets/madame-luxo-blusas-decote-u-varias-cores-400w.webp 400w, assets/madame-luxo-blusas-decote-u-varias-cores.webp 800w" sizes="(max-width: 600px) 50vw, (max-width: 1024px) 33vw, 400px"
                         alt="Arara com blusas de diversas cores com decote elegante em destaque"
                         class="bento-image bento-image--top" width="400" height="600" loading="lazy" decoding="async">
                     <div class="bento-overlay">
@@ -485,7 +489,7 @@
 
                 <!-- Célula 3: Macacão -->
                 <article class="bento-cell" role="listitem">
-                    <img src="assets/madame-luxo-macacao-longo-azul-claro-plus-size.webp"
+                    <img src="assets/madame-luxo-macacao-longo-azul-claro-plus-size.webp" srcset="assets/madame-luxo-macacao-longo-azul-claro-plus-size-400w.webp 400w, assets/madame-luxo-macacao-longo-azul-claro-plus-size.webp 800w" sizes="(max-width: 600px) 50vw, (max-width: 1024px) 33vw, 400px"
                         alt="Modelos usando macacão longo azul claro com recortes da Madame Luxo"
                         class="bento-image bento-image--top" width="400" height="600" loading="lazy" decoding="async">
                     <div class="bento-overlay">
@@ -498,7 +502,7 @@
 
                 <!-- Célula 4: Saias (span 2 rows) -->
                 <article class="bento-cell bento-cell-tall" role="listitem">
-                    <img src="assets/madame-luxo-moda-feminina-marrom-plus-size.webp"
+                    <img src="assets/madame-luxo-moda-feminina-marrom-plus-size.webp" srcset="assets/madame-luxo-moda-feminina-marrom-plus-size-400w.webp 400w, assets/madame-luxo-moda-feminina-marrom-plus-size.webp 800w" sizes="(max-width: 600px) 50vw, (max-width: 1024px) 33vw, 400px"
                         alt="Modelos com conjuntos elegantes na cor marrom da coleção Madame Luxo"
                         class="bento-image bento-image--top" width="400" height="800" loading="lazy" decoding="async">
                     <div class="bento-overlay">
@@ -511,7 +515,7 @@
 
                 <!-- Célula 5: Bodys -->
                 <article class="bento-cell" role="listitem">
-                    <img src="assets/madame-luxo-conjunto-resort-preto-tela-plus-size.webp"
+                    <img src="assets/madame-luxo-conjunto-resort-preto-tela-plus-size.webp" srcset="assets/madame-luxo-conjunto-resort-preto-tela-plus-size-400w.webp 400w, assets/madame-luxo-conjunto-resort-preto-tela-plus-size.webp 800w" sizes="(max-width: 600px) 50vw, (max-width: 1024px) 33vw, 400px"
                         alt="Modelo plus size usando conjunto resort preto em tela da Madame Luxo"
                         class="bento-image bento-image--top" width="400" height="600" loading="lazy" decoding="async">
                     <div class="bento-overlay">
@@ -524,7 +528,7 @@
 
                 <!-- Célula 6: Plus Size (span 2) -->
                 <article class="bento-cell bento-cell-large" role="listitem">
-                    <img src="assets/madame-luxo-vestido-midi-plus-size-verde.webp"
+                    <img src="assets/madame-luxo-vestido-midi-plus-size-verde.webp" srcset="assets/madame-luxo-vestido-midi-plus-size-verde-400w.webp 400w, assets/madame-luxo-vestido-midi-plus-size-verde.webp 800w" sizes="(max-width: 600px) 50vw, (max-width: 1024px) 33vw, 400px"
                         alt="Modelo plus size usando vestido midi verde com recortes da Madame Luxo"
                         class="bento-image bento-image--top" width="800" height="600" loading="lazy" decoding="async">
                     <div class="bento-overlay">
@@ -537,7 +541,7 @@
 
                 <!-- Célula 7: Cropped -->
                 <article class="bento-cell" role="listitem">
-                    <img src="assets/madame-luxo-conjunto-croche-off-white-feminino.webp"
+                    <img src="assets/madame-luxo-conjunto-croche-off-white-feminino.webp" srcset="assets/madame-luxo-conjunto-croche-off-white-feminino-400w.webp 400w, assets/madame-luxo-conjunto-croche-off-white-feminino.webp 800w" sizes="(max-width: 600px) 50vw, (max-width: 1024px) 33vw, 400px"
                         alt="Modelo usando conjunto de crochê off-white da boutique Madame Luxo"
                         class="bento-image bento-image--top" width="400" height="600" loading="lazy" decoding="async">
                     <div class="bento-overlay">
@@ -550,7 +554,7 @@
 
                 <!-- Célula 8: Shorts (Agora Wide para equilibrar) -->
                 <article class="bento-cell bento-cell-wide" role="listitem">
-                    <img src="assets/madame-luxo-shorts-estilo-casual.webp"
+                    <img src="assets/madame-luxo-shorts-estilo-casual.webp" srcset="assets/madame-luxo-shorts-estilo-casual-400w.webp 400w, assets/madame-luxo-shorts-estilo-casual.webp 800w" sizes="(max-width: 600px) 50vw, (max-width: 1024px) 33vw, 400px"
                         alt="Shorts femininos de linho da coleção de verão Madame Luxo em estilo casual chique"
                         class="bento-image" width="800" height="400" loading="lazy" decoding="async">
                     <div class="bento-overlay">
@@ -563,7 +567,7 @@
 
                 <!-- Célula 9: Acessórios -->
                 <article class="bento-cell bento-cell-wide" role="listitem">
-                    <img src="assets/madame-luxo-acessorios-luxo-feminino.webp"
+                    <img src="assets/madame-luxo-acessorios-luxo-feminino.webp" srcset="assets/madame-luxo-acessorios-luxo-feminino-400w.webp 400w, assets/madame-luxo-acessorios-luxo-feminino.webp 800w" sizes="(max-width: 600px) 50vw, (max-width: 1024px) 33vw, 400px"
                         alt="Acessórios de luxo, incluindo bolsa de couro e joias minimalistas da Madame Luxo"
                         class="bento-image" width="800" height="400" loading="lazy" decoding="async">
                     <div class="bento-overlay">
@@ -576,7 +580,7 @@
 
                 <!-- Célula 10: Macaquinho (Agora normal para respeitar o 9:16) -->
                 <article class="bento-cell" role="listitem">
-                    <img src="assets/madame-luxo-macaquinho-rosa-feminino.webp"
+                    <img src="assets/madame-luxo-macaquinho-rosa-feminino.webp" srcset="assets/madame-luxo-macaquinho-rosa-feminino-400w.webp 400w, assets/madame-luxo-macaquinho-rosa-feminino.webp 800w" sizes="(max-width: 600px) 50vw, (max-width: 1024px) 33vw, 400px"
                         alt="Modelo usando macaquinho rosa elegante da coleção Madame Luxo"
                         class="bento-image bento-image--top" width="400" height="600" loading="lazy" decoding="async">
                     <div class="bento-overlay">
@@ -589,7 +593,7 @@
 
                 <!-- Célula 11: Looks Completos -->
                 <article class="bento-cell bento-cell-wide" role="listitem">
-                    <img src="assets/fachada-loja-madame-luxo-vitrine.webp"
+                    <img src="assets/fachada-loja-madame-luxo-vitrine.webp" srcset="assets/fachada-loja-madame-luxo-vitrine-400w.webp 400w, assets/fachada-loja-madame-luxo-vitrine.webp 800w" sizes="(max-width: 600px) 50vw, (max-width: 1024px) 33vw, 400px"
                         alt="Fachada da loja Madame Luxo with vitrine exhibiting dresses from the new collection and modern logo"
                         class="bento-image" width="800" height="400" loading="lazy" decoding="async">
                     <div class="bento-overlay">
@@ -602,7 +606,7 @@
 
                 <!-- Célula 12: Nova Coleção -->
                 <article class="bento-cell" role="listitem">
-                    <img src="assets/madame-luxo-vestido-trico-listrado-colorido.webp"
+                    <img src="assets/madame-luxo-vestido-trico-listrado-colorido.webp" srcset="assets/madame-luxo-vestido-trico-listrado-colorido-400w.webp 400w, assets/madame-luxo-vestido-trico-listrado-colorido.webp 800w" sizes="(max-width: 600px) 50vw, (max-width: 1024px) 33vw, 400px"
                         alt="Modelo usando vestido de tricô listrado colorido da coleção Madame Luxo"
                         class="bento-image" width="400" height="600" loading="lazy" decoding="async">
                     <div class="bento-overlay">
@@ -1242,14 +1246,14 @@
         <div class="pmodal-box"><button class="pmodal-close" aria-label="Fechar">✕</button>
             <div class="pmodal-inner">
                 <div class="pmodal-galeria">
-                    <img src="https://images.unsplash.com/photo-1509631179647-0177331693ae?w=700"
+                    <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1509631179647-0177331693ae?w=700" loading="lazy" decoding="async"
                         alt="Macacão Pantacourt Linho Bege" class="pmodal-img-main" id="pimg-p4">
                     <div class="pmodal-thumbs">
-                        <img src="https://images.unsplash.com/photo-1509631179647-0177331693ae?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1509631179647-0177331693ae?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb active" alt="" onclick="mlTrocarImg('pimg-p4',this)">
-                        <img src="https://images.unsplash.com/photo-1581044777550-4cfa60707c03?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1581044777550-4cfa60707c03?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p4',this)">
-                        <img src="https://images.unsplash.com/photo-1603217040830-03a7c59a8cde?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1603217040830-03a7c59a8cde?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p4',this)">
                     </div>
                 </div>
@@ -1282,14 +1286,14 @@
         <div class="pmodal-box"><button class="pmodal-close" aria-label="Fechar">✕</button>
             <div class="pmodal-inner">
                 <div class="pmodal-galeria">
-                    <img src="https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=700"
+                    <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=700" loading="lazy" decoding="async"
                         alt="Macacão Curto Jeans Destroyed" class="pmodal-img-main" id="pimg-p5">
                     <div class="pmodal-thumbs">
-                        <img src="https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb active" alt="" onclick="mlTrocarImg('pimg-p5',this)">
-                        <img src="https://images.unsplash.com/photo-1542295669297-4d352b042bca?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1542295669297-4d352b042bca?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p5',this)">
-                        <img src="https://images.unsplash.com/photo-1580657018950-c7f7d3b8a3b8?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1580657018950-c7f7d3b8a3b8?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p5',this)">
                     </div>
                 </div>
@@ -1323,14 +1327,14 @@
         <div class="pmodal-box"><button class="pmodal-close" aria-label="Fechar">✕</button>
             <div class="pmodal-inner">
                 <div class="pmodal-galeria">
-                    <img src="https://images.unsplash.com/photo-1562157873-818bc0726f68?w=700"
+                    <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1562157873-818bc0726f68?w=700" loading="lazy" decoding="async"
                         alt="Macacão Ciganinha Estampado" class="pmodal-img-main" id="pimg-p6">
                     <div class="pmodal-thumbs">
-                        <img src="https://images.unsplash.com/photo-1562157873-818bc0726f68?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1562157873-818bc0726f68?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb active" alt="" onclick="mlTrocarImg('pimg-p6',this)">
-                        <img src="https://images.unsplash.com/photo-1571513722275-4b41940f54b8?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1571513722275-4b41940f54b8?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p6',this)">
-                        <img src="https://images.unsplash.com/photo-1555069519-127aadedf1ee?w=700" class="pmodal-thumb"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1555069519-127aadedf1ee?w=700" loading="lazy" decoding="async" class="pmodal-thumb"
                             alt="" onclick="mlTrocarImg('pimg-p6',this)">
                     </div>
                 </div>
@@ -1364,14 +1368,14 @@
         <div class="pmodal-box"><button class="pmodal-close" aria-label="Fechar">✕</button>
             <div class="pmodal-inner">
                 <div class="pmodal-galeria">
-                    <img src="https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=700"
+                    <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=700" loading="lazy" decoding="async"
                         alt="Conjunto Saia + Blusa Linho Rosa" class="pmodal-img-main" id="pimg-p7">
                     <div class="pmodal-thumbs">
-                        <img src="https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb active" alt="" onclick="mlTrocarImg('pimg-p7',this)">
-                        <img src="https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p7',this)">
-                        <img src="https://images.unsplash.com/photo-1559582798-678dfc71ccd8?w=700" class="pmodal-thumb"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1559582798-678dfc71ccd8?w=700" loading="lazy" decoding="async" class="pmodal-thumb"
                             alt="" onclick="mlTrocarImg('pimg-p7',this)">
                     </div>
                 </div>
@@ -1404,14 +1408,14 @@
         <div class="pmodal-box"><button class="pmodal-close" aria-label="Fechar">✕</button>
             <div class="pmodal-inner">
                 <div class="pmodal-galeria">
-                    <img src="https://images.unsplash.com/photo-1551803091-e20673f15770?w=700"
+                    <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1551803091-e20673f15770?w=700" loading="lazy" decoding="async"
                         alt="Saia Midi Plissada Verde Oliva" class="pmodal-img-main" id="pimg-p8">
                     <div class="pmodal-thumbs">
-                        <img src="https://images.unsplash.com/photo-1551803091-e20673f15770?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1551803091-e20673f15770?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb active" alt="" onclick="mlTrocarImg('pimg-p8',this)">
-                        <img src="https://images.unsplash.com/photo-1583846552345-0e86aa9f8e58?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1583846552345-0e86aa9f8e58?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p8',this)">
-                        <img src="https://images.unsplash.com/photo-1594938298603-c8148c4b4d5c?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1594938298603-c8148c4b4d5c?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p8',this)">
                     </div>
                 </div>
@@ -1445,14 +1449,14 @@
         <div class="pmodal-box"><button class="pmodal-close" aria-label="Fechar">✕</button>
             <div class="pmodal-inner">
                 <div class="pmodal-galeria">
-                    <img src="https://images.unsplash.com/photo-1586771107445-d3ca888129ff?w=700"
+                    <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1586771107445-d3ca888129ff?w=700" loading="lazy" decoding="async"
                         alt="Conjunto Saia Jeans + Top Cropped" class="pmodal-img-main" id="pimg-p9">
                     <div class="pmodal-thumbs">
-                        <img src="https://images.unsplash.com/photo-1586771107445-d3ca888129ff?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1586771107445-d3ca888129ff?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb active" alt="" onclick="mlTrocarImg('pimg-p9',this)">
-                        <img src="https://images.unsplash.com/photo-1596178060671-7a80dc8059ea?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1596178060671-7a80dc8059ea?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p9',this)">
-                        <img src="https://images.unsplash.com/photo-1594938298603-c8148c4b4d5c?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1594938298603-c8148c4b4d5c?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p9',this)">
                     </div>
                 </div>
@@ -1485,14 +1489,14 @@
         <div class="pmodal-box"><button class="pmodal-close" aria-label="Fechar">✕</button>
             <div class="pmodal-inner">
                 <div class="pmodal-galeria">
-                    <img src="https://images.unsplash.com/photo-1602488283247-29bf1f5b148a?w=700"
+                    <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1602488283247-29bf1f5b148a?w=700" loading="lazy" decoding="async"
                         alt="Body Manga Longa Canelado Preto" class="pmodal-img-main" id="pimg-p10">
                     <div class="pmodal-thumbs">
-                        <img src="https://images.unsplash.com/photo-1602488283247-29bf1f5b148a?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1602488283247-29bf1f5b148a?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb active" alt="" onclick="mlTrocarImg('pimg-p10',this)">
-                        <img src="https://images.unsplash.com/photo-1612336307429-8a898d10e223?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1612336307429-8a898d10e223?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p10',this)">
-                        <img src="https://images.unsplash.com/photo-1618354691438-25bc04584c23?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1618354691438-25bc04584c23?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p10',this)">
                     </div>
                 </div>
@@ -1526,14 +1530,14 @@
         <div class="pmodal-box"><button class="pmodal-close" aria-label="Fechar">✕</button>
             <div class="pmodal-inner">
                 <div class="pmodal-galeria">
-                    <img src="https://images.unsplash.com/photo-1566479179817-f0eed2c3fbf2?w=700"
+                    <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1566479179817-f0eed2c3fbf2?w=700" loading="lazy" decoding="async"
                         alt="Body Decote V Renda Off White" class="pmodal-img-main" id="pimg-p11">
                     <div class="pmodal-thumbs">
-                        <img src="https://images.unsplash.com/photo-1566479179817-f0eed2c3fbf2?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1566479179817-f0eed2c3fbf2?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb active" alt="" onclick="mlTrocarImg('pimg-p11',this)">
-                        <img src="https://images.unsplash.com/photo-1509631179647-0177331693ae?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1509631179647-0177331693ae?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p11',this)">
-                        <img src="https://images.unsplash.com/photo-1571513722275-4b41940f54b8?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1571513722275-4b41940f54b8?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p11',this)">
                     </div>
                 </div>
@@ -1567,14 +1571,14 @@
         <div class="pmodal-box"><button class="pmodal-close" aria-label="Fechar">✕</button>
             <div class="pmodal-inner">
                 <div class="pmodal-galeria">
-                    <img src="https://images.unsplash.com/photo-1518611012118-696072aa579a?w=700"
+                    <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1518611012118-696072aa579a?w=700" loading="lazy" decoding="async"
                         alt="Body Alcinha Fitness Compressão" class="pmodal-img-main" id="pimg-p12">
                     <div class="pmodal-thumbs">
-                        <img src="https://images.unsplash.com/photo-1518611012118-696072aa579a?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1518611012118-696072aa579a?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb active" alt="" onclick="mlTrocarImg('pimg-p12',this)">
-                        <img src="https://images.unsplash.com/photo-1598638741073-e2a3c5e2f4f7?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1598638741073-e2a3c5e2f4f7?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p12',this)">
-                        <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p12',this)">
                     </div>
                 </div>
@@ -1608,14 +1612,14 @@
         <div class="pmodal-box"><button class="pmodal-close" aria-label="Fechar">✕</button>
             <div class="pmodal-inner">
                 <div class="pmodal-galeria">
-                    <img src="https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?w=700"
+                    <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?w=700" loading="lazy" decoding="async"
                         alt="Cropped Tricô Manga Curta Caramelo" class="pmodal-img-main" id="pimg-p13">
                     <div class="pmodal-thumbs">
-                        <img src="https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb active" alt="" onclick="mlTrocarImg('pimg-p13',this)">
-                        <img src="https://images.unsplash.com/photo-1594938298603-c8148c4b4d5c?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1594938298603-c8148c4b4d5c?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p13',this)">
-                        <img src="https://images.unsplash.com/photo-1559582798-678dfc71ccd8?w=700" class="pmodal-thumb"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1559582798-678dfc71ccd8?w=700" loading="lazy" decoding="async" class="pmodal-thumb"
                             alt="" onclick="mlTrocarImg('pimg-p13',this)">
                     </div>
                 </div>
@@ -1649,14 +1653,14 @@
         <div class="pmodal-box"><button class="pmodal-close" aria-label="Fechar">✕</button>
             <div class="pmodal-inner">
                 <div class="pmodal-galeria">
-                    <img src="https://images.unsplash.com/photo-1578632749014-ca77efd052eb?w=700"
+                    <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1578632749014-ca77efd052eb?w=700" loading="lazy" decoding="async"
                         alt="Cropped Estampado Tie Dye" class="pmodal-img-main" id="pimg-p14">
                     <div class="pmodal-thumbs">
-                        <img src="https://images.unsplash.com/photo-1578632749014-ca77efd052eb?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1578632749014-ca77efd052eb?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb active" alt="" onclick="mlTrocarImg('pimg-p14',this)">
-                        <img src="https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=700" class="pmodal-thumb"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=700" loading="lazy" decoding="async" class="pmodal-thumb"
                             alt="" onclick="mlTrocarImg('pimg-p14',this)">
-                        <img src="https://images.unsplash.com/photo-1580657018950-c7f7d3b8a3b8?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1580657018950-c7f7d3b8a3b8?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p14',this)">
                     </div>
                 </div>
@@ -1690,14 +1694,14 @@
         <div class="pmodal-box"><button class="pmodal-close" aria-label="Fechar">✕</button>
             <div class="pmodal-inner">
                 <div class="pmodal-galeria">
-                    <img src="https://images.unsplash.com/photo-1576185850227-1f72b7f8d483?w=700"
+                    <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1576185850227-1f72b7f8d483?w=700" loading="lazy" decoding="async"
                         alt="Cropped Alcinha Satin Acetinado" class="pmodal-img-main" id="pimg-p15">
                     <div class="pmodal-thumbs">
-                        <img src="https://images.unsplash.com/photo-1576185850227-1f72b7f8d483?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1576185850227-1f72b7f8d483?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb active" alt="" onclick="mlTrocarImg('pimg-p15',this)">
-                        <img src="https://images.unsplash.com/photo-1585487000160-6ebcfceb0d03?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1585487000160-6ebcfceb0d03?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p15',this)">
-                        <img src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p15',this)">
                     </div>
                 </div>
@@ -1731,14 +1735,14 @@
         <div class="pmodal-box"><button class="pmodal-close" aria-label="Fechar">✕</button>
             <div class="pmodal-inner">
                 <div class="pmodal-galeria">
-                    <img src="https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=700"
+                    <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=700" loading="lazy" decoding="async"
                         alt="Short Jeans Cintura Alta Destroyed" class="pmodal-img-main" id="pimg-p19">
                     <div class="pmodal-thumbs">
-                        <img src="https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb active" alt="" onclick="mlTrocarImg('pimg-p19',this)">
-                        <img src="https://images.unsplash.com/photo-1542295669297-4d352b042bca?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1542295669297-4d352b042bca?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p19',this)">
-                        <img src="https://images.unsplash.com/photo-1586771107445-d3ca888129ff?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1586771107445-d3ca888129ff?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p19',this)">
                     </div>
                 </div>
@@ -1771,14 +1775,14 @@
         <div class="pmodal-box"><button class="pmodal-close" aria-label="Fechar">✕</button>
             <div class="pmodal-inner">
                 <div class="pmodal-galeria">
-                    <img src="https://images.unsplash.com/photo-1596783074918-c84cb06531ca?w=700"
+                    <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1596783074918-c84cb06531ca?w=700" loading="lazy" decoding="async"
                         alt="Short de Alfaiataria Marrom" class="pmodal-img-main" id="pimg-p20">
                     <div class="pmodal-thumbs">
-                        <img src="https://images.unsplash.com/photo-1596783074918-c84cb06531ca?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1596783074918-c84cb06531ca?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb active" alt="" onclick="mlTrocarImg('pimg-p20',this)">
-                        <img src="https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=700" class="pmodal-thumb"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=700" loading="lazy" decoding="async" class="pmodal-thumb"
                             alt="" onclick="mlTrocarImg('pimg-p20',this)">
-                        <img src="https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p20',this)">
                     </div>
                 </div>
@@ -1812,14 +1816,14 @@
         <div class="pmodal-box"><button class="pmodal-close" aria-label="Fechar">✕</button>
             <div class="pmodal-inner">
                 <div class="pmodal-galeria">
-                    <img src="https://images.unsplash.com/photo-1518611012118-696072aa579a?w=700"
+                    <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1518611012118-696072aa579a?w=700" loading="lazy" decoding="async"
                         alt="Short Fitness Suplex Cintura Alta" class="pmodal-img-main" id="pimg-p21">
                     <div class="pmodal-thumbs">
-                        <img src="https://images.unsplash.com/photo-1518611012118-696072aa579a?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1518611012118-696072aa579a?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb active" alt="" onclick="mlTrocarImg('pimg-p21',this)">
-                        <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p21',this)">
-                        <img src="https://images.unsplash.com/photo-1598638741073-e2a3c5e2f4f7?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1598638741073-e2a3c5e2f4f7?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p21',this)">
                     </div>
                 </div>
@@ -1853,14 +1857,14 @@
         <div class="pmodal-box"><button class="pmodal-close" aria-label="Fechar">✕</button>
             <div class="pmodal-inner">
                 <div class="pmodal-galeria">
-                    <img src="https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=700"
+                    <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=700" loading="lazy" decoding="async"
                         alt="Bolsa Tiracolo Couro Caramelo" class="pmodal-img-main" id="pimg-p22">
                     <div class="pmodal-thumbs">
-                        <img src="https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb active" alt="" onclick="mlTrocarImg('pimg-p22',this)">
-                        <img src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p22',this)">
-                        <img src="https://images.unsplash.com/photo-1591561954557-26941169b49e?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1591561954557-26941169b49e?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p22',this)">
                     </div>
                 </div>
@@ -1894,14 +1898,14 @@
         <div class="pmodal-box"><button class="pmodal-close" aria-label="Fechar">✕</button>
             <div class="pmodal-inner">
                 <div class="pmodal-galeria">
-                    <img src="https://images.unsplash.com/photo-1624222247344-550fb60583dc?w=700"
+                    <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1624222247344-550fb60583dc?w=700" loading="lazy" decoding="async"
                         alt="Cinto Largo Trançado Preto" class="pmodal-img-main" id="pimg-p23">
                     <div class="pmodal-thumbs">
-                        <img src="https://images.unsplash.com/photo-1624222247344-550fb60583dc?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1624222247344-550fb60583dc?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb active" alt="" onclick="mlTrocarImg('pimg-p23',this)">
-                        <img src="https://images.unsplash.com/photo-1598638741073-e2a3c5e2f4f7?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1598638741073-e2a3c5e2f4f7?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p23',this)">
-                        <img src="https://images.unsplash.com/photo-1571513722275-4b41940f54b8?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1571513722275-4b41940f54b8?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p23',this)">
                     </div>
                 </div>
@@ -1935,14 +1939,14 @@
         <div class="pmodal-box"><button class="pmodal-close" aria-label="Fechar">✕</button>
             <div class="pmodal-inner">
                 <div class="pmodal-galeria">
-                    <img src="https://images.unsplash.com/photo-1601924921557-45e6dea0a157?w=700"
+                    <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1601924921557-45e6dea0a157?w=700" loading="lazy" decoding="async"
                         alt="Lenço Seda Floral Estampado" class="pmodal-img-main" id="pimg-p24">
                     <div class="pmodal-thumbs">
-                        <img src="https://images.unsplash.com/photo-1601924921557-45e6dea0a157?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1601924921557-45e6dea0a157?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb active" alt="" onclick="mlTrocarImg('pimg-p24',this)">
-                        <img src="https://images.unsplash.com/photo-1612423284934-2850a4ea6b0f?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1612423284934-2850a4ea6b0f?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p24',this)">
-                        <img src="https://images.unsplash.com/photo-1559582798-678dfc71ccd8?w=700" class="pmodal-thumb"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1559582798-678dfc71ccd8?w=700" loading="lazy" decoding="async" class="pmodal-thumb"
                             alt="" onclick="mlTrocarImg('pimg-p24',this)">
                     </div>
                 </div>
@@ -1976,14 +1980,14 @@
         <div class="pmodal-box"><button class="pmodal-close" aria-label="Fechar">✕</button>
             <div class="pmodal-inner">
                 <div class="pmodal-galeria">
-                    <img src="https://images.unsplash.com/photo-1562157873-818bc0726f68?w=700"
+                    <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1562157873-818bc0726f68?w=700" loading="lazy" decoding="async"
                         alt="Macaquinho Floral Alça Fina" class="pmodal-img-main" id="pimg-p25">
                     <div class="pmodal-thumbs">
-                        <img src="https://images.unsplash.com/photo-1562157873-818bc0726f68?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1562157873-818bc0726f68?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb active" alt="" onclick="mlTrocarImg('pimg-p25',this)">
-                        <img src="https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p25',this)">
-                        <img src="https://images.unsplash.com/photo-1583846552345-0e86aa9f8e58?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1583846552345-0e86aa9f8e58?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p25',this)">
                     </div>
                 </div>
@@ -2017,14 +2021,14 @@
         <div class="pmodal-box"><button class="pmodal-close" aria-label="Fechar">✕</button>
             <div class="pmodal-inner">
                 <div class="pmodal-galeria">
-                    <img src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=700"
+                    <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=700" loading="lazy" decoding="async"
                         alt="Macaquinho Canelado Liso" class="pmodal-img-main" id="pimg-p26">
                     <div class="pmodal-thumbs">
-                        <img src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb active" alt="" onclick="mlTrocarImg('pimg-p26',this)">
-                        <img src="https://images.unsplash.com/photo-1602488283247-29bf1f5b148a?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1602488283247-29bf1f5b148a?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p26',this)">
-                        <img src="https://images.unsplash.com/photo-1618354691438-25bc04584c23?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1618354691438-25bc04584c23?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p26',this)">
                     </div>
                 </div>
@@ -2058,14 +2062,14 @@
         <div class="pmodal-box"><button class="pmodal-close" aria-label="Fechar">✕</button>
             <div class="pmodal-inner">
                 <div class="pmodal-galeria">
-                    <img src="https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=700"
+                    <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=700" loading="lazy" decoding="async"
                         alt="Macaquinho Jeans Short Destroyed" class="pmodal-img-main" id="pimg-p27">
                     <div class="pmodal-thumbs">
-                        <img src="https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb active" alt="" onclick="mlTrocarImg('pimg-p27',this)">
-                        <img src="https://images.unsplash.com/photo-1542295669297-4d352b042bca?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1542295669297-4d352b042bca?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p27',this)">
-                        <img src="https://images.unsplash.com/photo-1555069519-127aadedf1ee?w=700" class="pmodal-thumb"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1555069519-127aadedf1ee?w=700" loading="lazy" decoding="async" class="pmodal-thumb"
                             alt="" onclick="mlTrocarImg('pimg-p27',this)">
                     </div>
                 </div>
@@ -2100,14 +2104,14 @@
             <button class="pmodal-close" aria-label="Fechar">✕</button>
             <div class="pmodal-inner">
                 <div class="pmodal-galeria">
-                    <img src="https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=700"
+                    <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=700" loading="lazy" decoding="async"
                         alt="Vestido Midi Floral Manga Longa" class="pmodal-img-main" id="pimg-p1">
                     <div class="pmodal-thumbs">
-                        <img src="https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb active" alt="" onclick="mlTrocarImg('pimg-p1',this)">
-                        <img src="https://images.unsplash.com/photo-1596783074918-c84cb06531ca?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1596783074918-c84cb06531ca?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p1',this)">
-                        <img src="https://images.unsplash.com/photo-1583846552345-0e86aa9f8e58?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1583846552345-0e86aa9f8e58?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p1',this)">
                     </div>
                 </div>
@@ -2145,14 +2149,14 @@
             <button class="pmodal-close" aria-label="Fechar">✕</button>
             <div class="pmodal-inner">
                 <div class="pmodal-galeria">
-                    <img src="https://images.unsplash.com/photo-1585487000160-6ebcfceb0d03?w=700"
+                    <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1585487000160-6ebcfceb0d03?w=700" loading="lazy" decoding="async"
                         alt="Vestido Longo Ombro a Ombro Listra" class="pmodal-img-main" id="pimg-p2">
                     <div class="pmodal-thumbs">
-                        <img src="https://images.unsplash.com/photo-1585487000160-6ebcfceb0d03?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1585487000160-6ebcfceb0d03?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb active" alt="" onclick="mlTrocarImg('pimg-p2',this)">
-                        <img src="https://images.unsplash.com/photo-1551803091-e20673f15770?w=700" class="pmodal-thumb"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1551803091-e20673f15770?w=700" loading="lazy" decoding="async" class="pmodal-thumb"
                             alt="" onclick="mlTrocarImg('pimg-p2',this)">
-                        <img src="https://images.unsplash.com/photo-1576185850227-1f72b7f8d483?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1576185850227-1f72b7f8d483?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p2',this)">
                     </div>
                 </div>
@@ -2190,14 +2194,14 @@
             <button class="pmodal-close" aria-label="Fechar">✕</button>
             <div class="pmodal-inner">
                 <div class="pmodal-galeria">
-                    <img src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=700"
+                    <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=700" loading="lazy" decoding="async"
                         alt="Vestido Curto Babado Festa" class="pmodal-img-main" id="pimg-p3">
                     <div class="pmodal-thumbs">
-                        <img src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb active" alt="" onclick="mlTrocarImg('pimg-p3',this)">
-                        <img src="https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p3',this)">
-                        <img src="https://images.unsplash.com/photo-1554412933-514a83d2f3c8?w=700" class="pmodal-thumb"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1554412933-514a83d2f3c8?w=700" loading="lazy" decoding="async" class="pmodal-thumb"
                             alt="" onclick="mlTrocarImg('pimg-p3',this)">
                     </div>
                 </div>
@@ -2235,14 +2239,14 @@
             <button class="pmodal-close" aria-label="Fechar">✕</button>
             <div class="pmodal-inner">
                 <div class="pmodal-galeria">
-                    <img src="https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=700"
+                    <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=700" loading="lazy" decoding="async"
                         alt="Vestido Floral Plus Size Midi" class="pmodal-img-main" id="pimg-p16">
                     <div class="pmodal-thumbs">
-                        <img src="https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb active" alt="" onclick="mlTrocarImg('pimg-p16',this)">
-                        <img src="https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p16',this)">
-                        <img src="https://images.unsplash.com/photo-1554412933-514a83d2f3c8?w=700" class="pmodal-thumb"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1554412933-514a83d2f3c8?w=700" loading="lazy" decoding="async" class="pmodal-thumb"
                             alt="" onclick="mlTrocarImg('pimg-p16',this)">
                     </div>
                 </div>
@@ -2280,14 +2284,14 @@
             <button class="pmodal-close" aria-label="Fechar">✕</button>
             <div class="pmodal-inner">
                 <div class="pmodal-galeria">
-                    <img src="https://images.unsplash.com/photo-1594938298603-c8148c4b4d5c?w=700"
+                    <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1594938298603-c8148c4b4d5c?w=700" loading="lazy" decoding="async"
                         alt="Calça Wide Leg Plus Size Preta" class="pmodal-img-main" id="pimg-p17">
                     <div class="pmodal-thumbs">
-                        <img src="https://images.unsplash.com/photo-1594938298603-c8148c4b4d5c?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1594938298603-c8148c4b4d5c?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb active" alt="" onclick="mlTrocarImg('pimg-p17',this)">
-                        <img src="https://images.unsplash.com/photo-1509631179647-0177331693ae?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1509631179647-0177331693ae?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p17',this)">
-                        <img src="https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p17',this)">
                     </div>
                 </div>
@@ -2325,14 +2329,14 @@
             <button class="pmodal-close" aria-label="Fechar">✕</button>
             <div class="pmodal-inner">
                 <div class="pmodal-galeria">
-                    <img src="https://images.unsplash.com/photo-1566479179817-f0eed2c3fbf2?w=700"
+                    <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1566479179817-f0eed2c3fbf2?w=700" loading="lazy" decoding="async"
                         alt="Blusa Plus Size Manga Bufante Estampada" class="pmodal-img-main" id="pimg-p18">
                     <div class="pmodal-thumbs">
-                        <img src="https://images.unsplash.com/photo-1566479179817-f0eed2c3fbf2?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1566479179817-f0eed2c3fbf2?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb active" alt="" onclick="mlTrocarImg('pimg-p18',this)">
-                        <img src="https://images.unsplash.com/photo-1551803091-e20673f15770?w=700" class="pmodal-thumb"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1551803091-e20673f15770?w=700" loading="lazy" decoding="async" class="pmodal-thumb"
                             alt="" onclick="mlTrocarImg('pimg-p18',this)">
-                        <img src="https://images.unsplash.com/photo-1562157873-818bc0726f68?w=700" class="pmodal-thumb"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1562157873-818bc0726f68?w=700" loading="lazy" decoding="async" class="pmodal-thumb"
                             alt="" onclick="mlTrocarImg('pimg-p18',this)">
                     </div>
                 </div>
@@ -2370,14 +2374,14 @@
             <button class="pmodal-close" aria-label="Fechar">✕</button>
             <div class="pmodal-inner">
                 <div class="pmodal-galeria">
-                    <img src="https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=700"
+                    <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=700" loading="lazy" decoding="async"
                         alt="Vestido Midi Cetim Nova Coleção" class="pmodal-img-main" id="pimg-p28">
                     <div class="pmodal-thumbs">
-                        <img src="https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb active" alt="" onclick="mlTrocarImg('pimg-p28',this)">
-                        <img src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p28',this)">
-                        <img src="https://images.unsplash.com/photo-1576185850227-1f72b7f8d483?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1576185850227-1f72b7f8d483?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p28',this)">
                     </div>
                 </div>
@@ -2415,14 +2419,14 @@
             <button class="pmodal-close" aria-label="Fechar">✕</button>
             <div class="pmodal-inner">
                 <div class="pmodal-galeria">
-                    <img src="https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=700"
+                    <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=700" loading="lazy" decoding="async"
                         alt="Conjunto Linho Calça + Cropped" class="pmodal-img-main" id="pimg-p29">
                     <div class="pmodal-thumbs">
-                        <img src="https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb active" alt="" onclick="mlTrocarImg('pimg-p29',this)">
-                        <img src="https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p29',this)">
-                        <img src="https://images.unsplash.com/photo-1559582798-678dfc71ccd8?w=700" class="pmodal-thumb"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1559582798-678dfc71ccd8?w=700" loading="lazy" decoding="async" class="pmodal-thumb"
                             alt="" onclick="mlTrocarImg('pimg-p29',this)">
                     </div>
                 </div>
@@ -2460,14 +2464,14 @@
             <button class="pmodal-close" aria-label="Fechar">✕</button>
             <div class="pmodal-inner">
                 <div class="pmodal-galeria">
-                    <img src="https://images.unsplash.com/photo-1566479179817-f0eed2c3fbf2?w=700"
+                    <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1566479179817-f0eed2c3fbf2?w=700" loading="lazy" decoding="async"
                         alt="Blusa Transparência Tule Bordado" class="pmodal-img-main" id="pimg-p30">
                     <div class="pmodal-thumbs">
-                        <img src="https://images.unsplash.com/photo-1566479179817-f0eed2c3fbf2?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1566479179817-f0eed2c3fbf2?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb active" alt="" onclick="mlTrocarImg('pimg-p30',this)">
-                        <img src="https://images.unsplash.com/photo-1578632749014-ca77efd052eb?w=700"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1578632749014-ca77efd052eb?w=700" loading="lazy" decoding="async"
                             class="pmodal-thumb" alt="" onclick="mlTrocarImg('pimg-p30',this)">
-                        <img src="https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=700" class="pmodal-thumb"
+                        <img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1 1%22%3E%3C/svg%3E" data-src="https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=700" loading="lazy" decoding="async" class="pmodal-thumb"
                             alt="" onclick="mlTrocarImg('pimg-p30',this)">
                     </div>
                 </div>
@@ -2618,7 +2622,7 @@
 
                 <!-- Card Solução -->
                 <article class="card-solution" role="article">
-                    <img src="assets/madame-luxo-blusas-decote-u-varias-cores.webp"
+                    <img src="assets/madame-luxo-blusas-decote-u-varias-cores.webp" srcset="assets/madame-luxo-blusas-decote-u-varias-cores-400w.webp 400w, assets/madame-luxo-blusas-decote-u-varias-cores.webp 800w" sizes="(max-width: 600px) 50vw, (max-width: 1024px) 33vw, 400px"
                         alt="Arara de roupas premium organizada representando a curadoria exclusiva Madame Luxo"
                         width="600" height="400" loading="lazy" decoding="async">
                     <h3>O Estilo Madame Luxo</h3>
@@ -3649,18 +3653,45 @@
     </div>
 
     <!-- Lighthouse/PageSpeed fix: defer scripts minificados (TBT/FCP) -->
-    <script src="script.min.js" defer></script>
+    <script src="script.min.js?v=20260514c" defer></script>
     <script src="cookie-banner.min.js" defer></script>
 
-    <!-- Lazy load de vídeos e iframes (PageSpeed/LCP/INP fix) -->
+    <!-- Lazy load de vídeos, iframes e imagens de modais (PageSpeed/LCP/INP fix) -->
     <script>
     (function(){
+        // Ativa data-src→src de imagens dentro de um modal quando ele abre
+        function ativarImgsModal(modal){
+            if (!modal) return;
+            modal.querySelectorAll('img[data-src]').forEach(function(img){
+                img.src = img.dataset.src;
+                img.removeAttribute('data-src');
+            });
+        }
+        window.mlAtivarImgsModal = ativarImgsModal;
+        // Observa cada modal: quando perde 'hidden' OU ganha .ml-open, ativa as imagens
+        if ('MutationObserver' in window) {
+            var modalMo = new MutationObserver(function(muts){
+                muts.forEach(function(m){
+                    var t = m.target;
+                    if (t.classList && t.classList.contains('pmodal-overlay')) {
+                        if (!t.hasAttribute('hidden') || t.classList.contains('ml-open')) {
+                            ativarImgsModal(t);
+                        }
+                    }
+                });
+            });
+            document.querySelectorAll('.pmodal-overlay').forEach(function(o){
+                modalMo.observe(o, { attributes:true, attributeFilter:['hidden','class'] });
+            });
+        }
+
         if (!('IntersectionObserver' in window)) {
             // Fallback: carrega tudo imediato
             document.querySelectorAll('video.lazy-video[data-src]').forEach(function(v){
                 var s=document.createElement('source');s.src=v.dataset.src;s.type='video/mp4';v.appendChild(s);v.load();v.play().catch(function(){});
             });
             document.querySelectorAll('iframe[data-src]').forEach(function(f){f.src=f.dataset.src;});
+            document.querySelectorAll('.pmodal-overlay img[data-src]').forEach(function(i){i.src=i.dataset.src;i.removeAttribute('data-src');});
             return;
         }
         var videoObs = new IntersectionObserver(function(entries, obs){

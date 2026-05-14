@@ -742,6 +742,9 @@ window.openWhatsApp = (message = '') => {
             // ── Ativa aba por nome de categoria ──
             function ativarAba(cat) {
                 document.querySelectorAll('.cat-tab').forEach(function (t) {
+                    // Pula o "Ver Categorias" (cat-more-btn): é dropdown, não aba.
+                    // aria-selected em button com aria-haspopup é inválido (Lighthouse a11y).
+                    if (t.classList.contains('cat-more-btn')) return;
                     var ativo = t.dataset.cat === cat;
                     t.classList.toggle('active', ativo);
                     t.setAttribute('aria-selected', ativo ? 'true' : 'false');
@@ -1036,6 +1039,19 @@ window.openWhatsApp = (message = '') => {
                         headers.forEach((header, index) => {
                             obj[header] = row[index] || '';
                         });
+                        // Fallbacks posicionais — protegem contra headers duplicados
+                        // ou renomeados na planilha (ex.: se a coluna D for renomeada
+                        // pra "Categoria *" por engano, o `obj['categoria *']` viria
+                        // sobrescrito pela coluna D. Os fallbacks abaixo garantem que
+                        // categoria/tipo sempre apontem para a coluna certa).
+                        // Ordem real da planilha (24 colunas): 0:ID 1:Nome 2:Categoria 3:Tipo
+                        // 4:Cor 5:Tamanhos 6:Material 7:Descrição 8..17:Imagem1..10
+                        // 18:Link 19:PrecoDe 20:PrecoPor 21:Desconto 22:Forma 23:Status
+                        obj['__id']        = row[0] || '';
+                        obj['__nome']      = row[1] || '';
+                        obj['__categoria'] = row[2] || '';
+                        obj['__tipo']      = row[3] || '';
+                        obj['__status']    = row[23] || '';
                         data.push(obj);
                     }
                 }
@@ -1249,8 +1265,8 @@ window.openWhatsApp = (message = '') => {
 
                 // Mapeamento das colunas da planilha do usuário
                 const nome = produto['nome da peca / conjunto *'] || produto['nome'];
-                const categoria = produto['categoria *'] || produto['categoria'];
-                const tipo = produto['tipo de produto *'] || produto['tipo'];
+                const categoria = produto['__categoria'] || produto['categoria *'] || produto['categoria'];
+                const tipo = produto['__tipo'] || produto['tipo de produto *'] || produto['tipo'];
                 const precoDe = formatarPreco(produto['preco de (r$)'] || produto['precode']);
                 const precoPor = formatarPreco(produto['preco por (r$) *'] || produto['precopor']);
                 const desconto = produto['desconto %'] || produto['desconto'];
@@ -1308,8 +1324,15 @@ window.openWhatsApp = (message = '') => {
                 // ── Carrossel mobile (mostra só se houver imagens reais, e respeita 1 imagem) ──
                 montarCarrosselMobile(semImagemReal ? [FALLBACK_IMG] : imagens, nome);
 
-                // Breadcrumb mostra só a categoria; tipo agora vai na grid de specs.
-                document.getElementById('pmodal-cat-dinamico').innerText = categoria;
+                // Breadcrumb mostra a(s) categoria(s); tipo agora vai na grid de specs.
+                // Produtos podem estar em várias categorias (ex.: "Shorts, Bermudas").
+                const catEl = document.getElementById('pmodal-cat-dinamico');
+                const cats = String(categoria || '').split(/[,;|]/).map(c => c.trim()).filter(Boolean);
+                if (cats.length > 1) {
+                    catEl.innerHTML = cats.map(c => `<span class="pmodal-cat-pill">${c}</span>`).join('');
+                } else {
+                    catEl.innerText = cats[0] || '';
+                }
                 document.getElementById('pmodal-nome-dinamico').innerText = nome;
 
                 const precoDeElem = document.getElementById('pmodal-de-dinamico');
@@ -1342,11 +1365,16 @@ window.openWhatsApp = (message = '') => {
                     }
                 }
 
-                const statusProd = (produto['status *'] || produto['status'] || '').toLowerCase().trim();
+                const statusProd = (produto['__status'] || produto['status *'] || produto['status'] || '').toLowerCase().trim();
                 const esgotadoProd = statusProd === 'esgotado';
 
                 document.getElementById('pmodal-texto-dinamico').innerText = descricao || '';
-                document.getElementById('pmodal-tipo-dinamico').innerText = tipo || 'Não informado';
+                // Tipo aceita múltiplos valores separados por vírgula. Diferente de
+                // cor/tamanho (que são selecionáveis), tipo é só informativo —
+                // mostramos como texto inline separado por "·" pra ficar minimalista.
+                const tipoEl = document.getElementById('pmodal-tipo-dinamico');
+                const tipos = String(tipo || '').split(/[,;|]/).map(t => t.trim()).filter(Boolean);
+                tipoEl.innerText = tipos.length ? tipos.join(' · ') : 'Não informado';
                 document.getElementById('pmodal-mat-dinamico').innerText = material || 'Não informado';
                 document.getElementById('pmodal-est-dinamico').innerText = estoque || 'Não informado';
 
@@ -1488,9 +1516,11 @@ window.openWhatsApp = (message = '') => {
             // True se o produto atende ao filtro chip selecionado.
             function produtoNoFiltro(prod, filtro) {
                 if (filtro === 'todos') return true;
-                const status = (prod['status *'] || prod['status'] || '').toLowerCase();
-                const categoria = (prod['categoria *'] || prod['categoria'] || '').toLowerCase();
-                const tipo = (prod['tipo de produto *'] || prod['tipo'] || '').toLowerCase();
+                const status = (prod['__status'] || prod['status *'] || prod['status'] || '').toLowerCase();
+                // categoria pode ser uma lista CSV — mantemos o blob lowercase para checagens de "includes"
+                // continuarem funcionando mesmo com várias categorias na mesma célula.
+                const categoria = (prod['__categoria'] || prod['categoria *'] || prod['categoria'] || '').toLowerCase();
+                const tipo = (prod['__tipo'] || prod['tipo de produto *'] || prod['tipo'] || '').toLowerCase();
                 const tamanhos = (prod['tamanhos disponiveis *'] || prod['tamanhos'] || '').toLowerCase();
 
                 if (filtro === 'ofertas') {
@@ -1521,21 +1551,26 @@ window.openWhatsApp = (message = '') => {
                 const panelsEl = document.getElementById('catPanels');
                 if (!tabsEl || !panelsEl) return;
 
-                // Coleta: slug → { titulo, count }
+                // Coleta: slug → { titulo, count }.
+                // Um produto pode ter várias categorias separadas por vírgula (ex.: "Shorts, Bermudas")
+                // — entra em todas as abas correspondentes e é contado em cada uma.
                 const mapa = new Map();
                 let countOfertas = 0;
                 produtos.forEach(prod => {
-                    const status = (prod['status *'] || prod['status'] || '').toLowerCase();
+                    const status = (prod['__status'] || prod['status *'] || prod['status'] || '').toLowerCase();
                     if (status === 'inativo') return;
                     const isOferta = status === 'oferta especial' || status === 'últimas unidades' || status === 'ultimas unidades';
                     if (isOferta) countOfertas++;
 
-                    const cat = prod['categoria *'] || prod['categoria'];
-                    if (!cat) return;
-                    const slug = categoriaParaSlug(cat);
-                    if (!slug) return;
-                    if (!mapa.has(slug)) mapa.set(slug, { titulo: tituloCategoria(cat), count: 0 });
-                    mapa.get(slug).count++;
+                    const catRaw = prod['__categoria'] || prod['categoria *'] || prod['categoria'];
+                    if (!catRaw) return;
+                    const cats = String(catRaw).split(/[,;|]/).map(c => c.trim()).filter(Boolean);
+                    cats.forEach(cat => {
+                        const slug = categoriaParaSlug(cat);
+                        if (!slug) return;
+                        if (!mapa.has(slug)) mapa.set(slug, { titulo: tituloCategoria(cat), count: 0 });
+                        mapa.get(slug).count++;
+                    });
                 });
 
                 // Ordena por contagem desc → mais procurados ficam visíveis nas tabs.
@@ -1958,11 +1993,12 @@ window.openWhatsApp = (message = '') => {
                 });
 
                 produtos.forEach(prod => {
-                    if (prod['status *'] && prod['status *'].toLowerCase() === 'inativo') return;
+                    const _statusBlob = prod['__status'] || prod['status *'] || prod['status'] || '';
+                    if (_statusBlob && _statusBlob.toLowerCase() === 'inativo') return;
 
                     const nome = prod['nome da peca / conjunto *'] || prod['nome'];
-                    const categoria = prod['categoria *'] || prod['categoria'];
-                    const tipo = prod['tipo de produto *'] || prod['tipo'];
+                    const categoria = prod['__categoria'] || prod['categoria *'] || prod['categoria'];
+                    const tipo = prod['__tipo'] || prod['tipo de produto *'] || prod['tipo'];
                     const precoDe = formatarPreco(prod['preco de (r$)'] || prod['precode']);
                     const precoPor = formatarPreco(prod['preco por (r$) *'] || prod['precopor']);
                     const desconto = prod['desconto %'] || prod['desconto'];
@@ -1978,7 +2014,12 @@ window.openWhatsApp = (message = '') => {
 
                     if (!categoria) return;
 
-                    const catKey = categoriaParaSlug(categoria);
+                    // Produto pode pertencer a várias categorias (ex.: "Shorts, Bermudas").
+                    // Renderiza o card em cada panel correspondente.
+                    const catSlugs = String(categoria).split(/[,;|]/)
+                        .map(c => categoriaParaSlug(c.trim()))
+                        .filter(Boolean);
+                    const catKey = catSlugs[0];
 
                     const panel = document.getElementById(`panel-${catKey}`);
                     if (!panel) return;
@@ -1996,7 +2037,7 @@ window.openWhatsApp = (message = '') => {
                         .toLowerCase()
                         .normalize('NFD').replace(/[̀-ͯ]/g, '');
                     card.dataset.search = searchBlob;
-                    const status = (prod['status *'] || prod['status'] || '').toLowerCase().trim();
+                    const status = (prod['__status'] || prod['status *'] || prod['status'] || '').toLowerCase().trim();
                     const esgotado = status === 'esgotado';
                     const isOfertaDestaque = status === 'últimas unidades' || status === 'ultimas unidades' || status === 'oferta especial';
 
@@ -2060,6 +2101,20 @@ window.openWhatsApp = (message = '') => {
                             abrirModalDinamico(prod);
                         });
                     };
+
+                    // ── Categorias secundárias: clona o card pra cada panel adicional ──
+                    // Produto com "Shorts, Bermudas" aparece em ambas as abas.
+                    for (let s = 1; s < catSlugs.length; s++) {
+                        const slug = catSlugs[s];
+                        if (!slug || slug === catKey) continue;
+                        const panelExtra = document.getElementById(`panel-${slug}`);
+                        if (!panelExtra) continue;
+                        const gridExtra = panelExtra.querySelector('.cat-grid');
+                        if (!gridExtra) continue;
+                        const cardExtra = card.cloneNode(true);
+                        bindCardClicks(cardExtra);
+                        gridExtra.appendChild(cardExtra);
+                    }
 
                     // ── Aba "Todos": clona todos os produtos pra essa aba ──
                     const panelTodos = document.getElementById('panel-todos');

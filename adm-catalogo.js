@@ -268,11 +268,20 @@ async function loadProducts() {
         allProducts = parseCSV(csvText);
         filteredProducts = [...allProducts];
 
-        // Extrai valores únicos da planilha para popular os seletores
-        _configDados.tipos = [...new Set(allProducts.map(p => p._tipo).filter(Boolean))].sort();
+        // Extrai valores únicos da planilha para popular os seletores.
+        // Categoria/Tipo aceitam múltiplos valores separados por vírgula na mesma célula
+        // (ex.: "Shorts, Bermudas") — quebramos cada item e listamos individualmente.
+        // Também quebra eventuais entradas CSV que tenham sobrado no default ou de
+        // versões antigas (ex.: "Plus Size, Acessórios, Teste" como item único).
+        // Sempre faz UNION com o estado atual pra preservar tipos/categorias adicionados
+        // manualmente que ainda não foram salvos em nenhum produto.
+        _configDados.tipos = [...new Set([
+            ...(_configDados.tipos || []).flatMap(t => csdSplit(t)),
+            ...allProducts.flatMap(p => p._tipos || csdSplit(p._tipo))
+        ])].sort();
         _configDados.categorias = [...new Set([
-            ..._configDados.categorias,
-            ...allProducts.map(p => p._categoria).filter(Boolean)
+            ..._configDados.categorias.flatMap(c => csdSplit(c)),
+            ...allProducts.flatMap(p => p._categorias || csdSplit(p._categoria))
         ])].sort();
         _configDados.status = [...new Set([
             ..._configDados.status,
@@ -329,7 +338,11 @@ function parseCSV(text) {
         product._id       = values[0] || '';
         product._nome     = values[1] || '';
         product._categoria= values[2] || '';
+        // Lista normalizada: cada categoria/tipo da célula vira um item do array.
+        // A planilha guarda múltiplos valores separados por vírgula (ex.: "Shorts, Bermudas").
+        product._categorias = csdSplit(product._categoria);
         product._tipo     = values[3] || '';
+        product._tipos    = csdSplit(product._tipo);
         product._cor      = values[4] || '';
         product._tamanhos = values[5] || '';
         product._material = values[6] || '';
@@ -402,7 +415,8 @@ function updateStats() {
     const total = allProducts.length;
     const ativos = allProducts.filter(p => ['ativo', 'oferta especial', 'últimas unidades'].includes(p._status.toLowerCase())).length;
     const inativos = allProducts.filter(p => ['inativo', 'esgotado'].includes(p._status.toLowerCase())).length;
-    const categorias = new Set(allProducts.map(p => p._categoria)).size;
+    // Conta categorias únicas considerando que cada produto pode estar em várias.
+    const categorias = new Set(allProducts.flatMap(p => p._categorias || csdSplit(p._categoria))).size;
     
     document.getElementById('stat-total').textContent = total;
     document.getElementById('stat-ativos').textContent = ativos;
@@ -499,10 +513,18 @@ function renderTable() {
                         <span class="prod-card-nome-text">${escapeHtml(product._nome)}</span>
                         ${tagInlineHtml}
                     </div>
-                    <div class="prod-card-tipo">${escapeHtml(product._tipo)}</div>
+                    <div class="prod-card-tipo">${
+                        (product._tipos && product._tipos.length
+                            ? product._tipos
+                            : csdSplit(product._tipo)
+                        ).map(t => `<span class="prod-tipo-pill">${escapeHtml(t)}</span>`).join('') || '—'
+                    }</div>
                 </div>
                 <div class="prod-list-cat">
-                    <span class="prod-categoria">${escapeHtml(product._categoria)}</span>
+                    ${(product._categorias && product._categorias.length
+                        ? product._categorias
+                        : csdSplit(product._categoria)
+                      ).map(c => `<span class="prod-categoria">${escapeHtml(c)}</span>`).join('') || '<span class="prod-categoria">—</span>'}
                 </div>
                 <div class="prod-list-preco">
                     ${product._precoDe ? `<span class="prod-preco-de">R$ ${product._precoDe}</span>` : ''}
@@ -526,7 +548,12 @@ function renderTable() {
                 </div>
                 <div class="prod-card-body">
                     <div class="prod-card-nome">${escapeHtml(product._nome)}</div>
-                    <div class="prod-card-tipo">${escapeHtml(product._categoria)}</div>
+                    <div class="prod-card-tipo">${
+                        (product._categorias && product._categorias.length
+                            ? product._categorias
+                            : csdSplit(product._categoria)
+                        ).map(c => `<span class="prod-card-cat-pill">${escapeHtml(c)}</span>`).join('') || '—'
+                    }</div>
                     <div class="prod-card-precos">
                         ${product._precoDe ? `<span class="prod-preco-de">R$ ${product._precoDe}</span>` : ''}
                         <span class="prod-preco-por">R$ ${product._precoPor || '-'}</span>
@@ -642,7 +669,12 @@ function openDetailModal(product, opts = {}) {
 
                     <!-- ═══════════════════ MODO VISUALIZAÇÃO ═══════════════════ -->
                     <div class="dm-view-mode">
-                        <span class="pmodal-cat">${escapeHtml(product._categoria || '')}</span>
+                        <span class="pmodal-cat">${
+                            (product._categorias && product._categorias.length
+                                ? product._categorias
+                                : csdSplit(product._categoria)
+                            ).map(c => `<span class="pmodal-cat-pill">${escapeHtml(c)}</span>`).join('') || ''
+                        }</span>
                         <h2 class="pmodal-nome">${escapeHtml(product._nome)}</h2>
 
                         ${statusKey === 'esgotado' ? `
@@ -666,7 +698,15 @@ function openDetailModal(product, opts = {}) {
                         ${product._descricao ? `<p class="pmodal-texto">${escapeHtml(product._descricao)}</p>` : ''}
 
                         <div class="pmodal-specs">
-                            <div class="pmodal-spec"><span class="pspec-l">Tipo</span><span class="pspec-v">${escapeHtml(product._tipo || 'Não informado')}</span></div>
+                            <div class="pmodal-spec"><span class="pspec-l">Tipo</span><span class="pspec-v">${
+                                (() => {
+                                    const tipos = (product._tipos && product._tipos.length)
+                                        ? product._tipos
+                                        : csdSplit(product._tipo);
+                                    if (tipos.length === 0) return 'Não informado';
+                                    return escapeHtml(tipos.join(' · '));
+                                })()
+                            }</span></div>
                             <div class="pmodal-spec"><span class="pspec-l">Material</span><span class="pspec-v">${escapeHtml(product._material || 'Não informado')}</span></div>
                             <div class="pmodal-spec"><span class="pspec-l">Cor</span><span class="pspec-v">${cores.length <= 1
                                 ? escapeHtml(cores[0] || 'Não informado')
@@ -682,7 +722,14 @@ function openDetailModal(product, opts = {}) {
                         <div class="dm-quick-bar">
                             <div class="dm-quick-status" data-current="${escapeAttr(product._status || '')}">
                                 <span class="dm-quick-status-label">Status</span>
-                                <select class="dm-quick-status-select" id="dm-quick-status-select"></select>
+                                <div class="dm-quick-status-wrap" id="dm-quick-status-wrap">
+                                    <button type="button" class="dm-quick-status-btn" id="dm-quick-status-btn" aria-haspopup="listbox" aria-expanded="false">
+                                        <span class="dm-quick-status-dot" id="dm-quick-status-dot"></span>
+                                        <span class="dm-quick-status-text" id="dm-quick-status-text">—</span>
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="dm-quick-status-caret"><polyline points="6 9 12 15 18 9"/></svg>
+                                    </button>
+                                    <div class="dm-quick-status-menu" id="dm-quick-status-menu" role="listbox" hidden></div>
+                                </div>
                             </div>
                             <button type="button" class="pmodal-cta dm-edit-btn">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4z"/></svg>
@@ -710,14 +757,16 @@ function openDetailModal(product, opts = {}) {
                                 </label>
 
                                 <div class="dm-form-row">
-                                    <label class="dm-form-field">
+                                    <div class="dm-form-field">
                                         <span class="dm-form-label">Categoria *</span>
-                                        <select class="dm-input dm-select" data-key="categoria"></select>
-                                    </label>
-                                    <label class="dm-form-field">
+                                        <input type="hidden" data-key="categoria">
+                                        <div class="dm-chips-field" data-chips="categoria"></div>
+                                    </div>
+                                    <div class="dm-form-field">
                                         <span class="dm-form-label">Tipo</span>
-                                        <select class="dm-input dm-select" data-key="tipo"></select>
-                                    </label>
+                                        <input type="hidden" data-key="tipo">
+                                        <div class="dm-chips-field" data-chips="tipo"></div>
+                                    </div>
                                 </div>
 
                                 <div class="dm-form-row">
@@ -816,49 +865,8 @@ function openDetailModal(product, opts = {}) {
     btnCancel.addEventListener('click', () => sairModoEdicao(overlay, product));
     btnSave.addEventListener('click', () => salvarEdicaoInline(overlay, product, fechar));
 
-    // Quick status (barra de ação rápida — view mode).
-    const quickStatusSel = overlay.querySelector('#dm-quick-status-select');
-    if (quickStatusSel) {
-        const statusList = _configDados.status || [];
-        quickStatusSel.innerHTML = statusList.map(s =>
-            `<option value="${escapeAttr(s)}" ${s === product._status ? 'selected' : ''}>${escapeHtml(s)}</option>`
-        ).join('');
-        // Aplica classe pelo status atual (cor do fundo da pill).
-        const aplicarCorStatus = () => {
-            const k = (quickStatusSel.value || '').toLowerCase();
-            const info = STATUS_MAP[k] || { cls: 'status-inativo' };
-            quickStatusSel.className = `dm-quick-status-select ${info.cls}`;
-        };
-        aplicarCorStatus();
-        quickStatusSel.addEventListener('change', async () => {
-            const novoStatus = quickStatusSel.value;
-            quickStatusSel.disabled = true;
-            try {
-                await enviarViaIframe({
-                    action: 'update',
-                    row: product._rowIndex,
-                    values: [
-                        product._id, product._nome, product._categoria, product._tipo,
-                        product._cor, product._tamanhos, product._material, product._descricao,
-                        product._imagem1 || '', product._imagem2 || '', product._imagem3 || '',
-                        product._imagem4 || '', product._imagem5 || '', product._imagem6 || '',
-                        product._imagem7 || '', product._imagem8 || '', product._imagem9 || '', product._imagem10 || '',
-                        product._link, product._precoDe, product._precoPor, product._desconto,
-                        product._formaPagamento || '', novoStatus
-                    ]
-                });
-                product._status = novoStatus;
-                aplicarCorStatus();
-                showToast(`Status: ${novoStatus}`, 'success');
-                registrarHistorico('Status', product._nome, `Status alterado para ${novoStatus}`);
-                setTimeout(() => location.reload(), 600);
-            } catch (err) {
-                showToast('Erro ao alterar status: ' + err.message, 'error');
-            } finally {
-                quickStatusSel.disabled = false;
-            }
-        });
-    }
+    // ── Quick status (custom dropdown estilizado, view mode) ──
+    montarQuickStatus(overlay, product);
 
     // ── Thumbs (linha única) ──
     const thumbsEl = overlay.querySelector('#dm-thumbs');
@@ -906,6 +914,106 @@ function openDetailModal(product, opts = {}) {
 let _dmEditCards = [];
 let _dmEditIdSeq = 0;
 
+// Custom dropdown do quick-status (substitui o <select> nativo no view-mode).
+// Aplica a classe de cor do STATUS_MAP no botão pra acompanhar o tom (verde/cinza/rosa…).
+function montarQuickStatus(overlay, product) {
+    const wrap = overlay.querySelector('#dm-quick-status-wrap');
+    const btn = overlay.querySelector('#dm-quick-status-btn');
+    const text = overlay.querySelector('#dm-quick-status-text');
+    const dot = overlay.querySelector('#dm-quick-status-dot');
+    const menu = overlay.querySelector('#dm-quick-status-menu');
+    if (!wrap || !btn || !text || !menu) return;
+
+    const statusList = _configDados.status || [];
+    let atual = product._status || (statusList[0] || '');
+
+    function aplicarCor() {
+        const k = (atual || '').toLowerCase();
+        const info = STATUS_MAP[k] || { cls: 'status-inativo' };
+        btn.className = `dm-quick-status-btn ${info.cls}`;
+        if (dot) dot.className = `dm-quick-status-dot ${info.cls}`;
+        text.textContent = atual || 'Selecione';
+    }
+
+    function renderMenu() {
+        menu.innerHTML = statusList.map(s => {
+            const k = (s || '').toLowerCase();
+            const info = STATUS_MAP[k] || { cls: 'status-inativo' };
+            const isSel = s === atual;
+            return `<div class="dm-quick-status-opt${isSel ? ' is-selected' : ''}" data-value="${escapeAttr(s)}" role="option" aria-selected="${isSel}">
+                <span class="dm-quick-status-dot ${info.cls}"></span>
+                <span class="dm-quick-status-opt-label">${escapeHtml(s)}</span>
+                ${isSel ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+            </div>`;
+        }).join('');
+
+        menu.querySelectorAll('.dm-quick-status-opt').forEach(opt => {
+            opt.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const novo = opt.dataset.value;
+                if (novo === atual) { fecharMenu(); return; }
+                aplicarMudanca(novo);
+            });
+        });
+    }
+
+    function abrirMenu() {
+        renderMenu();
+        menu.hidden = false;
+        wrap.classList.add('is-open');
+        btn.setAttribute('aria-expanded', 'true');
+    }
+    function fecharMenu() {
+        menu.hidden = true;
+        wrap.classList.remove('is-open');
+        btn.setAttribute('aria-expanded', 'false');
+    }
+
+    async function aplicarMudanca(novoStatus) {
+        const anterior = atual;
+        atual = novoStatus;
+        aplicarCor();
+        fecharMenu();
+        btn.disabled = true;
+        try {
+            await enviarViaIframe({
+                action: 'update',
+                row: product._rowIndex,
+                values: [
+                    product._id, product._nome, product._categoria, product._tipo,
+                    product._cor, product._tamanhos, product._material, product._descricao,
+                    product._imagem1 || '', product._imagem2 || '', product._imagem3 || '',
+                    product._imagem4 || '', product._imagem5 || '', product._imagem6 || '',
+                    product._imagem7 || '', product._imagem8 || '', product._imagem9 || '', product._imagem10 || '',
+                    product._link, product._precoDe, product._precoPor, product._desconto,
+                    product._formaPagamento || '', novoStatus
+                ]
+            });
+            product._status = novoStatus;
+            showToast(`Status: ${novoStatus}`, 'success');
+            registrarHistorico('Status', product._nome, `Status alterado para ${novoStatus}`);
+            setTimeout(() => location.reload(), 600);
+        } catch (err) {
+            atual = anterior;
+            aplicarCor();
+            showToast('Erro ao alterar status: ' + err.message, 'error');
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (menu.hidden) abrirMenu();
+        else fecharMenu();
+    });
+    document.addEventListener('click', (e) => {
+        if (!wrap.contains(e.target)) fecharMenu();
+    });
+
+    aplicarCor();
+}
+
 function entrarModoEdicao(overlay, product) {
     const detalhes = overlay.querySelector('.admin-detalhes');
     const viewMode = overlay.querySelector('.dm-view-mode');
@@ -917,7 +1025,7 @@ function entrarModoEdicao(overlay, product) {
     viewMode.hidden = true;
     editMode.hidden = false;
 
-    // Popula selects (categoria, tipo, status).
+    // Popula select de status (single).
     const fillSelect = (key, lista, valorAtual, placeholder) => {
         const sel = editMode.querySelector(`select[data-key="${key}"]`);
         if (!sel) return;
@@ -926,9 +1034,11 @@ function entrarModoEdicao(overlay, product) {
         ).join('');
         sel.innerHTML = (placeholder ? `<option value="">${placeholder}</option>` : '') + opts;
     };
-    fillSelect('categoria', _configDados.categorias, product._categoria, '— escolha —');
-    fillSelect('tipo', _configDados.tipos, product._tipo, '— sem tipo —');
     fillSelect('status', _configDados.status, product._status);
+
+    // Popula campos multi-select inline (chips + busca) para categoria e tipo.
+    montarDmChips(overlay, 'categoria', _configDados.categorias, product._categorias || csdSplit(product._categoria), 'Buscar ou adicionar categoria...');
+    montarDmChips(overlay, 'tipo',      _configDados.tipos,      product._tipos      || csdSplit(product._tipo),      'Buscar ou adicionar tipo...');
 
     // Popula galeria editável com as imagens atuais.
     _dmEditCards = (product._imagens || []).filter(Boolean).map(url => ({
@@ -936,6 +1046,135 @@ function entrarModoEdicao(overlay, product) {
     }));
     _dmEditRender(overlay);
     _dmEditLigarDropzone(overlay);
+}
+
+// Cria um campo inline de chips (multi-select) dentro do modo de edição.
+// `lista` é a fonte de opções, `selecionados` o estado inicial. Atualiza
+// o input hidden `[data-key="${key}"]` com os valores separados por ", ".
+function montarDmChips(overlay, key, lista, selecionados, placeholder) {
+    const wrap = overlay.querySelector(`.dm-chips-field[data-chips="${key}"]`);
+    const hidden = overlay.querySelector(`[data-key="${key}"]`);
+    if (!wrap || !hidden) return;
+
+    // Estado local — não usa _csdState pra não conflitar com o form principal.
+    const state = {
+        sel: Array.isArray(selecionados) ? selecionados.slice() : csdSplit(selecionados),
+        opts: Array.isArray(lista) ? lista.slice() : [],
+        termo: ''
+    };
+
+    const norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+    function syncHidden() {
+        hidden.value = state.sel.join(', ');
+    }
+
+    function render() {
+        const pillsHtml = state.sel.map(v =>
+            `<span class="csd-pill csd-pill--inline">${escapeHtml(v)}<button type="button" class="csd-pill-x" data-remove="${escapeAttr(v)}" aria-label="Remover ${escapeAttr(v)}">×</button></span>`
+        ).join('');
+
+        const filtrados = state.termo
+            ? state.opts.filter(o => norm(o).includes(norm(state.termo)))
+            : state.opts;
+        const podeCriar = state.termo && !state.opts.some(o => norm(o) === norm(state.termo));
+
+        let listHtml = filtrados.slice(0, 80).map(o => {
+            const isSel = state.sel.some(v => norm(v) === norm(o));
+            return `<button type="button" class="dm-chip-opt${isSel ? ' is-selected' : ''}" data-value="${escapeAttr(o)}">
+                <span class="dm-chip-opt-check">${isSel ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><polyline points="20 6 9 17 4 12"/></svg>' : ''}</span>
+                <span>${escapeHtml(o)}</span>
+            </button>`;
+        }).join('');
+        if (podeCriar) {
+            listHtml += `<button type="button" class="dm-chip-opt dm-chip-opt--create" data-create="${escapeAttr(state.termo)}">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Adicionar “${escapeHtml(state.termo)}”
+            </button>`;
+        }
+        if (!listHtml) listHtml = `<div class="dm-chip-empty">Nenhum resultado</div>`;
+
+        wrap.innerHTML = `
+            <div class="dm-chip-pills">${pillsHtml || `<span class="dm-chip-placeholder">Nenhum selecionado</span>`}</div>
+            <div class="dm-chip-search">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" class="dm-chip-input" placeholder="${escapeAttr(placeholder || 'Buscar...')}" value="${escapeAttr(state.termo)}">
+            </div>
+            <div class="dm-chip-list">${listHtml}</div>
+        `;
+
+        // Liga listeners.
+        wrap.querySelectorAll('.csd-pill-x').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                state.sel = state.sel.filter(v => norm(v) !== norm(btn.dataset.remove));
+                syncHidden();
+                render();
+            });
+        });
+
+        const inp = wrap.querySelector('.dm-chip-input');
+        inp.addEventListener('input', () => {
+            state.termo = inp.value;
+            render();
+            // Mantém foco e cursor no input.
+            const novo = wrap.querySelector('.dm-chip-input');
+            if (novo) { novo.focus(); novo.setSelectionRange(novo.value.length, novo.value.length); }
+        });
+        inp.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const t = state.termo.trim();
+                if (!t) return;
+                const ja = state.opts.find(o => norm(o) === norm(t));
+                if (ja) {
+                    if (!state.sel.some(v => norm(v) === norm(ja))) state.sel.push(ja);
+                } else {
+                    state.opts.push(t);
+                    state.sel.push(t);
+                    // Adiciona globalmente também pra outros lugares verem o novo item.
+                    const listaKey = csdListaKey(key);
+                    if (_configDados[listaKey] && !_configDados[listaKey].some(o => norm(o) === norm(t))) {
+                        _configDados[listaKey].push(t);
+                        populateFormSelects();
+                        syncValidationToSheet(key);
+                    }
+                }
+                state.termo = '';
+                syncHidden();
+                render();
+            }
+        });
+
+        wrap.querySelectorAll('.dm-chip-opt').forEach(opt => {
+            opt.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (opt.classList.contains('dm-chip-opt--create')) {
+                    const t = opt.dataset.create;
+                    state.opts.push(t);
+                    state.sel.push(t);
+                    const listaKey = csdListaKey(key);
+                    if (_configDados[listaKey] && !_configDados[listaKey].some(o => norm(o) === norm(t))) {
+                        _configDados[listaKey].push(t);
+                        populateFormSelects();
+                        syncValidationToSheet(key);
+                    }
+                    state.termo = '';
+                } else {
+                    const v = opt.dataset.value;
+                    const idx = state.sel.findIndex(s => norm(s) === norm(v));
+                    if (idx === -1) state.sel.push(v);
+                    else state.sel.splice(idx, 1);
+                }
+                syncHidden();
+                render();
+            });
+        });
+    }
+
+    syncHidden();
+    render();
 }
 
 function sairModoEdicao(overlay, product) {
@@ -1227,8 +1466,12 @@ function filterProducts() {
             product._categoria.toLowerCase().includes(search) ||
             product._tipo.toLowerCase().includes(search);
 
+        // Produto entra no filtro se QUALQUER uma das suas categorias bater com QUALQUER selecionada.
+        const cats = product._categorias && product._categorias.length
+            ? product._categorias
+            : csdSplit(product._categoria);
         const matchCategoria = categorias.length === 0 ||
-            categorias.includes(getCatKey(product._categoria));
+            cats.some(c => categorias.includes(getCatKey(c)));
 
         const matchStatus = statuses.length === 0 ||
             statuses.includes(product._status.toLowerCase());
@@ -1872,34 +2115,6 @@ function removeImage(field, { deleteFromR2 = true } = {}) {
     atualizarBotaoAddFoto();
 }
 
-/**
- * Reseta todos os campos de imagem ao abrir o modal — recria os 3 slots padrão.
- */
-function resetImageFields() {
-    montarSlotsImagem(3);
-}
-
-/**
- * Popula os campos de imagem ao editar um produto. Recria slots na quantidade
- * exata de imagens existentes (mínimo 3).
- */
-function populateImageFields(product) {
-    const urls = (product._imagens && product._imagens.length)
-        ? product._imagens
-        : [product._imagem1, product._imagem2, product._imagem3].filter(Boolean);
-    const qtd = Math.max(3, urls.length);
-    montarSlotsImagem(qtd);
-    urls.forEach((url, idx) => {
-        const field = fieldNameAt(idx);
-        if (!document.getElementById(`prod-${field}`)) return;
-        document.getElementById(`prod-${field}`).value = url;
-        setImagePreview(field, url);
-        const urlInput = document.getElementById(`url-${field}`);
-        if (urlInput) urlInput.value = url;
-    });
-    atualizarBotaoAddFoto();
-}
-
 // ============================================
 // SALVAR PRODUTO (GOOGLE SHEETS API)
 // ============================================
@@ -1955,7 +2170,6 @@ async function handleSubmit(e) {
             link: document.getElementById('prod-link').value,
             formaPagamento: currentProduct?._formaPagamento || ''
         };
-        
         // Verifica se está autenticado
         if (!sessionStorage.getItem('ml_admin_auth')) {
             showToast('Você precisa fazer login primeiro', 'error');
@@ -2144,17 +2358,40 @@ function multiFilterPlaceholders(key) {
     return key === 'categoria' ? 'Todas as Categorias' : 'Todos os Status';
 }
 
+// Termo de busca por filtro (mantido entre renders enquanto o dropdown está aberto).
+const _multiFilterSearch = { categoria: '', status: '' };
+
 function renderMultiFilter(key) {
     const dd = document.getElementById(`filter-multi-${key}-dropdown`);
     if (!dd) return;
     const opts = multiFilterOptions(key);
     const sel = _multiFilters[key];
-    dd.innerHTML = opts.map(o => `
-        <label class="filter-multi-opt">
-            <input type="checkbox" value="${o.value}" ${sel.includes(o.value) ? 'checked' : ''}>
-            <span>${escapeHtml(o.label)}</span>
-        </label>
-    `).join('') + (sel.length > 0 ? `
+    const termo = (_multiFilterSearch[key] || '').trim().toLowerCase();
+    const norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+    // Filtra opções pelo termo de busca (só categoria recebe a barra — status é curto).
+    const filtrados = (key === 'categoria' && termo)
+        ? opts.filter(o => norm(o.label).includes(norm(termo)))
+        : opts;
+
+    // Topo: barra de busca (apenas categoria) — fica grudada via sticky.
+    const headerHtml = key === 'categoria'
+        ? `<div class="filter-multi-search">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" class="filter-multi-search-input" id="filter-multi-${key}-search" placeholder="Buscar categoria..." value="${escapeAttr(_multiFilterSearch[key] || '')}" autocomplete="off">
+            </div>`
+        : '';
+
+    const optsHtml = filtrados.length
+        ? filtrados.map(o => `
+            <label class="filter-multi-opt${sel.includes(o.value) ? ' is-checked' : ''}">
+                <input type="checkbox" value="${o.value}" ${sel.includes(o.value) ? 'checked' : ''}>
+                <span>${escapeHtml(o.label)}</span>
+            </label>
+        `).join('')
+        : `<div class="filter-multi-empty">Nenhum resultado${termo ? ` para "${escapeHtml(termo)}"` : ''}</div>`;
+
+    dd.innerHTML = headerHtml + `<div class="filter-multi-list">${optsHtml}</div>` + (sel.length > 0 ? `
         <button type="button" class="filter-multi-clear" data-key="${key}">Limpar seleção</button>
     ` : '');
 
@@ -2166,32 +2403,63 @@ function renderMultiFilter(key) {
                 _multiFilters[key] = _multiFilters[key].filter(v => v !== cb.value);
             }
             updateMultiFilterLabel(key);
-            renderMultiFilter(key); // re-renderiza pra mostrar/esconder "Limpar"
+            renderMultiFilter(key); // re-renderiza pra mostrar/esconder "Limpar" e atualizar checkmarks
             filterProducts();
         });
     });
+
+    // Barra de busca interativa (só categoria).
+    const inp = dd.querySelector(`#filter-multi-${key}-search`);
+    if (inp) {
+        // Não fecha o dropdown ao clicar/digitar dentro da barra.
+        inp.addEventListener('click', e => e.stopPropagation());
+        inp.addEventListener('input', () => {
+            _multiFilterSearch[key] = inp.value;
+            renderMultiFilter(key);
+            const novo = dd.querySelector(`#filter-multi-${key}-search`);
+            if (novo) { novo.focus(); novo.setSelectionRange(novo.value.length, novo.value.length); }
+        });
+    }
+
     dd.querySelector('.filter-multi-clear')?.addEventListener('click', () => {
         _multiFilters[key] = [];
+        _multiFilterSearch[key] = '';
         updateMultiFilterLabel(key);
         renderMultiFilter(key);
         filterProducts();
     });
 }
 
+// Caixa fechada mostra apenas o título do filtro + contador discreto quando há
+// seleção. Os nomes das categorias selecionadas só aparecem dentro do dropdown
+// (com checkmark) para manter a barra de filtros sempre compacta e limpa.
 function updateMultiFilterLabel(key) {
-    const labelEl = document.querySelector(`#filter-multi-${key}-btn .filter-multi-label`);
-    if (!labelEl) return;
+    const btnEl = document.getElementById(`filter-multi-${key}-btn`);
+    const labelEl = btnEl?.querySelector('.filter-multi-label');
+    if (!labelEl || !btnEl) return;
+
     const sel = _multiFilters[key];
+    const tituloFixo = key === 'categoria' ? 'Categorias' : 'Status';
+
+    // Garante o badge de contador como elemento próprio (não como texto inline).
+    let badge = btnEl.querySelector('.filter-multi-count');
+    if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'filter-multi-count';
+        // Coloca o badge logo após o label, antes do SVG da seta.
+        labelEl.insertAdjacentElement('afterend', badge);
+    }
+
     if (sel.length === 0) {
         labelEl.textContent = multiFilterPlaceholders(key);
         labelEl.classList.remove('has-selection');
-    } else if (sel.length === 1) {
-        const opt = multiFilterOptions(key).find(o => o.value === sel[0]);
-        labelEl.textContent = opt ? opt.label : sel[0];
-        labelEl.classList.add('has-selection');
+        badge.hidden = true;
+        badge.textContent = '';
     } else {
-        labelEl.textContent = `${sel.length} selecionado${sel.length > 1 ? 's' : ''}`;
+        labelEl.textContent = tituloFixo;
         labelEl.classList.add('has-selection');
+        badge.hidden = false;
+        badge.textContent = sel.length;
     }
 }
 
@@ -2201,29 +2469,40 @@ function initMultiFilter(key, placeholder) {
     const dd = document.getElementById(`filter-multi-${key}-dropdown`);
     if (!wrap || !btn || !dd) return;
 
+    const fecharDropdown = () => {
+        dd.setAttribute('hidden', '');
+        btn.setAttribute('aria-expanded', 'false');
+        wrap.classList.remove('is-open');
+        // Limpa busca ao fechar pra próxima abertura começar limpa.
+        if (_multiFilterSearch[key]) {
+            _multiFilterSearch[key] = '';
+            renderMultiFilter(key);
+        }
+    };
+
     btn.addEventListener('click', e => {
         e.stopPropagation();
         const isOpen = !dd.hasAttribute('hidden');
-        // Fecha outros multi-filters abertos.
         document.querySelectorAll('.filter-multi-dropdown').forEach(d => {
             if (d !== dd) d.setAttribute('hidden', '');
         });
         if (isOpen) {
-            dd.setAttribute('hidden', '');
-            btn.setAttribute('aria-expanded', 'false');
-            wrap.classList.remove('is-open');
+            fecharDropdown();
         } else {
             dd.removeAttribute('hidden');
             btn.setAttribute('aria-expanded', 'true');
             wrap.classList.add('is-open');
+            // Foca a busca automaticamente em categoria.
+            if (key === 'categoria') {
+                setTimeout(() => {
+                    const inp = dd.querySelector(`#filter-multi-${key}-search`);
+                    inp?.focus();
+                }, 0);
+            }
         }
     });
     document.addEventListener('click', e => {
-        if (!wrap.contains(e.target)) {
-            dd.setAttribute('hidden', '');
-            btn.setAttribute('aria-expanded', 'false');
-            wrap.classList.remove('is-open');
-        }
+        if (!wrap.contains(e.target)) fecharDropdown();
     });
 
     updateMultiFilterLabel(key);
@@ -2232,56 +2511,306 @@ function initMultiFilter(key, placeholder) {
 
 // ══════════════════════════════════════════════
 // CUSTOM SELECT — dropdown com edição inline
+// Suporta modo single (status) e multi (categoria, tipo).
+// Em multi-mode o estado é um array de strings; o input hidden
+// guarda os valores unidos por ", " (formato CSV da planilha).
 // ══════════════════════════════════════════════
-// Mapa: key do campo → chave em _configDados
 const CSD_KEYS = [
     // sheetColumn = letra da coluna na planilha; quando definido, csdAdicionar
     // dispara set_validation para o Apps Script atualizar o dropdown da planilha.
-    { key: 'categoria', listaKey: 'categorias', placeholder: 'Nova categoria...', sheetColumn: 'C' },
+    { key: 'categoria', listaKey: 'categorias', placeholder: 'Nova categoria...', sheetColumn: 'C', multi: true },
     { key: 'status',    listaKey: 'status',     placeholder: 'Novo status...'    },
-    { key: 'tipo',      listaKey: 'tipos',      placeholder: 'Novo tipo...',      sheetColumn: 'D' },
+    { key: 'tipo',      listaKey: 'tipos',      placeholder: 'Novo tipo...',      sheetColumn: 'D', multi: true },
 ];
 
-const _csdState = {};  // valor selecionado por key
+// _csdState[key] → string (single) ou array<string> (multi)
+const _csdState = {};
+// _csdSearch[key] → termo digitado na barra de busca (vivo enquanto o dropdown está aberto)
+const _csdSearch = {};
 
-function csdListaKey(key) {
-    return CSD_KEYS.find(k => k.key === key)?.listaKey || key;
+function csdConfig(key) { return CSD_KEYS.find(k => k.key === key) || {}; }
+function csdIsMulti(key) { return !!csdConfig(key).multi; }
+function csdListaKey(key) { return csdConfig(key).listaKey || key; }
+
+// Divide string CSV em itens limpos (suporta separadores , ; |).
+function csdSplit(str) {
+    return String(str || '')
+        .split(/[,;|]/)
+        .map(s => s.trim())
+        .filter(Boolean);
 }
 
-// Renderiza as opções na lista
+function csdSelecionados(key) {
+    if (csdIsMulti(key)) return Array.isArray(_csdState[key]) ? _csdState[key] : [];
+    return _csdState[key] ? [_csdState[key]] : [];
+}
+
+function csdValorString(key) {
+    return csdIsMulti(key) ? csdSelecionados(key).join(', ') : (_csdState[key] || '');
+}
+
+// Atualiza o input hidden e o label do botão para refletir o estado atual.
+function csdSyncCampo(key) {
+    const hidden = document.getElementById('prod-' + key);
+    if (hidden) hidden.value = csdValorString(key);
+    csdAtualizarLabel(key);
+}
+
+// Mesmo visual do Status: texto simples (sem pills). Multi-mode apenas junta
+// as selecionadas com vírgula. O usuário desmarca abrindo o dropdown e clicando
+// na opção já marcada (mesma UX do Status).
+function csdAtualizarLabel(key) {
+    const label = document.getElementById('label-' + key);
+    if (!label) return;
+    const v = csdValorString(key);
+    label.textContent = v || 'Selecione...';
+    label.style.opacity = v ? '1' : '0.5';
+}
+
+// Renderiza barra de busca (topo) + lista de opções (mesmo visual do Status,
+// com check no canto da linha selecionada) + linha "+ Adicionar 'termo'" no final.
 function csdRender(key) {
+    const dd = document.getElementById('dropdown-' + key);
     const list = document.getElementById('list-' + key);
-    if (!list) return;
+    if (!list || !dd) return;
+
+    const cfg = csdConfig(key);
     const listaKey = csdListaKey(key);
     const itens = _configDados[listaKey] || [];
-    const atual = _csdState[key] || '';
+    const selecionados = csdSelecionados(key);
+    const termo = (_csdSearch[key] || '').trim().toLowerCase();
 
-    if (!itens.length) {
-        list.innerHTML = '<div style="padding:10px 14px;font-size:13px;color:var(--admin-text-muted)">Nenhuma opção. Adicione abaixo.</div>';
+    // ── Garante a barra de busca (apenas em multi-mode) no topo do dropdown ──
+    if (cfg.multi) {
+        let search = dd.querySelector('.csd-search-row');
+        if (!search) {
+            search = document.createElement('div');
+            search.className = 'csd-search-row';
+            search.innerHTML = `
+                <svg class="csd-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="text" class="csd-search-input" id="search-${key}" placeholder="Buscar..." autocomplete="off">
+                <button type="button" class="csd-search-clear" id="search-clear-${key}" hidden aria-label="Limpar busca">×</button>
+            `;
+            dd.insertBefore(search, dd.firstChild);
+
+            const inp = search.querySelector(`#search-${key}`);
+            const clr = search.querySelector(`#search-clear-${key}`);
+            inp.addEventListener('input', () => {
+                _csdSearch[key] = inp.value;
+                clr.hidden = !inp.value;
+                csdRender(key);
+            });
+            inp.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') { e.preventDefault(); csdFechar(key); }
+            });
+            // Evita que clicar dentro do search feche o dropdown (caso do listener global).
+            search.addEventListener('click', (e) => e.stopPropagation());
+            clr.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                inp.value = '';
+                _csdSearch[key] = '';
+                clr.hidden = true;
+                csdRender(key);
+                inp.focus();
+            });
+        }
+    }
+
+    // ── Filtra opções pelo termo de busca (sem acentos, case-insensitive) ──
+    const norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    const filtrados = termo
+        ? itens.filter(it => norm(it).includes(norm(termo)))
+        : itens;
+
+    // Mostra a linha "+ Adicionar 'termo'" se o termo digitado não bate com nada.
+    const podeCriarComBusca = !!cfg.sheetColumn && termo && !itens.some(it => norm(it) === norm(termo));
+
+    if (!filtrados.length && !podeCriarComBusca) {
+        list.innerHTML = `<div class="csd-empty">${termo ? `Nenhum resultado para "${escapeHtml(termo)}"` : 'Nenhuma opção. Adicione abaixo.'}</div>`;
         return;
     }
 
-    list.innerHTML = itens.map(item => {
-        const sel = item === atual ? ' is-selected' : '';
-        return `<div class="csd-option${sel}" data-value="${escapeHtml(item)}">
+    // Visual idêntico ao Status (single): rótulo à esquerda, check à direita só quando selecionado.
+    // A diferença é que multi-mode deixa o dropdown aberto pra acumular seleções.
+    // Categoria/Tipo (que têm sheetColumn) ganham botão de lixeira no hover.
+    const podeExcluir = !!cfg.sheetColumn;
+    let html = filtrados.map(item => {
+        const isSel = selecionados.some(v => norm(v) === norm(item));
+        const trashBtn = podeExcluir
+            ? `<button type="button" class="csd-option-del" data-delete="${escapeAttr(item)}" title="Excluir esta opção" aria-label="Excluir ${escapeAttr(item)}">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>`
+            : '';
+        return `<div class="csd-option${isSel ? ' is-selected' : ''}" data-value="${escapeAttr(item)}" role="option" aria-selected="${isSel}">
             <span class="csd-option-label">${escapeHtml(item)}</span>
-            ${sel ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+            <span class="csd-option-btns">
+                ${trashBtn}
+                ${isSel ? '<svg class="csd-option-check" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+            </span>
         </div>`;
     }).join('');
 
+    if (podeCriarComBusca) {
+        html += `<div class="csd-option csd-option--create" data-create="${escapeAttr(termo)}">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span class="csd-option-label">Adicionar “${escapeHtml(termo)}”</span>
+        </div>`;
+    }
+
+    list.innerHTML = html;
+
     list.querySelectorAll('.csd-option').forEach(opt => {
-        opt.addEventListener('click', () => csdSelect(key, opt.dataset.value));
+        opt.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // Click no botão lixeira → abre fluxo de exclusão (não seleciona a opção).
+            if (e.target.closest('.csd-option-del')) {
+                e.preventDefault();
+                const valor = e.target.closest('.csd-option-del').dataset.delete;
+                csdExcluirOpcao(key, valor);
+                return;
+            }
+            if (opt.classList.contains('csd-option--create')) {
+                csdAdicionar(key, opt.dataset.create);
+                return;
+            }
+            if (cfg.multi) {
+                csdToggle(key, opt.dataset.value);
+            } else {
+                csdSelect(key, opt.dataset.value);
+            }
+        });
     });
 }
 
+// Exclui uma opção (categoria/tipo) da lista local, do dropdown da planilha e
+// remove ela de todos os produtos que a usam. Cada produto afetado dispara um
+// `action: 'update'` no Apps Script.
+async function csdExcluirOpcao(key, valor) {
+    const cfg = csdConfig(key);
+    const listaKey = csdListaKey(key);
+    const lista = _configDados[listaKey] || [];
+    if (!lista.length) return;
+
+    const norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    const existe = lista.find(v => norm(v) === norm(valor));
+    if (!existe) return;
+
+    // Conta produtos afetados (qualquer um cujo array de categorias/tipos contenha o valor).
+    const campoArr = key === 'categoria' ? '_categorias' : '_tipos';
+    const campoStr = key === 'categoria' ? '_categoria' : '_tipo';
+    const afetados = allProducts.filter(p => {
+        const arr = p[campoArr] && p[campoArr].length
+            ? p[campoArr]
+            : csdSplit(p[campoStr]);
+        return arr.some(v => norm(v) === norm(existe));
+    });
+
+    const label = key === 'categoria' ? 'categoria' : 'tipo';
+    const msg = afetados.length === 0
+        ? `Excluir ${label} "${existe}"? Essa opção sumirá do dropdown.`
+        : `Excluir ${label} "${existe}"?\n\n${afetados.length} produto(s) usam essa ${label} e serão atualizados (a ${label} será removida da célula deles). Esta ação não pode ser desfeita.`;
+    if (!confirm(msg)) return;
+
+    showToast(afetados.length ? `Removendo "${existe}" de ${afetados.length} produto(s)...` : `Excluindo "${existe}"...`, 'info');
+
+    // 1) Atualiza cada produto afetado (remove o item do array e regrava a célula).
+    let erros = 0;
+    for (const p of afetados) {
+        const novoArr = (p[campoArr] && p[campoArr].length ? p[campoArr] : csdSplit(p[campoStr]))
+            .filter(v => norm(v) !== norm(existe));
+        const novoStr = novoArr.join(', ');
+        const novoCategoria = key === 'categoria' ? novoStr : p._categoria;
+        const novoTipo      = key === 'tipo'      ? novoStr : p._tipo;
+        try {
+            await enviarViaIframe({
+                action: 'update',
+                row: p._rowIndex,
+                values: [
+                    p._id, p._nome, novoCategoria, novoTipo,
+                    p._cor, p._tamanhos, p._material, p._descricao,
+                    p._imagem1 || '', p._imagem2 || '', p._imagem3 || '',
+                    p._imagem4 || '', p._imagem5 || '', p._imagem6 || '',
+                    p._imagem7 || '', p._imagem8 || '', p._imagem9 || '', p._imagem10 || '',
+                    p._link, p._precoDe, p._precoPor, p._desconto,
+                    p._formaPagamento || '', p._status
+                ]
+            });
+            // Atualiza o cache local pra o filtro/grid refletirem imediatamente.
+            p[campoStr] = novoStr;
+            p[campoArr] = novoArr;
+        } catch (err) {
+            console.error(`Erro ao atualizar produto ${p._nome}:`, err);
+            erros++;
+        }
+    }
+
+    // 2) Remove o item da lista local.
+    _configDados[listaKey] = lista.filter(v => norm(v) !== norm(existe));
+
+    // 3) Remove o item da seleção atual (se estiver selecionado no form).
+    if (csdIsMulti(key)) {
+        _csdState[key] = csdSelecionados(key).filter(v => norm(v) !== norm(existe));
+    } else if (norm(_csdState[key] || '') === norm(existe)) {
+        _csdState[key] = '';
+    }
+    csdSyncCampo(key);
+
+    // 4) Sincroniza a validação da coluna da planilha (atualiza o dropdown da célula).
+    if (cfg.sheetColumn) {
+        // syncValidationToSheet usa a lista atual de _configDados — já está limpa.
+        try {
+            await fetch(CONFIG.APPS_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'set_validation',
+                    column: cfg.sheetColumn,
+                    values: _configDados[listaKey]
+                })
+            });
+        } catch (err) {
+            console.warn('Falha ao sincronizar validação:', err);
+        }
+    }
+
+    // 5) Re-renderiza UI: dropdown, filtros, grid, stats.
+    populateFormSelects();
+    csdRender(key);
+    updateStats();
+    renderTable();
+
+    if (erros > 0) {
+        showToast(`"${existe}" excluída. ${erros} produto(s) falharam — recarregue para verificar.`, 'error');
+    } else if (afetados.length > 0) {
+        showToast(`"${existe}" removida de ${afetados.length} produto(s).`, 'success');
+        registrarHistorico('Excluído', `${label}: ${existe}`, `Removida de ${afetados.length} produto(s)`);
+    } else {
+        showToast(`"${existe}" excluída.`, 'success');
+        registrarHistorico('Excluído', `${label}: ${existe}`, `Opção excluída da lista`);
+    }
+}
+
+// Single: substitui valor e fecha. Multi: usa csdToggle.
 function csdSelect(key, valor) {
+    if (csdIsMulti(key)) { csdToggle(key, valor); return; }
     _csdState[key] = valor;
-    document.getElementById('prod-' + key).value = valor;
-    const label = document.getElementById('label-' + key);
-    label.textContent = valor || 'Selecione...';
-    label.style.opacity = valor ? '1' : '0.5';
+    csdSyncCampo(key);
     csdFechar(key);
     csdRender(key);
+}
+
+// Multi: adiciona ou remove um item do array, sem fechar o dropdown.
+function csdToggle(key, valor) {
+    if (!csdIsMulti(key)) { csdSelect(key, valor); return; }
+    const arr = csdSelecionados(key);
+    const i = arr.findIndex(v => v.toLowerCase() === String(valor).toLowerCase());
+    if (i === -1) arr.push(valor);
+    else arr.splice(i, 1);
+    _csdState[key] = arr;
+    csdSyncCampo(key);
+    csdRender(key); // mantém aberto pra permitir várias seleções em sequência
 }
 
 function csdAbrir(key) {
@@ -2291,29 +2820,83 @@ function csdAbrir(key) {
     csdRender(key); // atualiza lista antes de abrir
     dd?.removeAttribute('hidden');
     btn?.classList.add('is-open');
+    // Foca a busca em multi-mode pra começar a digitar imediatamente.
+    if (csdIsMulti(key)) {
+        const inp = document.getElementById('search-' + key);
+        if (inp) setTimeout(() => inp.focus(), 0);
+    }
 }
 
 function csdFechar(key) {
     document.getElementById('dropdown-' + key)?.setAttribute('hidden', '');
     document.getElementById('btn-' + key)?.classList.remove('is-open');
+    // Limpa o termo de busca ao fechar pra próxima abertura começar limpa.
+    if (_csdSearch[key]) {
+        _csdSearch[key] = '';
+        const inp = document.getElementById('search-' + key);
+        if (inp) inp.value = '';
+        const clr = document.getElementById('search-clear-' + key);
+        if (clr) clr.hidden = true;
+    }
 }
 
-async function csdAdicionar(key) {
+// Adiciona um (ou vários, se vier com vírgula) valor à lista do catálogo + seleciona.
+// `valorForcado` permite chamar a partir da linha "+ Adicionar 'termo'".
+// Em multi-mode, vírgulas dentro do texto são tratadas como separadores — cada
+// item vira uma categoria distinta (ex.: "Bermudas, Praia" cria duas).
+async function csdAdicionar(key, valorForcado) {
     const input = document.getElementById('add-input-' + key);
-    const valor = input?.value.trim();
-    if (!valor) { input?.focus(); return; }
+    const bruto = (valorForcado || input?.value || '').trim();
+    if (!bruto) { input?.focus(); return; }
+
     const listaKey = csdListaKey(key);
     if (!_configDados[listaKey]) _configDados[listaKey] = [];
-    if (_configDados[listaKey].map(i => i.toLowerCase()).includes(valor.toLowerCase())) {
-        showToast('Já existe na lista.', 'error'); return;
-    }
-    _configDados[listaKey].push(valor);
-    input.value = '';
-    populateFormSelects(); // atualiza filtros e dropdowns
-    csdSelect(key, valor); // seleciona o novo automaticamente
 
-    // Propaga a lista para o dropdown da coluna inteira da planilha (best-effort).
-    syncValidationToSheet(key);
+    const itens = csdIsMulti(key) ? csdSplit(bruto) : [bruto];
+    if (!itens.length) { input?.focus(); return; }
+
+    const norm = (s) => String(s || '').toLowerCase();
+    const adicionados = [];
+    const jaSelecionados = [];
+
+    itens.forEach(valor => {
+        const existe = _configDados[listaKey].find(i => norm(i) === norm(valor));
+        if (existe) {
+            jaSelecionados.push(existe);
+        } else {
+            _configDados[listaKey].push(valor);
+            adicionados.push(valor);
+        }
+    });
+
+    // Single-mode: pega o último item válido (não esperamos vírgulas aqui).
+    if (!csdIsMulti(key)) {
+        const final = adicionados[0] || jaSelecionados[0];
+        if (!adicionados.length) { showToast('Já existe na lista.', 'error'); return; }
+        if (input) input.value = '';
+        populateFormSelects();
+        csdSelect(key, final);
+        syncValidationToSheet(key);
+        return;
+    }
+
+    // Multi-mode: marca cada item (adicionado ou existente) na seleção atual.
+    const arr = csdSelecionados(key);
+    [...adicionados, ...jaSelecionados].forEach(v => {
+        if (!arr.some(s => norm(s) === norm(v))) arr.push(v);
+    });
+    _csdState[key] = arr;
+
+    if (input) input.value = '';
+    _csdSearch[key] = '';
+    const srch = document.getElementById('search-' + key);
+    if (srch) srch.value = '';
+
+    populateFormSelects();
+    csdSyncCampo(key);
+    csdRender(key);
+
+    if (adicionados.length) syncValidationToSheet(key);
 }
 
 /**
@@ -2372,11 +2955,20 @@ function initCustomSelects() {
     csdSetValue('tipo', '');
 }
 
+// Aceita string (single) ou string CSV / array (multi).
 function csdSetValue(key, valor) {
-    _csdState[key] = valor;
-    document.getElementById('prod-' + key).value = valor;
-    const label = document.getElementById('label-' + key);
-    if (label) { label.textContent = valor || 'Selecione...'; label.style.opacity = valor ? '1' : '0.5'; }
+    if (csdIsMulti(key)) {
+        let arr;
+        if (Array.isArray(valor)) arr = valor.slice();
+        else arr = csdSplit(valor);
+        // Normaliza: case-insensitive dedupe, preservando o primeiro casing visto.
+        const seen = new Map();
+        arr.forEach(v => { const k = v.toLowerCase(); if (!seen.has(k)) seen.set(k, v); });
+        _csdState[key] = Array.from(seen.values());
+    } else {
+        _csdState[key] = valor || '';
+    }
+    csdSyncCampo(key);
     csdRender(key);
 }
 

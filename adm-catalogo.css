@@ -665,6 +665,25 @@ body {
     font-weight: 600;
 }
 
+/* Badge contador discreto: só aparece quando há seleção. */
+.filter-multi-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 7px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #d4b170 0%, #b8924f 100%);
+    color: #1a1a1a;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+.filter-multi-count[hidden] { display: none; }
+
 .filter-multi-dropdown {
     position: absolute;
     top: calc(100% + 6px);
@@ -720,6 +739,53 @@ body {
     transition: color 0.15s ease;
 }
 .filter-multi-clear:hover { color: #ff7a7a; }
+
+/* Barra de busca no dropdown do filtro multi (categoria) */
+.filter-multi-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: rgba(255,255,255,0.025);
+    border-bottom: 1px solid var(--admin-border-light);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+.filter-multi-search svg {
+    color: var(--admin-text-muted);
+    flex-shrink: 0;
+}
+.filter-multi-search-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--admin-text);
+    font-size: 13px;
+    font-family: inherit;
+    padding: 3px 0;
+    min-width: 0;
+}
+.filter-multi-search-input::placeholder { color: var(--admin-text-muted); }
+
+.filter-multi-list {
+    padding: 4px 0;
+}
+.filter-multi-empty {
+    padding: 14px 12px;
+    text-align: center;
+    color: var(--admin-text-muted);
+    font-size: 13px;
+}
+
+/* Destaca opção marcada com um traço dourado discreto à esquerda. */
+.filter-multi-opt.is-checked {
+    background: rgba(200,169,106,0.10);
+    color: var(--admin-primary);
+    font-weight: 600;
+}
+.filter-multi-opt.is-checked:hover { background: rgba(200,169,106,0.16); }
 
 /* Table Container */
 /* ============================================
@@ -1288,6 +1354,15 @@ body {
     transition: border-color 0.2s;
 }
 
+/* Texto do label trunca com reticências quando há várias selecionadas. */
+.custom-select-btn > span:first-child {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .custom-select-btn:hover,
 .custom-select-btn:focus {
     border-color: var(--admin-primary);
@@ -1349,15 +1424,19 @@ body {
 
 .csd-option-btns {
     display: flex;
-    gap: 2px;
-    opacity: 0;
-    transition: opacity 0.15s;
+    align-items: center;
+    gap: 4px;
     flex-shrink: 0;
 }
 
-.csd-option:hover .csd-option-btns {
-    opacity: 1;
+/* Checkmark sempre visível quando selecionado, lixeira só no hover. */
+.csd-option-check { color: var(--admin-primary); }
+
+.csd-option-del {
+    opacity: 0;
+    transition: opacity 0.15s, background 0.15s, color 0.15s;
 }
+.csd-option:hover .csd-option-del { opacity: 1; }
 
 .csd-option-edit,
 .csd-option-del {
@@ -1481,6 +1560,325 @@ body {
 
 .csd-add-btn:hover {
     background: var(--admin-primary-hover);
+}
+
+/* ============================================
+   CUSTOM SELECT — BUSCA + CRIAR (mesmo visual do Status)
+   ============================================ */
+
+/* Pill ainda usada pelos chips inline do modo edição inline (csd-pill--inline). */
+.csd-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 4px 3px 10px;
+    background: linear-gradient(135deg, rgba(200,169,106,0.22) 0%, rgba(200,169,106,0.12) 100%);
+    border: 1px solid rgba(200,169,106,0.45);
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--admin-primary);
+    letter-spacing: 0.2px;
+    line-height: 1.1;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+.csd-pill-x {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(200,169,106,0.25);
+    color: var(--admin-primary);
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    font-weight: 700;
+    transition: background 0.15s, color 0.15s, transform 0.15s;
+}
+.csd-pill-x:hover {
+    background: var(--admin-danger);
+    color: #fff;
+    transform: scale(1.08);
+}
+
+/* ── Barra de busca no topo do dropdown ── */
+.csd-search-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.02);
+    border-bottom: 1px solid var(--admin-border);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.csd-search-icon {
+    color: var(--admin-text-muted);
+    flex-shrink: 0;
+}
+
+.csd-search-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--admin-text);
+    font-size: 13px;
+    font-family: inherit;
+    padding: 4px 0;
+    min-width: 0;
+}
+.csd-search-input::placeholder {
+    color: var(--admin-text-muted);
+}
+
+.csd-search-clear {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.06);
+    color: var(--admin-text-secondary);
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    flex-shrink: 0;
+}
+.csd-search-clear:hover {
+    background: var(--admin-danger);
+    color: #fff;
+}
+
+/* ── Opção "+ Adicionar 'termo'" (inline create) ── */
+.csd-option--create {
+    color: var(--admin-primary);
+    font-weight: 600;
+    border-top: 1px dashed var(--admin-border);
+    background: rgba(200,169,106,0.04);
+}
+.csd-option--create:hover {
+    background: rgba(200,169,106,0.12);
+}
+.csd-option--create svg {
+    color: var(--admin-primary);
+    margin-right: 2px;
+}
+
+.csd-empty {
+    padding: 14px;
+    font-size: 13px;
+    color: var(--admin-text-muted);
+    text-align: center;
+}
+
+/* ============================================
+   MODAL INLINE — CHIPS DE CATEGORIA/TIPO
+   ============================================ */
+.dm-chips-field {
+    background: var(--admin-bg);
+    border: 1px solid var(--admin-border-light);
+    border-radius: var(--admin-radius-sm);
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.dm-chip-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 26px;
+    align-items: center;
+}
+
+.dm-chip-placeholder {
+    color: var(--admin-text-muted);
+    font-size: 12px;
+    font-style: italic;
+}
+
+.csd-pill--inline {
+    padding: 3px 4px 3px 10px;
+}
+
+.dm-chip-search {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--admin-border);
+    border-radius: 6px;
+}
+
+.dm-chip-search svg {
+    color: var(--admin-text-muted);
+    flex-shrink: 0;
+}
+
+.dm-chip-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--admin-text);
+    font-size: 13px;
+    font-family: inherit;
+    padding: 2px 0;
+    min-width: 0;
+}
+.dm-chip-input::placeholder {
+    color: var(--admin-text-muted);
+}
+
+.dm-chip-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    max-height: 132px;
+    overflow-y: auto;
+    padding: 2px;
+}
+.dm-chip-list::-webkit-scrollbar { width: 6px; }
+.dm-chip-list::-webkit-scrollbar-thumb { background: rgba(200,169,106,0.3); border-radius: 3px; }
+
+.dm-chip-opt {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--admin-border);
+    border-radius: 999px;
+    color: var(--admin-text);
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.dm-chip-opt:hover {
+    background: rgba(200,169,106,0.10);
+    border-color: rgba(200,169,106,0.35);
+}
+
+.dm-chip-opt.is-selected {
+    background: linear-gradient(135deg, rgba(200,169,106,0.22) 0%, rgba(200,169,106,0.12) 100%);
+    border-color: rgba(200,169,106,0.55);
+    color: var(--admin-primary);
+    font-weight: 600;
+}
+
+.dm-chip-opt-check {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1.4px solid var(--admin-border-light);
+    background: var(--admin-bg);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #111;
+}
+.dm-chip-opt.is-selected .dm-chip-opt-check {
+    background: var(--admin-primary);
+    border-color: var(--admin-primary);
+}
+
+.dm-chip-opt--create {
+    color: var(--admin-primary);
+    border-style: dashed;
+    border-color: rgba(200,169,106,0.55);
+}
+.dm-chip-opt--create:hover {
+    background: rgba(200,169,106,0.16);
+}
+
+.dm-chip-empty {
+    padding: 8px;
+    font-size: 12px;
+    color: var(--admin-text-muted);
+    width: 100%;
+    text-align: center;
+}
+
+/* ============================================
+   CARD/LIST — PILLS DE CATEGORIA
+   ============================================ */
+.prod-card-cat-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    margin-right: 4px;
+    margin-bottom: 3px;
+    background: rgba(200,169,106,0.12);
+    border: 1px solid rgba(200,169,106,0.30);
+    border-radius: 999px;
+    color: var(--admin-primary);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    line-height: 1.45;
+}
+
+/* Pill de Tipo de Produto — tom mais neutro (cinza) pra contrastar com categoria (dourada). */
+.prod-tipo-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    margin-right: 4px;
+    margin-bottom: 3px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 999px;
+    color: var(--admin-text-secondary);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    line-height: 1.45;
+}
+
+.prod-list-cat {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.prod-list-cat .prod-categoria {
+    background: rgba(200,169,106,0.12);
+    border: 1px solid rgba(200,169,106,0.30);
+    border-radius: 999px;
+    padding: 2px 8px;
+    color: var(--admin-primary);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* Pills no modal de detalhes admin (pmodal-cat) */
+.pmodal-cat-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    margin-right: 5px;
+    background: linear-gradient(135deg, rgba(200,169,106,0.22) 0%, rgba(200,169,106,0.12) 100%);
+    border: 1px solid rgba(200,169,106,0.45);
+    border-radius: 999px;
+    color: var(--admin-primary);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
 }
 
 /* ============================================
@@ -3094,33 +3492,118 @@ body.has-selection .prod-check,
     color: var(--admin-text-muted);
     flex-shrink: 0;
 }
-.dm-quick-status-select {
+/* ── Custom dropdown estilizado (substitui o <select> nativo) ── */
+.dm-quick-status-wrap {
+    position: relative;
     flex: 1;
-    appearance: none;
-    -webkit-appearance: none;
-    border: none;
-    background: transparent;
+    min-width: 0;
+}
+.dm-quick-status-btn {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px 9px 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 100px;
     color: #fff;
     font-family: inherit;
     font-size: 13px;
     font-weight: 700;
-    padding: 8px 28px 8px 12px;
-    border-radius: 100px;
     cursor: pointer;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    transition: all 0.18s ease;
+    transition: background 0.18s ease, border-color 0.18s ease;
     min-width: 0;
 }
-.dm-quick-status-select:hover { background-color: rgba(255, 255, 255, 0.05); }
-.dm-quick-status-select:disabled { opacity: 0.5; cursor: wait; }
-/* Cores por status (replica STATUS_MAP) */
-.dm-quick-status-select.status-ativo { color: #6BFFA0; }
-.dm-quick-status-select.status-inativo { color: #888; }
-.dm-quick-status-select.status-esgotado { color: #ff7a7a; }
-.dm-quick-status-select.status-ultimas { color: #FFD25C; }
-.dm-quick-status-select.status-oferta { color: #F0D98A; }
+.dm-quick-status-btn:hover { background: rgba(255, 255, 255, 0.07); }
+.dm-quick-status-btn:disabled { opacity: 0.5; cursor: wait; }
+.dm-quick-status-wrap.is-open .dm-quick-status-btn {
+    background: rgba(200, 169, 106, 0.10);
+    border-color: rgba(200, 169, 106, 0.35);
+}
+.dm-quick-status-wrap.is-open .dm-quick-status-caret { transform: rotate(180deg); }
+.dm-quick-status-caret {
+    margin-left: auto;
+    flex-shrink: 0;
+    transition: transform 0.18s ease;
+    opacity: 0.7;
+}
+
+.dm-quick-status-text {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
+}
+
+/* Dot colorido reflete o status (mesmas cores do STATUS_MAP). */
+.dm-quick-status-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: #888;
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.04);
+}
+.dm-quick-status-dot.status-ativo     { background: #6BFFA0; box-shadow: 0 0 8px rgba(107,255,160,0.4); }
+.dm-quick-status-dot.status-inativo   { background: #888; }
+.dm-quick-status-dot.status-esgotado  { background: #ff7a7a; box-shadow: 0 0 8px rgba(255,122,122,0.35); }
+.dm-quick-status-dot.status-ultimas   { background: #FFD25C; box-shadow: 0 0 8px rgba(255,210,92,0.4); }
+.dm-quick-status-dot.status-oferta    { background: #F0D98A; box-shadow: 0 0 8px rgba(240,217,138,0.4); }
+
+/* Cor do texto reflete também o status atual no botão fechado. */
+.dm-quick-status-btn.status-ativo    .dm-quick-status-text { color: #6BFFA0; }
+.dm-quick-status-btn.status-inativo  .dm-quick-status-text { color: #aaa; }
+.dm-quick-status-btn.status-esgotado .dm-quick-status-text { color: #ff7a7a; }
+.dm-quick-status-btn.status-ultimas  .dm-quick-status-text { color: #FFD25C; }
+.dm-quick-status-btn.status-oferta   .dm-quick-status-text { color: #F0D98A; }
+
+/* ── Menu dropdown ── */
+.dm-quick-status-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    min-width: 200px;
+    background: #1a1a1a;
+    border: 1px solid rgba(200, 169, 106, 0.25);
+    border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.55), 0 0 0 1px rgba(0,0,0,0.4);
+    padding: 4px;
+    z-index: 50;
+    overflow: hidden;
+}
+.dm-quick-status-menu[hidden] { display: none; }
+
+.dm-quick-status-opt {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #ddd;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background 0.15s ease;
+}
+.dm-quick-status-opt:hover { background: rgba(200, 169, 106, 0.10); }
+
+.dm-quick-status-opt-label {
+    flex: 1;
+    min-width: 0;
+}
+
+.dm-quick-status-opt.is-selected {
+    background: rgba(200, 169, 106, 0.14);
+    color: var(--admin-primary);
+}
+.dm-quick-status-opt.is-selected svg {
+    color: var(--admin-primary);
+    flex-shrink: 0;
+}
 
 .dm-quick-bar .dm-edit-btn {
     margin: 0 !important;

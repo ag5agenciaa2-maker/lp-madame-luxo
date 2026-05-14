@@ -3756,7 +3756,22 @@ ol {
             text-transform: uppercase;
             color: #C9A227;
             margin-bottom: 10px;
-            display: block;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        /* Quando o produto está em várias categorias, viram pills (uma por vírgula). */
+        .pmodal-cat-pill {
+            display: inline-block;
+            padding: 3px 10px;
+            background: linear-gradient(135deg, rgba(201, 162, 39, 0.22) 0%, rgba(201, 162, 39, 0.10) 100%);
+            border: 1px solid rgba(201, 162, 39, 0.45);
+            border-radius: 999px;
+            color: #C9A227;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.18em;
         }
 
         .pmodal-nome {
