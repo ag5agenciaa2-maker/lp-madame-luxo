@@ -46,6 +46,92 @@ const ScrollLock = (function () {
 })();
 
 // ============================================
+// MODAL HISTORY — integra o botão "voltar" do celular com os modais.
+// Como funciona:
+//  - Ao abrir um modal, .push() empilha um estado fictício no history (pushState)
+//    e guarda um handler `onBack`.
+//  - O usuário aperta voltar → o navegador dispara `popstate` → executa o handler.
+//  - Ao fechar manualmente (X, salvar, clique fora), chamamos .pop() pra remover
+//    o estado do history sem disparar o handler.
+// ============================================
+const ModalHistory = (function () {
+    const stack = []; // [{name, onBack}]
+    let skipNextPop = false;
+
+    window.addEventListener('popstate', () => {
+        if (skipNextPop) { skipNextPop = false; return; }
+        const top = stack.pop();
+        if (top && typeof top.onBack === 'function') top.onBack();
+    });
+
+    return {
+        push(name, onBack) {
+            stack.push({ name, onBack });
+            try { history.pushState({ modal: name }, '', location.href); } catch (_) {}
+        },
+        // Remove o registro mais recente com o nome dado (sem disparar onBack).
+        pop(name) {
+            const revIdx = [...stack].reverse().findIndex(s => s.name === name);
+            if (revIdx === -1) return;
+            stack.splice(stack.length - 1 - revIdx, 1);
+            try { skipNextPop = true; history.back(); }
+            catch (_) { skipNextPop = false; }
+        },
+        size() { return stack.length; }
+    };
+})();
+
+// Diálogo de 3 opções pra quando o usuário tenta sair com edição pendente.
+// Resolve com 'continue' | 'back-to-product' | 'back-to-list'.
+function pedirDecisaoDescarte({ inEditModalOverDetail = true } = {}) {
+    return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'discard-dialog-overlay';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.innerHTML = `
+            <div class="discard-dialog-box">
+                <div class="discard-dialog-icon">
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 9v4M12 17h.01"/>
+                        <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                    </svg>
+                </div>
+                <h3 class="discard-dialog-title">Você tem alterações não salvas</h3>
+                <p class="discard-dialog-text">O que deseja fazer?</p>
+                <div class="discard-dialog-actions">
+                    <button type="button" class="discard-btn discard-btn-primary" data-action="continue">
+                        Continuar editando
+                    </button>
+                    ${inEditModalOverDetail ? `
+                    <button type="button" class="discard-btn discard-btn-secondary" data-action="back-to-product">
+                        Descartar e voltar ao produto
+                    </button>` : ''}
+                    <button type="button" class="discard-btn discard-btn-danger" data-action="back-to-list">
+                        Descartar e voltar à lista
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        requestAnimationFrame(() => overlay.classList.add('is-open'));
+
+        const finalizar = (acao) => {
+            overlay.classList.remove('is-open');
+            setTimeout(() => overlay.remove(), 180);
+            resolve(acao);
+        };
+
+        overlay.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-action]');
+            if (btn) finalizar(btn.dataset.action);
+            // clique no fundo = continuar editando (mais seguro)
+            else if (e.target === overlay) finalizar('continue');
+        });
+    });
+}
+
+// ============================================
 // CONFIGURAÇÕES
 // ============================================
 const CONFIG = {
@@ -953,16 +1039,59 @@ function openDetailModal(product, opts = {}) {
 
     document.body.appendChild(overlay);
     ScrollLock.lock();
-    const fechar = () => {
+
+    // Fecha o pop sem perguntar — pra uso interno (X, clique fora, salvar).
+    const fecharSemConfirmar = () => {
+        ScrollLock.unlock();
+        overlay.remove();
+        ModalHistory.pop('detail');
+    };
+
+    // Pediu pra fechar: se edição ativa, abre o diálogo de 3 opções; senão fecha.
+    // `viaPopstate=true` indica que o state do history já foi consumido pelo navegador.
+    const fechar = async (viaPopstate = false) => {
         if (overlay.dataset.editing === '1') {
-            if (!confirm('Você está editando. Descartar alterações?')) return;
+            const acao = await pedirDecisaoDescarte({ inEditModalOverDetail: true });
+            if (acao === 'continue') {
+                // Volta a empilhar o state que o popstate consumiu (mantém o "voltar").
+                if (viaPopstate) registrarPopstateEdit();
+                return;
+            }
+            // Limpa o estado de edição antes de prosseguir.
+            sairModoEdicao(overlay, product);
+            if (!viaPopstate) ModalHistory.pop('edit');
+            if (acao === 'back-to-product') {
+                // Permanece no detail modal — não fecha.
+                return;
+            }
+            // 'back-to-list' cai para o fechamento total abaixo.
         }
         ScrollLock.unlock();
         overlay.remove();
+        if (!viaPopstate) ModalHistory.pop('detail');
     };
 
-    overlay.querySelector('#detail-close').addEventListener('click', fechar);
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) fechar(); });
+    // Registra o state no history pra capturar o "voltar" do celular.
+    ModalHistory.push('detail', () => fechar(true));
+
+    // Helper usado quando o usuário escolhe "continuar editando" — re-empilha o
+    // state que o navegador consumiu, pra que o próximo voltar peça de novo.
+    function registrarPopstateEdit() {
+        ModalHistory.push('edit', async () => {
+            const acao = await pedirDecisaoDescarte({ inEditModalOverDetail: true });
+            if (acao === 'continue') { registrarPopstateEdit(); return; }
+            sairModoEdicao(overlay, product);
+            if (acao === 'back-to-list') {
+                ScrollLock.unlock();
+                overlay.remove();
+                ModalHistory.pop('detail');
+            }
+            // back-to-product: já saiu do edit mode, permanece no detail.
+        });
+    }
+
+    overlay.querySelector('#detail-close').addEventListener('click', () => fechar(false));
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) fechar(false); });
 
     // ── Modo Edição (inline) ──
     const detalhes = overlay.querySelector('.admin-detalhes');
@@ -970,9 +1099,15 @@ function openDetailModal(product, opts = {}) {
     const btnCancel = overlay.querySelector('.dm-cancel-btn');
     const btnSave = overlay.querySelector('.dm-save-btn');
 
-    btnEdit.addEventListener('click', () => entrarModoEdicao(overlay, product));
-    btnCancel.addEventListener('click', () => sairModoEdicao(overlay, product));
-    btnSave.addEventListener('click', () => salvarEdicaoInline(overlay, product, fechar));
+    btnEdit.addEventListener('click', () => {
+        entrarModoEdicao(overlay, product);
+        registrarPopstateEdit();
+    });
+    btnCancel.addEventListener('click', () => {
+        sairModoEdicao(overlay, product);
+        ModalHistory.pop('edit');
+    });
+    btnSave.addEventListener('click', () => salvarEdicaoInline(overlay, product, fecharSemConfirmar));
 
     // ── Quick status (custom dropdown estilizado, view mode) ──
     montarQuickStatus(overlay, product);
@@ -1591,6 +1726,9 @@ async function salvarEdicaoInline(overlay, product, fecharFn) {
 
         showToast(`"${dados.nome}" atualizado!`, 'success');
         registrarDiffsEdicao(product, { ...dados, imagens: urls });
+        // Limpa o history empilhado antes do reload pra não deixar lixo no botão "voltar".
+        ModalHistory.pop('edit');
+        ModalHistory.pop('detail');
         setTimeout(() => location.reload(), 800);
     } catch (err) {
         showToast('Erro ao salvar: ' + err.message, 'error');
@@ -1959,11 +2097,26 @@ function openModal(product = null) {
     
     modal.hidden = false;
     ScrollLock.lock();
+
+    // Integra com o "voltar" do celular: empilha um state e, ao receber popstate,
+    // pergunta antes de descartar. Como este modal é a raiz da edição (não está
+    // sobre outro pop), só duas opções: continuar editando ou voltar à lista.
+    const onBackProdutoModal = async () => {
+        const acao = await pedirDecisaoDescarte({ inEditModalOverDetail: false });
+        if (acao === 'continue') {
+            ModalHistory.push('produto-modal', onBackProdutoModal);
+            return;
+        }
+        // 'back-to-list' → fecha sem confirmar de novo.
+        closeModal({ skipHistoryPop: true });
+    };
+    ModalHistory.push('produto-modal', onBackProdutoModal);
 }
 
-function closeModal() {
+function closeModal(opts = {}) {
     document.getElementById('modal-produto').hidden = true;
     ScrollLock.unlock();
+    if (!opts.skipHistoryPop) ModalHistory.pop('produto-modal');
 }
 
 // ============================================
