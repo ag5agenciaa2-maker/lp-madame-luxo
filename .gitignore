@@ -16,3 +16,6 @@ Desktop.ini
 
 # Pasta de Skills (opcional subir, mas geralmente é melhor manter o repo limpo apenas com o site)
 Skill´s Padrões AG5/
+
+# Mídia original / documentação interna (42 MB — não vai pro deploy)
+docs/
