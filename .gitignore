@@ -19,3 +19,4 @@ Skill´s Padrões AG5/
 
 # Mídia original / documentação interna (42 MB — não vai pro deploy)
 docs/
+.wrangler/
